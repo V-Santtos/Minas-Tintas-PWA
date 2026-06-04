@@ -1,0 +1,259 @@
+/* ============================================================
+   Minas Tintas — Design Tokens
+   Warm Editorial adapted for a painter benefits PWA.
+   ============================================================ */
+
+/* ----------  FONT FACES  ---------- */
+
+@font-face {
+  font-family: "Playfair Display";
+  src: url("fonts/playfair-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Playfair Display";
+  src: url("fonts/playfair-400-italic.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Playfair Display";
+  src: url("fonts/playfair-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("fonts/inter-300.woff2") format("woff2");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("fonts/inter-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("fonts/inter-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("fonts/inter-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("fonts/inter-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ----------  TOKENS  ---------- */
+
+:root {
+  /* Warm neutral palette — never pure black/white */
+  --paper:        #FAF7F2;   /* page background (cream) */
+  --paper-deep:   #F2EDE4;   /* recessed/striped surface */
+  --card:         #FFFFFF;   /* card surface (only place near-white appears) */
+  --ink:          #1C1A17;   /* primary text — warm near-black */
+  --ink-2:        #3D3833;   /* secondary text */
+  --muted:        #8A817A;   /* tertiary text, captions, helper */
+  --line:         #E7E0D4;   /* hairline dividers, card borders */
+  --line-strong:  #D5CCBC;   /* heavier borders, dashed receipts */
+
+  /* Brand — used sparingly, once per section */
+  --brand:        #CC0000;   /* Minas red */
+  --brand-ink:    #A30000;   /* darker red for press / text on cream */
+  --brand-tint:   #FBE9E9;   /* faint red tint, used for tags only */
+
+  /* Semantic */
+  --success:      #4F7A4A;   /* olive-leaning green, warm */
+  --success-tint: #E8EFE3;
+  --warning:      #B5751F;   /* burnt amber */
+  --warning-tint: #F6ECDB;
+  --danger:       #CC0000;   /* shares brand red */
+  --danger-tint:  #FBE9E9;
+  --info:         #4A5A7A;   /* slate-blue, warm-leaning */
+  --info-tint:    #E5E8EE;
+
+  /* Type families */
+  --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-body:    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono:    ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  /* Type scale (mobile-first; admin scales larger) */
+  --fs-display:   44px;   /* hero, full-bleed */
+  --fs-h1:        32px;
+  --fs-h2:        24px;
+  --fs-h3:        20px;
+  --fs-lg:        17px;
+  --fs-body:      15px;
+  --fs-sm:        13px;
+  --fs-xs:        11px;
+
+  --lh-tight:     1.1;
+  --lh-snug:      1.25;
+  --lh-body:      1.5;
+  --lh-loose:     1.65;
+
+  --ls-tight:     -0.02em;
+  --ls-normal:    0;
+  --ls-wide:      0.08em;     /* small caps / eyebrow */
+  --ls-xwide:     0.16em;
+
+  /* Spacing — 4px base */
+  --s-1:  4px;
+  --s-2:  8px;
+  --s-3:  12px;
+  --s-4:  16px;
+  --s-5:  20px;
+  --s-6:  24px;
+  --s-8:  32px;
+  --s-10: 40px;
+  --s-12: 48px;
+  --s-16: 64px;
+  --s-20: 80px;
+
+  /* Radius — strict 8–24 range */
+  --r-sm: 8px;    /* chips, small buttons */
+  --r-md: 12px;   /* inputs, list rows */
+  --r-lg: 16px;   /* cards */
+  --r-xl: 20px;   /* prominent cards, bottom-sheets */
+  --r-2xl: 24px;  /* hero panels */
+  --r-pill: 999px;
+
+  /* Shadows — warm, soft, never blue */
+  --shadow-1: 0 1px 2px rgba(28, 26, 23, 0.04), 0 1px 1px rgba(28, 26, 23, 0.03);
+  --shadow-2: 0 2px 6px rgba(28, 26, 23, 0.06), 0 1px 2px rgba(28, 26, 23, 0.04);
+  --shadow-3: 0 8px 24px rgba(28, 26, 23, 0.08), 0 2px 6px rgba(28, 26, 23, 0.04);
+  --shadow-4: 0 16px 40px rgba(28, 26, 23, 0.10), 0 4px 10px rgba(28, 26, 23, 0.06);
+  --shadow-inset: inset 0 0 0 1px var(--line);
+
+  /* Motion */
+  --ease-out:   cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast:   140ms;
+  --dur-base:   220ms;
+  --dur-slow:   360ms;
+}
+
+/* ----------  SEMANTIC ELEMENTS  ---------- */
+
+html, body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, .display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--ink);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+  text-wrap: balance;
+  margin: 0;
+}
+.display   { font-size: var(--fs-display); }
+h1         { font-size: var(--fs-h1); }
+h2         { font-size: var(--fs-h2); }
+h3         { font-size: var(--fs-h3); font-weight: 400; font-style: italic; letter-spacing: 0; }
+
+/* Eyebrow / small caps label — pairs Playfair small caps look via Inter */
+.eyebrow {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: var(--ls-xwide);
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+p, .body {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--ink-2);
+  text-wrap: pretty;
+  margin: 0;
+}
+
+.lead {
+  font-size: var(--fs-lg);
+  line-height: var(--lh-loose);
+  color: var(--ink-2);
+}
+
+.caption {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  line-height: var(--lh-snug);
+}
+
+.numeric {
+  font-family: var(--font-body);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "ss01" 1;
+}
+
+/* ----------  CORE COMPONENT BASE  ---------- */
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-1);
+}
+
+.btn {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--fs-body);
+  line-height: 1;
+  padding: 14px 20px;
+  border-radius: var(--r-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out),
+              transform var(--dur-fast) var(--ease-out),
+              border-color var(--dur-fast) var(--ease-out);
+}
+.btn--primary {
+  background: var(--brand);
+  color: var(--card);
+}
+.btn--primary:hover { background: var(--brand-ink); }
+.btn--primary:active { transform: translateY(1px); }
+
+.btn--ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+.btn--ghost:hover { background: var(--paper-deep); }
+
+.btn--quiet {
+  background: transparent;
+  color: var(--ink-2);
+  border-color: transparent;
+}
+.btn--quiet:hover { color: var(--ink); background: var(--paper-deep); }

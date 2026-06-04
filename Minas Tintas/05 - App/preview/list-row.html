@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>List row</title>
+<link rel="stylesheet" href="_card.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<style>
+  body { padding: 0; }
+  .wrap { background: var(--card); border: 1px solid var(--line); border-radius: 16px; margin: 24px 28px; overflow: hidden; }
+  .row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 16px;
+    align-items: center;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--line);
+  }
+  .row:last-child { border-bottom: 0; }
+  .left { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .ttl { font-weight: 600; font-size: 14px; color: var(--ink); }
+  .sub { font-size: 12px; color: var(--muted); display: flex; gap: 8px; align-items: center; }
+  .sub .sep { width: 3px; height: 3px; border-radius: 50%; background: var(--muted); }
+  .amt { font-weight: 700; font-size: 14px; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .chev { color: var(--muted); display: flex; }
+  .chev i { width: 16px; height: 16px; }
+  .pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .pill .dot { width: 5px; height: 5px; border-radius: 50%; }
+  .p-paid { background: #E8EFE3; color: #4F7A4A; }
+  .p-paid .dot { background: #4F7A4A; }
+  .p-wait { background: #F6ECDB; color: #B5751F; }
+  .p-wait .dot { background: #B5751F; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="row">
+      <div class="left">
+        <div class="ttl">Obra Vila Esperança</div>
+        <div class="sub"><span>#0481</span><span class="sep"></span><span>12 mar</span><span class="sep"></span><span class="pill p-paid"><span class="dot"></span>pago</span></div>
+      </div>
+      <div class="amt">R$ 1.840,00</div>
+      <div class="chev"><i data-lucide="chevron-right"></i></div>
+    </div>
+    <div class="row">
+      <div class="left">
+        <div class="ttl">Casa Sr. Antônio</div>
+        <div class="sub"><span>#0480</span><span class="sep"></span><span>10 mar</span><span class="sep"></span><span class="pill p-wait"><span class="dot"></span>aguardando</span></div>
+      </div>
+      <div class="amt">R$ 642,00</div>
+      <div class="chev"><i data-lucide="chevron-right"></i></div>
+    </div>
+    <div class="row">
+      <div class="left">
+        <div class="ttl">Salão Bela Vista</div>
+        <div class="sub"><span>#0479</span><span class="sep"></span><span>06 mar</span><span class="sep"></span><span class="pill p-paid"><span class="dot"></span>pago</span></div>
+      </div>
+      <div class="amt">R$ 2.310,50</div>
+      <div class="chev"><i data-lucide="chevron-right"></i></div>
+    </div>
+  </div>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

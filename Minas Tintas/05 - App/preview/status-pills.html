@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Status pills</title>
+<link rel="stylesheet" href="_card.css">
+<style>
+  .grid { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--font-body);
+  }
+  .pill .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .p-draft   { background: #E5E8EE; color: #4A5A7A; }
+  .p-wait    { background: #F6ECDB; color: #B5751F; }
+  .p-paid    { background: #E8EFE3; color: #4F7A4A; }
+  .p-bonus   { background: #FBE9E9; color: #CC0000; }
+  .p-can     { background: var(--paper-deep); color: var(--ink-2); }
+  .label { font-size: 12px; color: var(--muted); margin: 14px 0 6px; font-family: var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; }
+</style>
+</head>
+<body>
+  <div class="label">Pedido — fluxo de status</div>
+  <div class="grid">
+    <span class="pill p-draft"><span class="dot" style="background:#4A5A7A"></span>rascunho</span>
+    <span class="pill p-wait"><span class="dot" style="background:#B5751F"></span>aguardando pagamento</span>
+    <span class="pill p-paid"><span class="dot" style="background:#4F7A4A"></span>pago</span>
+    <span class="pill p-bonus"><span class="dot" style="background:#CC0000"></span>bônus liberado</span>
+    <span class="pill p-can"><span class="dot" style="background:#8A817A"></span>cancelado</span>
+  </div>
+
+  <div class="label">Resgate — Lojinha</div>
+  <div class="grid">
+    <span class="pill p-wait"><span class="dot" style="background:#B5751F"></span>em separação</span>
+    <span class="pill p-paid"><span class="dot" style="background:#4F7A4A"></span>retirar na loja</span>
+    <span class="pill p-can"><span class="dot" style="background:#8A817A"></span>retirado</span>
+  </div>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Type — Display</title>
+<link rel="stylesheet" href="_card.css">
+<style>
+  .stack { display: flex; flex-direction: column; gap: 14px; }
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 180px;
+    align-items: baseline;
+    gap: 24px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .row:last-child { border-bottom: 0; }
+  .specimen {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+  .meta { font-family: var(--font-mono); font-size: 11px; color: var(--muted); text-align: right; line-height: 1.6; }
+  .meta b { color: var(--ink-2); font-weight: 500; }
+</style>
+</head>
+<body>
+  <div class="stack">
+    <div class="row">
+      <div class="specimen" style="font-size:44px;">Bom trabalho.</div>
+      <div class="meta"><b>display</b><br>Playfair 700 / 44 / −0.02em</div>
+    </div>
+    <div class="row">
+      <div class="specimen" style="font-size:32px;">Pedidos para aprovação</div>
+      <div class="meta"><b>h1</b><br>Playfair 700 / 32 / 1.1</div>
+    </div>
+    <div class="row">
+      <div class="specimen" style="font-size:24px;">Lojinha de resgates</div>
+      <div class="meta"><b>h2</b><br>Playfair 700 / 24 / 1.1</div>
+    </div>
+    <div class="row">
+      <div class="specimen" style="font-size:20px; font-weight:400; font-style:italic; letter-spacing:0;">Bônus deste mês</div>
+      <div class="meta"><b>h3</b><br>Playfair italic 400 / 20</div>
+    </div>
+  </div>
+</body>
+</html>

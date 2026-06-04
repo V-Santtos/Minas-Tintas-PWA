@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Colors — Ink</title>
+<link rel="stylesheet" href="_card.css">
+<style>
+  .swatches { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .sw {
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    overflow: hidden;
+    background: var(--card);
+  }
+  .sw .chip { height: 96px; display: flex; align-items: flex-end; padding: 14px; }
+  .sw .chip span { font-family: var(--font-display); font-size: 32px; color: var(--paper); font-weight: 700; }
+  .sw .meta { padding: 10px 12px 12px; }
+  .sw .name { font-size: 13px; font-weight: 600; color: var(--ink); }
+  .sw .hex  { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-top: 2px; }
+</style>
+</head>
+<body>
+  <div class="swatches">
+    <div class="sw">
+      <div class="chip" style="background:#1C1A17;"><span>Aa</span></div>
+      <div class="meta"><div class="name">ink — primary</div><div class="hex">#1C1A17</div></div>
+    </div>
+    <div class="sw">
+      <div class="chip" style="background:#3D3833;"><span>Aa</span></div>
+      <div class="meta"><div class="name">ink-2 — body</div><div class="hex">#3D3833</div></div>
+    </div>
+    <div class="sw">
+      <div class="chip" style="background:#8A817A;"><span>Aa</span></div>
+      <div class="meta"><div class="name">muted</div><div class="hex">#8A817A</div></div>
+    </div>
+  </div>
+</body>
+</html>

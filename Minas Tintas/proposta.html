@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proposta — Minas Tintas App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #FAF7F2;
+      --fg:      #1C1A17;
+      --accent:  #CC0000;
+      --muted:   #8A817A;
+      --surface: #FFFFFF;
+      --border:  rgba(28,26,23,0.10);
+      --dark:    #1C1A17;
+    }
+
+    body {
+      background: #E8E4DD;
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    /* ─── PAGE ───────────────────────────────────────────── */
+    .page {
+      width: 794px;
+      min-height: 1123px;
+      margin: 32px auto;
+      padding: 80px 72px;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      color: var(--fg);
+      position: relative;
+      box-shadow: 0 4px 40px rgba(0,0,0,0.10);
+    }
+
+    .page--dark {
+      background: var(--dark);
+      color: #FAF7F2;
+    }
+
+    @media print {
+      body { background: white; }
+      .page {
+        margin: 0;
+        box-shadow: none;
+        page-break-after: always;
+      }
+    }
+
+    /* ─── TYPE ───────────────────────────────────────────── */
+    .eyebrow {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+    .page--dark .eyebrow { color: rgba(250,247,242,0.38); }
+
+    h1 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 60px;
+      font-weight: 700;
+      line-height: 1.10;
+      letter-spacing: -0.025em;
+    }
+
+    h2 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 42px;
+      font-weight: 700;
+      line-height: 1.12;
+      letter-spacing: -0.022em;
+    }
+
+    .accent { color: var(--accent); }
+    .page--dark .accent { color: #FF5050; }
+
+    p {
+      font-size: 14.5px;
+      line-height: 1.72;
+      color: var(--fg);
+    }
+    .page--dark p { color: rgba(250,247,242,0.68); }
+
+    .divider {
+      width: 36px;
+      height: 2px;
+      background: var(--accent);
+      margin: 28px 0;
+    }
+
+    /* ─── FEATURE LIST ───────────────────────────────────── */
+    .feature-list {
+      list-style: none;
+      border-top: 1px solid var(--border);
+    }
+    .feature-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13.5px;
+      line-height: 1.55;
+      color: var(--fg);
+    }
+    .feature-list li::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+      margin-top: 6px;
+    }
+
+    /* ─── CALLOUT ────────────────────────────────────────── */
+    .callout {
+      background: rgba(204,0,0,0.05);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      padding: 13px 16px;
+      font-size: 12.5px;
+      color: var(--fg);
+      margin-top: 20px;
+      line-height: 1.6;
+    }
+
+    /* ─── TAGS ───────────────────────────────────────────── */
+    .tag-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 28px;
+    }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 15px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+    .tag--filled  { background: var(--accent); color: #fff; }
+    .tag--dash    { border: 1.5px dashed rgba(28,26,23,0.22); color: var(--muted); }
+    .tag--dash-lt { border: 1.5px dashed rgba(255,255,255,0.20); color: rgba(250,247,242,0.45); }
+    .tag--ghost   { background: rgba(255,255,255,0.07); color: rgba(250,247,242,0.55); }
+
+    /* ─── PILLARS ────────────────────────────────────────── */
+    .pillar-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-top: 36px;
+    }
+    .pillar {
+      background: var(--bg);
+      padding: 24px 20px;
+    }
+    .pillar__icon {
+      font-size: 22px;
+      margin-bottom: 10px;
+    }
+    .pillar__title {
+      font-family: 'Playfair Display', serif;
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .pillar__body {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    /* ─── EXPANSION CARDS ────────────────────────────────── */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .exp-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      padding: 24px 22px;
+    }
+    .exp-card__label {
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: #FF5050;
+      margin-bottom: 10px;
+    }
+    .exp-card__title {
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.35;
+      color: #FAF7F2;
+      margin-bottom: 9px;
+    }
+    .exp-card__body {
+      font-size: 12.5px;
+      line-height: 1.58;
+      color: rgba(250,247,242,0.50);
+    }
+    .exp-card__tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 14px;
+    }
+    .exp-card__tag {
+      font-size: 10.5px;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 100px;
+      background: rgba(255,255,255,0.07);
+      color: rgba(250,247,242,0.65);
+    }
+
+    /* ─── STEP LIST ──────────────────────────────────────── */
+    .step-list {
+      list-style: none;
+      border-top: 1px solid var(--border);
+    }
+    .step-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 22px;
+      padding: 20px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .step-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+      width: 26px;
+      flex-shrink: 0;
+      padding-top: 1px;
+    }
+    .step-content strong {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 3px;
+    }
+    .step-content span {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    /* ─── COVER ──────────────────────────────────────────── */
+    .cover-logo {
+      height: 48px;
+      object-fit: contain;
+      object-position: left center;
+    }
+    .cover-hero {
+      margin-top: auto;
+      margin-bottom: auto;
+      padding: 48px 0 32px;
+    }
+    .cover-footer {
+      margin-top: auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding-top: 32px;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════
+     PÁGINA 1 — CAPA
+════════════════════════════════════════════════════ -->
+<section class="page">
+
+  <img src="../LOGO.svg" alt="Minas Tintas" class="cover-logo">
+
+  <div class="cover-hero">
+    <div class="eyebrow">Proposta de Desenvolvimento · Maio 2026</div>
+    <h1>Sistema de<br>Benefícios<br>para <span class="accent">Pintores</span></h1>
+    <div class="divider"></div>
+    <p style="max-width: 420px; color: var(--muted); font-size: 15px;">
+      Um aplicativo web instalável para digitalizar o relacionamento entre a Minas Tintas e seus pintores parceiros — orçamentos, bônus automáticos e lojinha de pontos.
+    </p>
+  </div>
+
+  <div class="cover-footer">
+    <div>
+      <div style="font-size: 14px; font-weight: 600;">Victor Santos</div>
+      <div style="font-size: 12px; color: var(--muted); margin-top: 3px;">Desenvolvedor responsável</div>
+    </div>
+    <div style="font-size: 12px; color: var(--muted); text-align: right;">
+      Minas Tintas<br>Maio de 2026
+    </div>
+  </div>
+
+</section>
+
+
+<!-- ════════════════════════════════════════════════════
+     PÁGINA 2 — O SISTEMA
+════════════════════════════════════════════════════ -->
+<section class="page">
+
+  <div class="eyebrow">01 — O Sistema</div>
+  <h2>O que está<br>sendo <span class="accent">entregue</span></h2>
+  <div class="divider"></div>
+
+  <p style="max-width: 540px;">
+    Um sistema digital completo para gerenciar o relacionamento com pintores parceiros. Dois perfis de acesso distintos — o pintor no campo, pelo celular; a administração na loja, pelo computador.
+  </p>
+
+  <div class="pillar-row">
+    <div class="pillar">
+      <div class="pillar__icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8A817A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="17" r="1" fill="#8A817A" stroke="none"/></svg>
+      </div>
+      <div class="pillar__title">Pintor</div>
+      <div class="pillar__body">Mobile-first. Cria orçamentos no campo, acompanha pedidos e gerencia seus pontos na lojinha.</div>
+    </div>
+    <div class="pillar">
+      <div class="pillar__icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8A817A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      </div>
+      <div class="pillar__title">Administração</div>
+      <div class="pillar__body">Desktop. Painel central — pedidos, pintores, lojinha, relatórios e consulta de clientes.</div>
+    </div>
+    <div class="pillar">
+      <div class="pillar__icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8A817A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </div>
+      <div class="pillar__title">Bônus Automático</div>
+      <div class="pillar__body">1% do valor bruto creditado automaticamente ao pintor responsável na aprovação do pedido.</div>
+    </div>
+  </div>
+
+  <div style="margin-top: 44px;">
+    <div class="eyebrow">Tipo de aplicativo</div>
+    <p style="margin-top: 8px; font-size: 13.5px; color: var(--muted); max-width: 560px;">
+      <strong style="color: var(--fg);">PWA — Progressive Web App.</strong> Instalável direto do navegador, sem App Store ou Google Play. Funciona no celular como um app nativo, com ícone na tela inicial e experiência fluida.
+    </p>
+  </div>
+
+</section>
+
+
+<!-- ════════════════════════════════════════════════════
+     PÁGINA 3 — SITE + VERSÃO 1
+════════════════════════════════════════════════════ -->
+<section class="page">
+
+  <div class="eyebrow">02 — O que está na mesa</div>
+  <h2>Dois projetos.<br>Uma <span class="accent">decisão.</span></h2>
+  <div class="divider"></div>
+
+  <!-- CARD SITE -->
+  <div style="border: 1px solid var(--border); border-radius: 16px; overflow: hidden;">
+    <div style="background: var(--fg); padding: 11px 24px; display: flex; align-items: center; gap: 8px;">
+      <span style="width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.13); display:inline-block;"></span>
+      <span style="width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.13); display:inline-block;"></span>
+      <span style="width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.13); display:inline-block;"></span>
+      <span style="font-size: 10.5px; color: rgba(255,255,255,0.28); margin-left: 8px; font-family: 'Inter', sans-serif;">minas-tintas-site.vercel.app</span>
+    </div>
+    <div style="padding: 28px 32px; display: grid; grid-template-columns: 1fr auto; gap: 32px; align-items: start;">
+      <div>
+        <div style="font-size: 10px; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px;">Site Institucional</div>
+        <div style="font-family: 'Inter', sans-serif; font-size: 17px; font-weight: 600; line-height: 1.3; color: var(--fg); margin-bottom: 12px;">A loja presente no digital</div>
+        <p style="font-size: 13px; color: var(--muted); line-height: 1.65; max-width: 420px;">Já desenvolvido e no ar. Apresenta a loja com catálogo de produtos, texturas decorativas, marcas parceiras e todos os canais de contato — com a identidade visual da Minas Tintas.</p>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-end; padding-top: 26px;">
+        <span class="tag tag--filled" style="gap:5px; white-space:nowrap;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Já no ar</span>
+      </div>
+    </div>
+    <div style="padding: 14px 32px; border-top: 1px solid var(--border); display: flex; gap: 6px; flex-wrap: wrap;">
+      <span style="font-size: 11px; padding: 4px 12px; border-radius: 100px; background: rgba(28,26,23,0.06); color: var(--fg);">Produtos e texturas</span>
+      <span style="font-size: 11px; padding: 4px 12px; border-radius: 100px; background: rgba(28,26,23,0.06); color: var(--fg);">Marcas parceiras</span>
+      <span style="font-size: 11px; padding: 4px 12px; border-radius: 100px; background: rgba(28,26,23,0.06); color: var(--fg);">Sobre a loja</span>
+      <span style="font-size: 11px; padding: 4px 12px; border-radius: 100px; background: rgba(28,26,23,0.06); color: var(--fg);">Contato completo</span>
+    </div>
+  </div>
+
+  <!-- CARD APP V1 -->
+  <div style="border: 1px solid var(--border); border-radius: 16px; overflow: hidden; margin-top: 16px;">
+    <div style="background: var(--fg); padding: 11px 24px;">
+      <span style="font-size: 10.5px; color: rgba(255,255,255,0.28); font-family: 'Inter', sans-serif;">App PWA · Mobile + Desktop</span>
+    </div>
+    <div style="padding: 28px 32px; display: grid; grid-template-columns: 1fr auto; gap: 32px; align-items: start;">
+      <div>
+        <div style="font-size: 10px; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px;">App · Versão 1 Essencial</div>
+        <div style="font-family: 'Inter', sans-serif; font-size: 17px; font-weight: 600; line-height: 1.3; color: var(--fg); margin-bottom: 12px;">O app que fideliza o pintor parceiro</div>
+        <p style="font-size: 13px; color: var(--muted); line-height: 1.65; max-width: 420px;">Tudo o que foi apresentado: orçamentos em campo, painel de controle, bônus automático e lojinha de pontos. Integração com o sistema da loja via API e funcionamento offline incluídos.</p>
+        <p style="font-size: 12px; color: var(--muted); line-height: 1.6; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);">
+          <strong style="color: var(--fg); font-weight: 500;">Sobre a API:</strong> o sistema da loja disponibiliza integração. O endpoint será verificado no início do desenvolvimento — se disponível, catálogo sincronizado desde o lançamento.
+        </p>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-end; padding-top: 26px;">
+        <span class="tag tag--filled" style="gap:5px; white-space:nowrap;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 15 a 20 dias úteis</span>
+      </div>
+    </div>
+  </div>
+
+
+</section>
+
+
+<!-- ════════════════════════════════════════════════════
+     PÁGINA 4 — INVESTIMENTO
+════════════════════════════════════════════════════ -->
+<section class="page">
+
+  <div class="eyebrow">03 — Investimento</div>
+  <h2>O que você<br><span class="accent">investe</span></h2>
+  <div class="divider"></div>
+
+  <p style="max-width: 520px;">Duas formas de contratar. Você escolhe o modelo que faz mais sentido para o momento da loja.</p>
+
+  <!-- CARDS DOS DOIS MODELOS -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px;">
+
+    <!-- Modelo Mensal -->
+    <div style="border: 2px solid var(--accent); border-radius: 16px; padding: 28px 24px;">
+      <div style="font-size: 10px; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; color: var(--accent); margin-bottom: 16px;">Modelo Mensal</div>
+      <div style="font-family: 'Playfair Display', serif; font-size: 38px; font-weight: 700; color: var(--fg); line-height: 1;">R$ 1.200</div>
+      <div style="font-size: 12px; color: var(--muted); margin-top: 4px; margin-bottom: 10px;">de entrada · App V1</div>
+      <div style="display: flex; align-items: baseline; gap: 6px; margin-bottom: 22px; padding-bottom: 20px; border-bottom: 1px solid var(--border);">
+        <span style="font-size: 21px; font-weight: 600; color: var(--fg);">+ R$ 270</span>
+        <span style="font-size: 13px; color: var(--muted);">/mês</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="display: flex; gap: 10px; align-items: center; font-size: 12.5px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
+          App V1 Essencial
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center; font-size: 12.5px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
+          Infraestrutura inclusa na mensalidade
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center; font-size: 12.5px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
+          Suporte e ajustes pontuais
+        </div>
+      </div>
+    </div>
+
+    <!-- Compra Direta -->
+    <div style="background: var(--fg); border-radius: 16px; padding: 28px 24px;">
+      <div style="font-size: 10px; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; color: rgba(250,247,242,0.40); margin-bottom: 16px;">Compra Direta</div>
+      <div style="font-family: 'Playfair Display', serif; font-size: 38px; font-weight: 700; color: #FAF7F2; line-height: 1;">R$ 3.800</div>
+      <div style="font-size: 12px; color: rgba(250,247,242,0.45); margin-top: 4px; margin-bottom: 10px;">pagamento único · App V1</div>
+      <div style="height: 41px; margin-bottom: 22px; padding-bottom: 20px; border-bottom: 1px solid rgba(250,247,242,0.10);"></div>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="display: flex; gap: 10px; align-items: center; font-size: 12.5px; color: rgba(250,247,242,0.75);">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FF5050" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
+          App V1 Essencial
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center; font-size: 12.5px; color: rgba(250,247,242,0.75);">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FF5050" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
+          Licença permanente — sem taxa de manutenção
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center; font-size: 12.5px; color: rgba(250,247,242,0.38);">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(250,247,242,0.25)" stroke-width="2.5" stroke-linecap="round" style="flex-shrink:0;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Infraestrutura por conta do cliente
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- DETALHAMENTO -->
+  <div style="margin-top: 14px; border: 1px solid var(--border); border-radius: 12px; padding: 16px 24px; display: grid; grid-template-columns: 1fr 1px 1fr; gap: 24px;">
+
+    <div>
+      <div style="font-size: 9.5px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px;">Pacote com site — mensal</div>
+      <div style="display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 7px;">
+        <span style="color: var(--muted);">App V1 Essencial</span>
+        <span style="font-weight: 500;">R$ 1.200</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 12.5px; padding-bottom: 10px; border-bottom: 1px solid var(--border);">
+        <span style="color: var(--muted);">Site institucional</span>
+        <span style="font-weight: 500;">R$ 800</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 13px; margin-top: 10px;">
+        <span style="font-weight: 600;">Total entrada</span>
+        <span style="font-weight: 700; color: var(--accent);">R$ 2.000</span>
+      </div>
+    </div>
+
+    <div style="background: var(--border);"></div>
+
+    <div>
+      <div style="font-size: 9.5px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px;">Pacote com site — direto</div>
+      <div style="display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 7px;">
+        <span style="color: var(--muted);">App V1 Essencial</span>
+        <span style="font-weight: 500;">R$ 3.800</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 12.5px; padding-bottom: 10px; border-bottom: 1px solid var(--border);">
+        <span style="color: var(--muted);">Site institucional</span>
+        <span style="font-weight: 500;">R$ 800</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 13px; margin-top: 10px;">
+        <span style="font-weight: 600;">Total</span>
+        <span style="font-weight: 700; color: var(--accent);">R$ 4.600</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- PERCEPÇÃO DE VALOR -->
+  <div style="margin-top: 14px; background: var(--fg); border-radius: 14px; padding: 22px 28px;">
+    <div style="font-size: 9.5px; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; color: rgba(250,247,242,0.35); margin-bottom: 14px;">Perspectiva do investimento</div>
+    <p style="font-size: 15px; line-height: 1.75; color: rgba(250,247,242,0.68); margin-bottom: 14px;">
+      <span style="color: #FAF7F2; font-weight: 600;">R$ 2.000 de investimento</span> para ter site e aplicativo desenvolvidos sob medida — dois sistemas que passam a ser da loja — para durar enquanto ela existir.
+    </p>
+    <p style="font-size: 15px; line-height: 1.75; color: rgba(250,247,242,0.68);">
+      Em <span style="color: #FAF7F2; font-weight: 600;">6 meses</span>, com <span style="color: var(--accent); font-weight: 700;">menos de R$ 350 por mês</span>, o valor de site e aplicativo já está inteiramente quitado. A loja fica com os dois.
+    </p>
+  </div>
+
+</section>
+
+
+<!-- ════════════════════════════════════════════════════
+     PÁGINA 5 — VERSÃO 2
+════════════════════════════════════════════════════ -->
+<section class="page page--dark">
+
+  <div class="eyebrow">04 — Versão 2 · Expansão</div>
+  <h2>Onde o negócio<br>pode <span class="accent">chegar</span></h2>
+  <div class="divider"></div>
+
+  <p style="max-width: 520px;">
+    Expansões planejadas para médio e longo prazo. A Versão 1 abre o caminho — o que vem depois depende de onde o negócio quiser ir.
+  </p>
+
+  <div class="grid-2" style="margin-top: 28px;">
+
+    <div class="exp-card">
+      <div class="exp-card__label">Gestão Completa da Loja</div>
+      <div class="exp-card__title">Do sistema de pontos ao controle total da operação</div>
+      <div class="exp-card__body">Expansão para cobrir toda a operação — produtos, serviços, inventário e controle financeiro.</div>
+      <div class="exp-card__tags">
+        <span class="exp-card__tag">Produtos e serviços</span>
+        <span class="exp-card__tag">Inventário</span>
+        <span class="exp-card__tag">Controle financeiro</span>
+      </div>
+    </div>
+
+    <div class="exp-card">
+      <div class="exp-card__label">CRM Integrado</div>
+      <div class="exp-card__title">Loja, cliente e pintor num único ecossistema</div>
+      <div class="exp-card__body">Histórico de relacionamento, funil de vendas e rastreabilidade completa de cada interação.</div>
+      <div class="exp-card__tags">
+        <span class="exp-card__tag">Funil de vendas</span>
+        <span class="exp-card__tag">Histórico</span>
+        <span class="exp-card__tag">Pós-venda</span>
+      </div>
+    </div>
+
+    <div class="exp-card">
+      <div class="exp-card__label">Gateway de Pagamento</div>
+      <div class="exp-card__title">Pagamentos automáticos dentro do próprio app</div>
+      <div class="exp-card__body">Integração com gateway para processar pagamentos diretamente — Pix, cartão e confirmação automática.</div>
+      <div class="exp-card__tags">
+        <span class="exp-card__tag">Pix / Cartão</span>
+        <span class="exp-card__tag">Via orçamento</span>
+        <span class="exp-card__tag">Confirmação automática</span>
+      </div>
+    </div>
+
+    <div class="exp-card">
+      <div class="exp-card__label">Inteligência Artificial</div>
+      <div class="exp-card__title">Atendimento inteligente e automação de fluxos</div>
+      <div class="exp-card__body">IA para comunicação entre pintores e loja, triagem de pedidos e assistência ao time de ADM.</div>
+      <div class="exp-card__tags">
+        <span class="exp-card__tag">Chatbot</span>
+        <span class="exp-card__tag">Automação de fluxos</span>
+        <span class="exp-card__tag">Assistência ao ADM</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="tag-row" style="margin-top: 28px;">
+    <span class="tag tag--ghost" style="gap:6px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Prazo a definir após mapeamento</span>
+    <span class="tag tag--dash-lt">Investimento: a definir</span>
+  </div>
+
+</section>
+
+
+<!-- ════════════════════════════════════════════════════
+     PÁGINA 6 — PRÓXIMOS PASSOS
+════════════════════════════════════════════════════ -->
+<section class="page">
+
+  <div class="eyebrow">05 — Próximos Passos</div>
+  <h2>Como a gente<br><span class="accent">começa</span></h2>
+  <div class="divider"></div>
+
+  <ul class="step-list">
+    <li>
+      <div class="step-num">01</div>
+      <div class="step-content">
+        <strong>Aprovação da proposta</strong>
+        <span>Confirmar a versão escolhida e alinhamento dos valores de investimento.</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">02</div>
+      <div class="step-content">
+        <strong>Verificação da API e configuração inicial</strong>
+        <span>Acesso ao endpoint do sistema da loja para validar a integração do catálogo de produtos.</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">03</div>
+      <div class="step-content">
+        <strong>Desenvolvimento</strong>
+        <span>Versão 1: 15 a 20 dias úteis. Acompanhamento próximo e alinhamentos ao longo do processo.</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">04</div>
+      <div class="step-content">
+        <strong>Lançamento e treinamento</strong>
+        <span>Publicação do app, cadastro dos primeiros pintores e suporte no período inicial de uso.</span>
+      </div>
+    </li>
+  </ul>
+
+  <div style="margin-top: auto; padding-top: 48px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-end;">
+    <div>
+      <div style="font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700;">Victor Santos</div>
+      <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">victorsantos010111998@gmail.com</div>
+    </div>
+    <img src="../LOGO.svg" alt="Minas Tintas" style="height: 34px; opacity: 0.5; object-fit: contain;">
+  </div>
+
+</section>
+
+</body>
+</html>

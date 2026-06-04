@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Logo</title>
+<link rel="stylesheet" href="_card.css">
+<style>
+  body { padding: 0; display: grid; grid-template-columns: 1.2fr 1fr; min-height: 240px; }
+  .panel {
+    padding: 28px 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 12px;
+  }
+  .panel.dark { background: #1C1A17; color: var(--paper); }
+  .panel img { max-width: 280px; height: auto; display: block; }
+  .panel.dark img { filter: brightness(1.05); }
+  .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+  .panel.dark .eyebrow { color: #8A817A; }
+  .rules { font-size: 12px; color: var(--ink-2); line-height: 1.5; max-width: 28ch; }
+  .panel.dark .rules { color: #8A817A; }
+</style>
+</head>
+<body>
+  <div class="panel">
+    <div class="eyebrow">WORDMARK · ON PAPER</div>
+    <img src="../assets/minas-tintas-logo.png" alt="Minas Tintas">
+    <div class="rules">Use over <b style="color:var(--ink)">--paper</b> or <b style="color:var(--ink)">--card</b>. Minimum width 140px.</div>
+  </div>
+  <div class="panel dark">
+    <div class="eyebrow">ON INK</div>
+    <img src="../assets/minas-tintas-logo.png" alt="Minas Tintas">
+    <div class="rules">Logo holds on dark ink. Never on pure black.</div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,3164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minas Tintas — Admin</title>
+<link rel="stylesheet" href="../../colors_and_type.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<style>
+/* ===== RESET ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+
+/* override display font to match mobile */
+:root { --font-display: "Plus Jakarta Sans", -apple-system, sans-serif; }
+
+/* ===== PAGE ===== */
+body {
+  background: var(--paper-deep);
+  font-family: var(--font-body);
+  color: var(--ink);
+  min-height: 100vh;
+  padding: 32px 40px 40px;
+}
+.stage { display: flex; flex-direction: column; gap: 0; max-width: 1400px; margin: 0 auto; }
+
+/* ===== BROWSER CHROME ===== */
+.browser {
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(28,26,23,.12);
+}
+.chrome-bar {
+  height: 38px;
+  background: var(--paper-deep);
+  border-bottom: 1px solid var(--line);
+  display: flex; align-items: center;
+  padding: 0 14px; gap: 10px;
+}
+.chrome-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+.chrome-url {
+  margin-left: 18px; flex: 1; max-width: 480px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+  padding: 5px 12px; font-family: monospace; font-size: 11px; color: var(--muted);
+}
+.chrome-version { margin-left: auto; font-size: 11px; color: var(--muted); font-family: monospace; flex-shrink: 0; }
+
+/* ===== APP SHELL ===== */
+.app-shell { display: grid; grid-template-columns: 232px 1fr; height: 820px; transition: grid-template-columns .22s cubic-bezier(.4,0,.2,1); }
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  background: #1C1A17;
+  border-right: 1px solid rgba(255,255,255,.08);
+  padding: 20px 14px;
+  display: flex; flex-direction: column; gap: 18px;
+  flex-shrink: 0; overflow: hidden;
+  transition: padding .22s cubic-bezier(.4,0,.2,1);
+}
+.sidebar.collapsed:not(.hovered) { padding: 20px 8px; }
+.sidebar-brand { padding: 22px 14px 16px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.sidebar-brand img { height: 52px; display: block; }
+.sidebar-tag { font-size: 10px; font-weight: 600; color: rgba(255,255,255,.35); letter-spacing: 0.16em; text-transform: uppercase; margin-top: 6px; }
+.sidebar-nav { display: flex; flex-direction: column; gap: 2px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 10px; cursor: pointer;
+  font-weight: 500; font-size: 13.5px;
+  color: rgba(255,255,255,.5); border: 1px solid transparent;
+  transition: background .12s;
+  user-select: none;
+}
+.nav-item:hover { background: rgba(255,255,255,.06); }
+.nav-item.active {
+  background: rgba(255,255,255,.14); color: #fff;
+  font-weight: 600;
+  border-color: transparent;
+  box-shadow: inset 3px 0 0 var(--brand);
+}
+.nav-item.active svg, .nav-item.active i { color: #fff !important; }
+.nav-badge {
+  margin-left: auto;
+  background: #fff; color: var(--brand);
+  font-size: 10px; font-weight: 700;
+  padding: 2px 7px; border-radius: 999px;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+.sidebar-user {
+  margin-top: auto;
+  padding: 10px;
+  display: flex; align-items: center; gap: 10px;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+.user-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(255,255,255,.15); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 600; font-size: 13px; flex-shrink: 0;
+}
+.user-name { font-size: 12.5px; font-weight: 600; color: #fff; }
+.user-role { font-size: 11px; color: var(--muted); }
+
+/* ===== SIDEBAR COLLAPSE ===== */
+/* .hovered is a JS class — avoids the bug where CSS :hover blocks click-to-collapse */
+.app-shell.sidebar-collapsed:not(:has(#sidebar.hovered)) { grid-template-columns: 56px 1fr; }
+
+.brand-row { display: flex; align-items: center; }
+.brand-logo { overflow: hidden; transition: max-height .25s ease, opacity .2s ease; max-height: 80px; display: flex; justify-content: center; width: 100%; }
+.sidebar.collapsed:not(.hovered) .brand-logo { max-height: 0; opacity: 0; }
+.sidebar.collapsed:not(.hovered) .sidebar-tag { opacity: 0; max-width: 0; overflow: hidden; white-space: nowrap; }
+.sidebar.collapsed:not(.hovered) .brand-row { justify-content: center; }
+.sidebar.collapsed:not(.hovered) .sidebar-brand { border-bottom-color: transparent; padding-bottom: 8px; }
+
+.sidebar-toggle-btn {
+  margin-left: auto; flex-shrink: 0;
+  width: 28px; height: 28px; border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(255,255,255,.8);
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.16);
+  transition: background .12s, color .12s, border-color .12s, transform .1s;
+  position: relative; z-index: 1;
+}
+.sidebar-toggle-btn:hover { background: rgba(255,255,255,.2); color: #fff; border-color: rgba(255,255,255,.28); }
+.sidebar-toggle-btn:active { transform: scale(.88); }
+.sidebar.collapsed:not(.hovered) .sidebar-toggle-btn { margin-left: 0; }
+
+.nav-label {
+  overflow: hidden; white-space: nowrap;
+  max-width: 160px;
+  transition: max-width .2s ease, opacity .15s ease;
+}
+.sidebar.collapsed:not(.hovered) .nav-label { max-width: 0; opacity: 0; }
+.sidebar.collapsed:not(.hovered) .nav-badge { display: none; }
+.sidebar.collapsed:not(.hovered) .nav-item { justify-content: center; padding: 10px 0; gap: 0; }
+.sidebar.collapsed:not(.hovered) .sidebar-user { justify-content: center; }
+.user-info { overflow: hidden; max-width: 160px; white-space: nowrap; transition: max-width .2s ease, opacity .15s ease; }
+.sidebar.collapsed:not(.hovered) .user-info { max-width: 0; opacity: 0; }
+
+/* ===== MAIN ===== */
+#main { overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+
+/* ===== PAGE HEADER ===== */
+.page-header {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  padding: 24px 32px 18px;
+  border-bottom: 1px solid var(--line);
+  gap: 24px; flex-wrap: wrap;
+}
+.eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.page-title { font-family: var(--font-display); font-weight: 800; font-size: 28px; letter-spacing: -0.03em; line-height: 1.05; color: var(--ink); }
+.page-subtitle { font-size: 13.5px; color: var(--ink-2); margin-top: 6px; display: flex; align-items: center; gap: 8px; }
+.page-subtitle strong { color: var(--ink); font-weight: 700; font-size: 14.5px; }
+.painter-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--success); flex-shrink: 0;
+  box-shadow: 0 0 0 0 rgba(79,122,74,.5);
+  animation: painter-pulse 2s ease-in-out infinite;
+}
+@keyframes painter-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(79,122,74,.5); }
+  60%  { box-shadow: 0 0 0 6px rgba(79,122,74,0); }
+  100% { box-shadow: 0 0 0 0 rgba(79,122,74,0); }
+}
+.page-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* ===== BUTTONS ===== */
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 14px; border-radius: 10px;
+  font-family: var(--font-body); font-weight: 600; font-size: 13px;
+  line-height: 1; cursor: pointer; border: 1px solid transparent;
+  transition: opacity .12s;
+  white-space: nowrap;
+}
+.btn:hover { opacity: .82; }
+.btn svg { width: 14px; height: 14px; stroke-width: 2; flex-shrink: 0; }
+.btn-primary { background: var(--brand); color: #fff; }
+.btn-dark    { background: var(--ink);   color: var(--paper); }
+.btn-ghost   { background: var(--card);  color: var(--ink); border-color: var(--line); }
+.btn-quiet   { background: transparent; color: var(--ink-2); }
+.btn-danger  { color: var(--brand) !important; }
+.btn-sm      { padding: 7px 10px; font-size: 12px; }
+.btn-sm svg  { width: 13px; height: 13px; }
+.btn-full    { width: 100%; justify-content: center; }
+
+/* ===== SEARCH BOX ===== */
+.search-box {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 10px; padding: 0 12px; height: 36px;
+  font-size: 13px; color: var(--muted); width: 280px;
+}
+.search-box svg { width: 15px; height: 15px; color: var(--muted); flex-shrink: 0; }
+
+/* ===== STAT GRID ===== */
+.stat-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 14px; padding: 20px 32px 16px;
+}
+.stat-tile {
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 14px; padding: 16px 18px;
+  display: flex; flex-direction: column; gap: 6px;
+  box-shadow: 0 1px 2px rgba(28,26,23,.04);
+}
+.stat-label { font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+.stat-value {
+  font-family: var(--font-display);
+  font-weight: 800; font-size: 30px; color: var(--ink);
+  letter-spacing: -0.03em; line-height: 1;
+  font-variant-numeric: tabular-nums; margin-top: 2px;
+}
+.stat-accent .stat-value { color: var(--brand); }
+.stat-foot { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* ===== FILTER BAR ===== */
+.filter-bar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 32px 8px; flex-wrap: wrap;
+}
+.filter-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 999px;
+  font-size: 12px; font-weight: 600;
+  background: var(--card); color: var(--ink-2);
+  border: 1px solid var(--line); cursor: pointer;
+  transition: background .12s, color .12s;
+}
+.filter-pill:hover { background: var(--paper-deep); }
+.filter-pill.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.filter-count { opacity: .6; font-weight: 500; }
+
+/* ===== TABLE ===== */
+.table-wrap { padding: 12px 32px 32px; }
+.data-table {
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 14px; overflow: hidden;
+}
+.table-head {
+  display: grid;
+  padding: 12px 18px; gap: 16px;
+  background: var(--paper-deep); border-bottom: 1px solid var(--line);
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--muted);
+}
+.table-row {
+  display: grid;
+  padding: 14px 18px; gap: 16px; align-items: center;
+  border-bottom: 1px solid var(--line); cursor: pointer;
+  font-size: 13px; color: var(--ink-2);
+  transition: background .1s;
+}
+.table-row:last-child { border-bottom: 0; }
+.table-row:hover { background: var(--paper-deep); }
+
+/* Orders table columns */
+.orders-table .table-head,
+.orders-table .table-row {
+  grid-template-columns: 70px 1fr 1fr 90px 130px 185px 100px;
+}
+/* Painters table columns */
+.painters-table .table-head,
+.painters-table .table-row {
+  grid-template-columns: 1fr 160px 110px 90px 150px 120px;
+}
+
+.td-primary   { font-weight: 600; color: var(--ink); }
+.td-secondary { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.td-right     { text-align: right; font-variant-numeric: tabular-nums; }
+.td-right strong { color: var(--ink); }
+
+.td-with-avatar { display: flex; align-items: center; gap: 12px; }
+.avatar {
+  width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+  background: var(--paper-deep); color: var(--ink);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 600; font-size: 13px; border: 1px solid var(--line);
+}
+
+/* ===== STATUS PILL ===== */
+.status-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 9px; border-radius: 999px;
+  font-size: 11px; font-weight: 600; white-space: nowrap;
+}
+.status-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+
+/* ===== DETAIL LAYOUT ===== */
+.detail-grid {
+  display: grid; grid-template-columns: 2fr 1fr;
+  gap: 18px; padding: 20px 32px 32px;
+}
+.detail-side { display: flex; flex-direction: column; gap: 14px; }
+
+/* ===== CARDS ===== */
+.card {
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 16px; padding: 20px 24px;
+}
+.card-title {
+  font-family: var(--font-display);
+  font-weight: 700; font-size: 18px; color: var(--ink);
+  letter-spacing: -0.02em;
+}
+
+/* ===== RECEIPT ===== */
+.receipt-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.receipt-row {
+  display: grid; grid-template-columns: 1fr 72px 110px 120px;
+  gap: 16px; align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px dashed var(--line-strong);
+  font-size: 13.5px; color: var(--ink-2);
+}
+.receipt-row.last { border-bottom: 0; }
+.receipt-name { color: var(--ink); }
+.receipt-qty, .receipt-unit { text-align: right; font-variant-numeric: tabular-nums; }
+.receipt-subtotal { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--ink); }
+.receipt-total {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-top: 14px; padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.receipt-total-label { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; }
+.receipt-total-value {
+  font-family: var(--font-display);
+  font-weight: 800; font-size: 34px; color: var(--ink);
+  letter-spacing: -0.03em; font-variant-numeric: tabular-nums;
+}
+.receipt-payment {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 12px; padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-size: 12.5px; color: var(--muted);
+}
+.receipt-payment svg { width: 14px; height: 14px; color: var(--muted); }
+.receipt-payment strong { color: var(--ink-2); }
+
+/* ===== BONUS CARD ===== */
+.bonus-label { font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+.bonus-value {
+  font-family: var(--font-display);
+  font-weight: 800; font-size: 44px; color: var(--brand);
+  letter-spacing: -0.03em; line-height: 1;
+  font-variant-numeric: tabular-nums; margin-top: 6px;
+}
+.bonus-value small { font-family: var(--font-body); font-size: 14px; font-weight: 500; color: var(--muted); margin-left: 4px; letter-spacing: 0; }
+.bonus-desc { font-size: 12.5px; color: var(--muted); line-height: 1.5; margin-top: 10px; }
+.bonus-card .btn { margin-top: 14px; }
+
+/* ===== TIMELINE ===== */
+.timeline-label { font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.timeline-entry { display: grid; grid-template-columns: 22px 1fr; gap: 12px; padding-bottom: 12px; }
+.timeline-entry:last-child { padding-bottom: 0; }
+.timeline-spine { display: flex; flex-direction: column; align-items: center; padding-top: 4px; }
+.timeline-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.timeline-dot.done { background: #4F7A4A; }
+.timeline-dot.pending { background: var(--brand); }
+.timeline-line { width: 1px; flex: 1; background: var(--line-strong); margin-top: 2px; }
+.timeline-text { font-size: 13px; color: var(--ink); font-weight: 500; }
+.timeline-text.bold { font-weight: 600; }
+.timeline-time { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* ===== REWARD GRID ===== */
+.reward-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 16px; padding: 20px 32px 32px;
+}
+.reward-card {
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 14px; padding: 14px;
+  display: flex; flex-direction: column; gap: 8px;
+  box-shadow: 0 1px 2px rgba(28,26,23,.04);
+}
+.reward-thumb {
+  aspect-ratio: 1.2; border-radius: 10px;
+  background: var(--paper-deep); border: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted); position: relative; overflow: hidden;
+}
+.reward-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 9px; }
+.reward-thumb svg { width: 40px; height: 40px; }
+.promo-badge {
+  position: absolute; top: 8px; left: 8px;
+  background: var(--brand); color: #fff;
+  font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
+  padding: 3px 7px; border-radius: 4px;
+}
+.oculto-badge {
+  position: absolute; top: 8px; right: 8px;
+  background: rgba(28,26,23,.6); color: #fff;
+  font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
+  padding: 3px 7px; border-radius: 4px; text-transform: uppercase;
+}
+.reward-card.hidden-reward { opacity: 0.45; transition: opacity .18s; }
+.reward-card.hidden-reward .reward-thumb img,
+.reward-card.hidden-reward .reward-thumb svg { filter: grayscale(1); }
+.reward-name { font-weight: 600; font-size: 13.5px; color: var(--ink); line-height: 1.25; }
+.reward-meta { display: flex; justify-content: space-between; align-items: baseline; }
+.reward-pts { display: flex; flex-direction: column; gap: 2px; }
+.reward-pts-original { font-size: 11px; color: var(--muted); text-decoration: line-through; }
+.reward-pts-current {
+  font-family: var(--font-display);
+  font-weight: 800; font-size: 18px; color: var(--ink);
+  letter-spacing: -0.03em; font-variant-numeric: tabular-nums;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.reward-pts-current .coin { width: 15px; height: 15px; display: inline-block; vertical-align: middle; }
+.reward-pts-current small { font-family: var(--font-body, 'Inter', sans-serif); font-size: 11px; font-weight: 500; color: var(--muted); margin-left: 1px; }
+.reward-stock { font-size: 11px; color: var(--muted); }
+.reward-actions { display: flex; gap: 6px; margin-top: 4px; }
+.reward-desc { font-size: 11.5px; color: var(--muted); line-height: 1.4; margin: 3px 0 6px; }
+.stepper { display:inline-flex; align-items:center; border:1.5px solid var(--line); border-radius:8px; overflow:hidden; height:38px; }
+.stepper-btn { width:38px; height:100%; border:none; background:transparent; cursor:pointer; font-size:18px; font-weight:300; color:var(--ink); display:flex; align-items:center; justify-content:center; transition:background .12s; }
+.stepper-btn:hover { background:var(--card); }
+.stepper-val { padding:0 16px; font-family:var(--font-display); font-weight:800; font-size:16px; letter-spacing:-.02em; min-width:64px; text-align:center; border-left:1.5px solid var(--line); border-right:1.5px solid var(--line); }
+.mult-formula-box { background:var(--card); border:1.5px solid var(--line); border-radius:10px; padding:14px 16px; }
+.mult-formula-row { display:flex; align-items:center; gap:10px; font-family:var(--font-display); font-weight:800; font-size:15px; letter-spacing:-.02em; flex-wrap:wrap; }
+.mult-formula-op { color:var(--muted); font-family:var(--font-body); font-weight:400; font-size:14px; }
+.pts-preview { font-size:13px; color:var(--ink); padding:9px 12px; background:var(--card); border-radius:8px; border:1.5px solid var(--line); min-height:36px; display:flex; align-items:center; gap:6px; }
+
+/* ===== LOJINHA TABS ===== */
+.lojinha-tabs {
+  display: flex; gap: 0; border-bottom: 1.5px solid var(--line);
+  padding: 0 32px; margin-top: -4px;
+}
+.lojinha-tab {
+  padding: 10px 18px 9px; font-size: 13px; font-weight: 600;
+  color: var(--muted); cursor: pointer; border: none; background: none;
+  border-bottom: 2px solid transparent; margin-bottom: -1.5px;
+  transition: color .15s, border-color .15s; display: flex; align-items: center; gap: 7px;
+}
+.lojinha-tab:hover { color: var(--ink); }
+.lojinha-tab.active { color: var(--ink); border-bottom-color: var(--brand); }
+.tab-badge {
+  background: var(--brand); color: #fff; font-size: 10px; font-weight: 700;
+  padding: 1px 6px; border-radius: 20px; line-height: 1.6;
+}
+/* ===== RESGATES LIST ===== */
+.resgates-toolbar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 18px 32px 0;
+}
+.resgates-list {
+  display: flex; flex-direction: column;
+  padding: 0 32px 32px;
+}
+.resgate-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+}
+.resgate-row:last-child { border-bottom: none; }
+.resgate-thumb {
+  width: 52px; height: 52px; flex-shrink: 0;
+  border-radius: 8px; background: var(--paper-deep);
+  border: 1px solid var(--line); overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted);
+}
+.resgate-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.resgate-info { flex: 1; min-width: 0; }
+.resgate-item-name { font-size: 13.5px; font-weight: 600; color: var(--ink); }
+.resgate-pintor { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.resgate-meta { text-align: right; flex-shrink: 0; }
+.resgate-pts { font-family: var(--font-display); font-weight: 800; font-size: 15px; letter-spacing: -.02em; color: var(--ink); }
+.resgate-data { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.resgate-status-entregue { font-size: 11px; font-weight: 600; color: var(--success); display: flex; align-items: center; gap: 4px; margin-top: 4px; justify-content: flex-end; }
+.resgates-empty { padding: 48px 32px; text-align: center; color: var(--muted); font-size: 13.5px; }
+
+/* ===== BACK BUTTON ===== */
+.back-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12.5px; font-weight: 600; color: var(--muted);
+  margin-bottom: 8px; padding: 4px 0; cursor: pointer;
+  background: none; border: none;
+  transition: color .12s;
+}
+.back-btn:hover { color: var(--ink); }
+.back-btn svg { width: 14px; height: 14px; }
+
+/* ===== PLACEHOLDER ===== */
+.placeholder { padding: 60px 32px; font-size: 14px; color: var(--muted); }
+
+/* Stat tile — variantes de cor */
+.stat-tile.t-warn    { background: rgba(181,117,31,.06); border-color: rgba(181,117,31,.25); border-top: 3px solid var(--warning); }
+.stat-tile.t-warn    .stat-value { color: var(--warning); }
+.stat-tile.t-success { background: rgba(79,122,74,.06);  border-color: rgba(79,122,74,.25);  border-top: 3px solid var(--success); }
+.stat-tile.t-success .stat-value { color: var(--success); }
+.stat-tile.t-purple  { background: rgba(107,70,193,.06); border-color: rgba(107,70,193,.25); border-top: 3px solid #6B46C1; }
+.stat-tile.t-purple  .stat-value { color: #6B46C1; }
+
+/* ===== FILTER PANEL ===== */
+.filters-panel {
+  position: absolute; right: 0; top: calc(100% + 8px);
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 14px; padding: 16px;
+  width: 264px; z-index: 100;
+  box-shadow: 0 8px 24px rgba(28,26,23,.12);
+  display: flex; flex-direction: column; gap: 12px;
+}
+.fp-row { display: flex; flex-direction: column; gap: 6px; }
+.fp-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); }
+.fp-select {
+  width: 100%; padding: 8px 10px; border-radius: 8px;
+  border: 1px solid var(--line); background: var(--paper);
+  font-family: var(--font-body); font-size: 13px; color: var(--ink);
+}
+.fp-select:focus { outline: none; border-color: var(--ink); }
+.fp-actions { display: flex; gap: 8px; justify-content: flex-end; padding-top: 8px; border-top: 1px solid var(--line); margin-top: 2px; }
+.filters-active-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--brand); flex-shrink: 0; }
+
+/* ===== MODAL ===== */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(28,26,23,.48);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 500;
+}
+.modal-panel {
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 20px; width: 520px;
+  box-shadow: 0 24px 60px rgba(28,26,23,.2);
+}
+.modal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 24px 16px; border-bottom: 1px solid var(--line);
+}
+.modal-title { font-family: var(--font-display); font-weight: 800; font-size: 20px; letter-spacing: -0.02em; color: var(--ink); }
+.modal-body  { padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; max-height: 68vh; overflow-y: auto; }
+.modal-foot  { padding: 12px 24px 20px; display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--line); }
+.nm-cart-list { margin-top: 8px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.nm-cart-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+.nm-cart-item:last-child { border-bottom: none; }
+.nm-cart-name { flex: 1; font-size: 12px; color: var(--ink); line-height: 1.35; }
+.nm-cart-ctrl { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.qty-ctrl-sm { display: inline-flex; align-items: center; gap: 2px; background: var(--paper-deep); border-radius: 8px; padding: 2px 4px; }
+.qty-btn-sm { background: transparent; border: 0; cursor: pointer; font-size: 15px; font-weight: 600; color: var(--ink); padding: 2px 5px; line-height: 1; }
+.qty-val-sm { min-width: 18px; text-align: center; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.nm-cart-sub { font-size: 12px; font-weight: 600; color: var(--ink); min-width: 72px; text-align: right; font-variant-numeric: tabular-nums; }
+.nm-cart-total { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: var(--paper-deep); border-radius: 10px; margin-top: 8px; font-size: 13px; }
+.nm-cart-empty { font-size: 12px; color: var(--muted); padding: 12px 0 4px; }
+.form-row    { display: flex; flex-direction: column; gap: 6px; }
+.form-label  { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); }
+.form-input, .form-select {
+  width: 100%; padding: 9px 12px; border-radius: 8px;
+  border: 1px solid var(--line); background: var(--paper);
+  font-family: var(--font-body); font-size: 13px; color: var(--ink);
+}
+.form-input:focus, .form-select:focus { outline: none; border-color: var(--ink); }
+.form-input::placeholder { color: var(--muted); }
+.form-note { font-size: 12px; color: var(--muted); line-height: 1.5; }
+.form-error { border-color: var(--brand) !important; }
+.autocomplete-wrap { position: relative; }
+.payment-options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.payment-option {
+  min-height: 42px; background: var(--card); border: 1px solid var(--line);
+  border-radius: 10px; padding: 9px 11px; cursor: pointer;
+  display: flex; align-items: center; gap: 8px;
+  color: var(--ink); font-family: var(--font-body); font-size: 12.5px;
+  font-weight: 600; text-align: left; transition: background .12s, border-color .12s;
+}
+.payment-option:hover { border-color: var(--ink); }
+.payment-option.active { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+.payment-option svg { flex-shrink: 0; color: var(--muted); }
+.payment-option.active svg { color: var(--paper); }
+.autocomplete-list { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--card); border: 1px solid var(--line); border-radius: 10px; z-index: 200; box-shadow: 0 8px 24px rgba(28,26,23,.12); overflow: hidden; max-height: 180px; overflow-y: auto; }
+.autocomplete-item { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 8px; }
+.autocomplete-item:last-child { border-bottom: none; }
+.autocomplete-item:hover { background: var(--paper-deep); }
+.ac-emoji { font-size: 16px; flex-shrink: 0; line-height: 1; }
+.ac-info { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.ac-name { font-size: 13px; font-weight: 600; color: var(--ink); }
+.ac-city { font-size: 11px; color: var(--muted); }
+.ac-profile { display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--line); font-size: 11px; font-weight: 600; color: var(--muted); background: none; cursor: pointer; white-space: nowrap; opacity: 0; transition: opacity .15s; flex-shrink: 0; }
+.autocomplete-item:hover .ac-profile { opacity: 1; }
+.ac-profile:hover { background: var(--paper); color: var(--ink); }
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+
+
+  <!-- Browser chrome + app -->
+  <div class="browser">
+    <div class="chrome-bar">
+      <span class="chrome-dot" style="background:#E48576"></span>
+      <span class="chrome-dot" style="background:#E5BC59"></span>
+      <span class="chrome-dot" style="background:#7BB97A"></span>
+      <div class="chrome-url" id="chrome-url">app.minastintas.com.br/admin/pedidos</div>
+      <span class="chrome-version">v0.4.0 · centro</span>
+    </div>
+    <div id="app-content">
+      <div class="app-shell">
+        <aside class="sidebar" id="sidebar"></aside>
+        <main id="main"></main>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /stage -->
+
+<script>
+/* ============================================================
+   DATA
+   ============================================================ */
+const ORDERS = [
+  { id:'0492', painter:'João Pereira',      location:'São João del-Rei', title:'Residência Parque das Acácias', date:'19 mai', total:3840.00, status:'aprovado',  payment:'Pix da loja', notes:'Cliente pediu nota fiscal. Entrega dos materiais direto na obra na quinta-feira.' },
+  { id:'0491', painter:'Carlos H. Almeida', location:'São João del-Rei', title:'Loja Comercial Centro',         date:'19 mai', total:1664.00, status:'aprovado',  payment:'Maquininha' },
+  { id:'0490', painter:'Carlos H. Almeida', location:'São João del-Rei', title:'Escola Municipal Centro',      date:'14 mar', total:4520.00, status:'pendente',  payment:'Maquininha' },
+  { id:'0480', painter:'João Pereira',      location:'São João del-Rei', title:'Reforma Edifício Glória',     date:'14 mar', total:4862.00, status:'aprovado',  payment:'Maquininha' },
+  { id:'0489', painter:'João Pereira',      location:'São João del-Rei', title:'Condomínio Vila Verde',        date:'13 mar', total:6340.00, status:'pendente',  payment:'Pix da loja' },
+  { id:'0488', painter:'José Mariano',      location:'Tiradentes',       title:'Pousada Recanto — 2ª etapa',  date:'13 mar', total:2180.00, status:'pendente',  payment:'Vai pagar na loja' },
+  { id:'0479', painter:'Carlos H. Almeida', location:'São João del-Rei', title:'Casa Sr. Antônio',            date:'13 mar', total:642.00,  status:'aprovado',  payment:'Dinheiro' },
+  { id:'0487', painter:'Helena Mota',       location:'Prados',           title:'Clínica Odonto Centro',        date:'12 mar', total:1850.00, status:'pendente',  payment:'Dinheiro' },
+  { id:'0486', painter:'Ricardo Lopes',     location:'São João del-Rei', title:'Cobertura Ed. Alvorada',      date:'12 mar', total:3190.00, status:'pendente',  payment:'Maquininha' },
+  { id:'0474', painter:'Carlos H. Almeida', location:'São João del-Rei', title:'Apt. Centro — revisão',       date:'12 mar', total:1140.00, status:'recusado',  payment:'Pix da loja' },
+  { id:'0485', painter:'Adílson Borges',    location:'Barbacena',        title:'Sobrado Rua das Flores',      date:'11 mar', total:1640.00, status:'pendente',  payment:'Pix da loja' },
+  { id:'0484', painter:'Helena Mota',       location:'Prados',           title:'Salão Bela Vista',            date:'11 mar', total:2310.50, status:'pendente',  payment:'Pix da loja' },
+  { id:'0478', painter:'Ricardo Lopes',     location:'São João del-Rei', title:'Apto 304 — Ed. Glória',      date:'11 mar', total:458.00,  status:'aprovado',  payment:'Pix da loja' },
+  { id:'0483', painter:'Ricardo Lopes',     location:'São João del-Rei', title:'Casa nova — Sra. Beatriz',   date:'10 mar', total:642.00,  status:'pendente',  payment:'Vai pagar na loja' },
+  { id:'0473', painter:'Ricardo Lopes',     location:'São João del-Rei', title:'Loja Bairro Matosinhos',      date:'10 mar', total:2250.00, status:'recusado',  payment:'Vai pagar na loja' },
+  { id:'0477', painter:'Helena Mota',       location:'Prados',           title:'Galpão Bairro Industrial',    date:'09 mar', total:8420.00, status:'aprovado',  payment:'Maquininha' },
+  { id:'0482', painter:'José Mariano',      location:'Tiradentes',       title:'Pousada Recanto',             date:'09 mar', total:3284.40, status:'pendente',  payment:'Maquininha' },
+  { id:'0481', painter:'Carlos H. Almeida', location:'São João del-Rei', title:'Obra Vila Esperança',         date:'08 mar', total:1840.00, status:'pendente',  payment:'Pix da loja' },
+  { id:'0476', painter:'José Mariano',      location:'Tiradentes',       title:'Igreja São Francisco',        date:'08 mar', total:1920.00, status:'aprovado',  payment:'Maquininha' },
+  { id:'0475', painter:'Adílson Borges',    location:'Barbacena',        title:'Residência Sr. Morais',       date:'07 mar', total:780.00,  status:'aprovado',  payment:'Dinheiro' },
+  { id:'0472', painter:'Helena Mota',       location:'Prados',           title:'Quiosque Feira Central',      date:'06 mar', total:680.00,  status:'recusado',  payment:'Maquininha' },
+  { id:'0471', painter:'João Pereira',      location:'São João del-Rei', title:'Escola Est. Bairro Sul',      date:'04 mar', total:3640.00, status:'estornado', payment:'Maquininha' },
+  { id:'0470', painter:'José Mariano',      location:'Tiradentes',       title:'Pousada das Pedras',          date:'01 mar', total:2180.00, status:'estornado', payment:'Pix da loja' },
+  { id:'0469', painter:'Carlos H. Almeida', location:'São João del-Rei', title:'Casa Vila Nova',              date:'28 fev', total:1240.00, status:'aprovado',  payment:'Pix da loja' },
+  { id:'0468', painter:'João Pereira',      location:'São João del-Rei', title:'Reforma Sala Comercial',      date:'27 fev', total:3180.00, status:'aprovado',  payment:'Maquininha' },
+  { id:'0467', painter:'José Mariano',      location:'Tiradentes',       title:'Pousada do Vale',             date:'26 fev', total:2760.00, status:'aprovado',  payment:'Vai pagar na loja' },
+  { id:'0466', painter:'Helena Mota',       location:'Prados',           title:'Residência Família Souza',    date:'25 fev', total:880.00,  status:'aprovado',  payment:'Dinheiro' },
+  { id:'0465', painter:'Ricardo Lopes',     location:'São João del-Rei', title:'Ed. Commercial Center',      date:'24 fev', total:5420.00, status:'aprovado',  payment:'Maquininha' },
+  { id:'0464', painter:'Carlos H. Almeida', location:'São João del-Rei', title:'Escola Estadual Norte',      date:'22 fev', total:2140.00, status:'aprovado',  payment:'Pix da loja' },
+  { id:'0463', painter:'Adílson Borges',    location:'Barbacena',        title:'Casa Rua das Palmeiras',     date:'20 fev', total:640.00,  status:'aprovado',  payment:'Dinheiro' },
+  { id:'0462', painter:'Helena Mota',       location:'Prados',           title:'Clínica Veterinária Sul',    date:'18 fev', total:1860.00, status:'aprovado',  payment:'Maquininha' },
+  { id:'0461', painter:'João Pereira',      location:'São João del-Rei', title:'Condomínio Parque das Flores', date:'15 fev', total:4220.00, status:'aprovado', payment:'Pix da loja' },
+  { id:'0460', painter:'Ricardo Lopes',     location:'São João del-Rei', title:'Supermercado Bom Preço',     date:'12 fev', total:7340.00, status:'aprovado',  payment:'Maquininha' },
+];
+
+const PAINTERS = [
+  { name:'Carlos H. Almeida', cpf:'127.***.***-04', city:'São João del-Rei', since:'jan 2024', orders:28, points:12480, active:true  },
+  { name:'José Mariano',      cpf:'208.***.***-71', city:'Tiradentes',       since:'mar 2024', orders:19, points:9840,  active:true  },
+  { name:'Ricardo Lopes',     cpf:'094.***.***-32', city:'São João del-Rei', since:'mai 2024', orders:14, points:4220,  active:true  },
+  { name:'Helena Mota',       cpf:'311.***.***-18', city:'Prados',           since:'jul 2024', orders:11, points:6180,  active:true  },
+  { name:'João Pereira',      cpf:'048.***.***-99', city:'São João del-Rei', since:'set 2024', orders:22, points:14210, active:true  },
+  { name:'Adílson Borges',    cpf:'162.***.***-44', city:'Barbacena',        since:'nov 2024', orders:3,  points:480,   active:false },
+];
+
+const CLIENTS = [
+  { name:'Sr. Antônio Ferreira',          type:'pessoa',  phone:'(32) 99812-4433', painter:'Carlos H. Almeida' },
+  { name:'Sra. Beatriz Almeida',          type:'pessoa',  phone:'(32) 98821-5500', painter:'Ricardo Lopes'     },
+  { name:'Dr. Rodrigo Mendes',            type:'pessoa',  phone:'(32) 99734-0011', painter: null               },
+  { name:'Sra. Carla Ribeiro',            type:'pessoa',  phone:'(32) 98743-2218', painter: null               },
+  { name:'Sr. Paulo Henrique Costa',      type:'pessoa',  phone:'(32) 99001-8872', painter:'João Pereira'      },
+  { name:'Sra. Fernanda Duarte',          type:'pessoa',  phone:'(32) 98456-3390', painter: null               },
+  { name:'Sr. Marcos Vinícius',           type:'pessoa',  phone:'(32) 99223-7741', painter: null               },
+  { name:'Família Souza',                 type:'pessoa',  phone:'(32) 98564-1102', painter:'Helena Mota'       },
+  { name:'Condomínio Vila Verde',         type:'empresa', phone:'(32) 3371-5500',  painter:'João Pereira'      },
+  { name:'Condomínio Parque das Flores',  type:'empresa', phone:'(32) 3371-8823',  painter:'João Pereira'      },
+  { name:'Condomínio Parque das Acácias', type:'empresa', phone:'(32) 3378-4400',  painter:'João Pereira'      },
+  { name:'Escola Municipal Centro',       type:'empresa', phone:'(32) 3371-2200',  painter:'Carlos H. Almeida' },
+  { name:'Escola Estadual Norte',         type:'empresa', phone:'(32) 3374-9900',  painter:'Carlos H. Almeida' },
+  { name:'Escola Estadual Sul',           type:'empresa', phone:'(32) 3374-1100',  painter: null               },
+  { name:'Pousada Recanto',               type:'empresa', phone:'(32) 3355-8812',  painter:'José Mariano'      },
+  { name:'Pousada das Pedras',            type:'empresa', phone:'(32) 3355-2244',  painter:'José Mariano'      },
+  { name:'Pousada do Vale',               type:'empresa', phone:'(32) 3355-6631',  painter:'José Mariano'      },
+  { name:'Supermercado Bom Preço',        type:'empresa', phone:'(32) 3372-4400',  painter:'Ricardo Lopes'     },
+  { name:'Igreja São Francisco',          type:'empresa', phone:'(32) 3371-0033',  painter:'José Mariano'      },
+  { name:'Clínica Veterinária Sul',       type:'empresa', phone:'(32) 3370-7700',  painter:'Helena Mota'       },
+  { name:'Salão Bela Vista',              type:'empresa', phone:'(32) 98890-3312', painter:'Helena Mota'       },
+  { name:'Ed. Glória',                    type:'empresa', phone:'(32) 3371-6688',  painter:'João Pereira'      },
+  { name:'Ed. Alvorada',                  type:'empresa', phone:'(32) 3374-5522',  painter:'Ricardo Lopes'     },
+  { name:'Ed. Commercial Center',         type:'empresa', phone:'(32) 3372-1100',  painter:'Ricardo Lopes'     },
+  { name:'Loja Comercial Centro',         type:'empresa', phone:'(32) 3371-3300',  painter:'Carlos H. Almeida' },
+  { name:'Galpão Bairro Industrial',      type:'empresa', phone:'(32) 98712-0055', painter:'Helena Mota'       },
+];
+
+let REWARDS = [
+  { id:'fita',      name:'Fita crepe 50 mm × 50 m',             custo:60,   venda:85,   itemMod:0,  stock:145, icon:'tape',         img:'Fita).png',
+    desc:'Fita crepe 50 mm × 50 m para delimitação de áreas, proteção de rodapés e acabamentos em pintura.' },
+  { id:'bone',      name:'Boné Minas Tintas brim',              custo:90,   venda:120,  itemMod:0,  stock:80,  icon:'hard-hat',     img:'bone.png',
+    desc:'Boné aba curva com bordado exclusivo da marca Minas Tintas. Fechamento traseiro com fivela ajustável.' },
+  { id:'pinceis',   name:'Kit pincéis Atlas (3 peças)',          custo:120,  venda:165,  itemMod:0,  stock:18,  icon:'paintbrush',   img:'Pincel Atlas.png',
+    desc:'Kit com 3 pincéis Atlas de cerdas naturais — 1", 2" e 3". Para cortes limpos e acabamento fino.' },
+  { id:'epi',       name:'Kit EPI — máscara + óculos + luvas',  custo:150,  venda:200,  itemMod:0,  stock:24,  icon:'shield',       img:'kit-epi.png',
+    desc:'Kit completo com máscara de proteção, óculos anti-impacto e luvas de látex. Proteção essencial durante a pintura.' },
+  { id:'camiseta',  name:'Camiseta Minas Tintas algodão',        custo:150,  venda:180,  itemMod:0,  stock:56,  icon:'shirt',        img:'camiseta.png',
+    desc:'Camiseta 100% algodão penteado com estampa exclusiva Minas Tintas. Disponível nos tamanhos P ao GG.' },
+  { id:'rolo',      name:'Rolo profissional anti-gota 23 cm',   custo:180,  venda:245,  itemMod:-2, stock:32,  icon:'paint-roller', img:'rolo profissional anti gota 23cm .png',
+    desc:'Rolo de lã 23 cm com tecnologia anti-gota para acabamento limpo e preciso em paredes e tetos.' },
+  { id:'impertech', name:'Impertech 3em1 — Borracha Líquida',   custo:210,  venda:290,  itemMod:-2, stock:7,   icon:'droplets',     img:'descrição do produto na foto.png',
+    desc:'Impermeabilizante em borracha líquida que sela, protege e impermeabiliza telhados, calhas e lajes em uma só demão.' },
+  { id:'macacao',   name:'Macacão de pintor — tamanho G',        custo:240,  venda:295,  itemMod:0,  stock:22,  icon:'shirt',        img:'macacao.png',
+    desc:'Macacão descartável em TNT resistente, com capuz e elástico nos punhos. Proteção completa durante a pintura.' },
+  { id:'caixa',     name:'Caixa de ferramentas 16"',             custo:300,  venda:420,  itemMod:0,  stock:9,   icon:'briefcase',    img:'caixa de ferramenta.png',
+    desc:'Caixa organizadora 16" em plástico reforçado com travas duplas e compartimentos internos removíveis.' },
+  { id:'lixadeira', name:'Lixadeira orbital 5" Bosch',           custo:900,  venda:1290, itemMod:0,  stock:2,   icon:'wrench',       img:'maquina orbital.png',
+    desc:'Lixadeira orbital 5" com base de velcro e 12.000 RPM. Ideal para lixamento de paredes, madeira e massa corrida.' },
+];
+
+let hiddenRewards = new Set();
+
+let RESGATES = [
+  { id:'re1', pintorName:'Carlos Eduardo',  itemId:'bone',      pts:900,  data:'2026-05-19', status:'pendente' },
+  { id:'re2', pintorName:'José Antônio',    itemId:'fita',      pts:600,  data:'2026-05-18', status:'pendente' },
+  { id:'re3', pintorName:'Marcos Lima',     itemId:'pinceis',   pts:1200, data:'2026-05-14', status:'entregue' },
+  { id:'re4', pintorName:'Roberto Fonseca', itemId:'camiseta',  pts:1500, data:'2026-05-10', status:'entregue' },
+];
+
+const CATALOG = [
+  { id:'p1', code:'SUV-18-BN', name:'Tinta látex acrílica fosca 18L — Branco Neve', brand:'Suvinil', price:320.00, cost:196.00, stock:47,  icon:'paint-roller' },
+  { id:'p2', code:'COR-18-AR', name:'Tinta látex 18L — Areia',                      brand:'Coral',   price:298.00, cost:188.00, stock:31,  icon:'paint-roller' },
+  { id:'p3', code:'SUV-MC-25', name:'Massa corrida 25kg',                            brand:'Suvinil', price:84.90,  cost:58.00,  stock:84,  icon:'package'      },
+  { id:'p4', code:'COR-SE-18', name:'Selador acrílico 18L',                         brand:'Coral',   price:162.00, cost:108.00, stock:12,  icon:'package'      },
+  { id:'p5', code:'TIG-RO-23', name:'Rolo de lã 23 cm — anti-gota',                 brand:'Tigre',   price:28.50,  cost:16.80,  stock:6,   icon:'paint-roller' },
+  { id:'p6', code:'ATL-PC-02', name:'Pincel chato 2"',                              brand:'Atlas',   price:14.90,  cost:7.40,   stock:93,  icon:'paintbrush'   },
+  { id:'p7', code:'EUR-FC-50', name:'Fita crepe 50mm × 50m',                        brand:'Eurocel', price:12.40,  cost:6.90,   stock:210, icon:'package'      },
+  { id:'p8', code:'SUV-TN-18', name:'Tinta acrílica semibrilho 18L — Branco Gelo',  brand:'Suvinil', price:340.00, cost:214.00, stock:18,  icon:'paint-roller' },
+  { id:'p9', code:'COR-PR-36', name:'Primer multiuso 3,6L',                         brand:'Coral',   price:58.90,  cost:38.50,  stock:4,   icon:'package'      },
+];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let isLoggedIn      = false;
+let screen          = 'home';
+let orderId         = null;
+let filter          = 'todos';
+let sidebarCollapsed = false;
+let searchQuery     = '';
+let filtersOpen     = false;
+let novoManualOpen  = false;
+let estornoOpen     = false;
+let advFilters          = { pintor: '', payment: '' };
+let painterId           = null;
+let cadastrarPintorOpen = false;
+let editarPintorOpen    = false;
+let pintoresSearch      = '';
+let globalMult          = 10;
+let multOpen            = false;
+let multDraft           = 10;
+let editRewardId        = null;
+let editRewardMod       = 0;
+let lojinhaTab          = 'produtos'; // 'produtos' | 'resgates'
+let resgatesFiltro      = 'pendentes'; // 'pendentes' | 'todos'
+let homeSearchQuery     = '';
+let dateSortOrder       = null; // null | 'desc' | 'asc'
+let addItemOpen             = false;
+let addItemMod              = 0;
+let addItemCatalogSelected  = false;
+let addItemVenda            = 0;
+let addItemSearch           = '';
+let addItemPhoto            = null;
+let addItemPhotoPos         = { x: 50, y: 50 };
+let _photoDrag              = null;
+let editRewardPhoto         = null;
+let editRewardPhotoPos      = { x: 50, y: 50 };
+let _editPhotoDrag          = null;
+let reportView  = 'ano';
+let reportMonth = 4;
+let reportYear  = 2025;
+let nmPintorValue   = '';
+let nmCart          = {};
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function brl(v) { return v.toLocaleString('pt-BR', { minimumFractionDigits: 2 }); }
+function pts(v) { return Math.round(v).toLocaleString('pt-BR'); }
+function rewardPts(r)     { return Math.round(r.custo * (globalMult + (r.itemMod || 0))); }
+function rewardOrigPts(r) { return (r.itemMod || 0) < 0 ? Math.round(r.custo * globalMult) : null; }
+function rewardIsPromo(r) { return (r.itemMod || 0) < 0; }
+function fmtMod(v)        { if (v === 0) return '0×'; return (v > 0 ? '+' : '') + v.toLocaleString('pt-BR', {maximumFractionDigits:2}) + '×'; }
+function calcPreviewHtml(custo, mod) {
+  const eff  = globalMult + mod;
+  const p    = Math.round(custo * eff);
+  const orig = Math.round(custo * globalMult);
+  if (mod < 0) return `<span style="text-decoration:line-through;color:var(--muted);font-size:12px">${pts(orig)} pts</span>&nbsp; <strong style="color:var(--brand)">${pts(p)} pts</strong> <span class="promo-badge" style="font-size:10px;padding:2px 6px;vertical-align:middle">PROMO</span>`;
+  if (mod > 0) return `<strong>${pts(p)} pts</strong> <span style="font-size:11px;color:var(--muted)">(base: ${pts(orig)} pts)</span>`;
+  return `<strong>${pts(p)} pts</strong>`;
+}
+function bonus(total) { return Math.round(total * 0.10); }
+function initials(name) { return name.split(' ').map(s => s[0]).slice(0, 2).join(''); }
+function icon(name, size) { return `<i data-lucide="${name}" style="width:${size||16}px;height:${size||16}px"></i>`; }
+
+const MONTH_NUM = {jan:1,fev:2,mar:3,abr:4,mai:5,jun:6,jul:7,ago:8,set:9,out:10,nov:11,dez:12};
+const MONTH_ABBR_MAP = {'janeiro':'jan','fevereiro':'fev','março':'mar','marco':'mar','abril':'abr','maio':'mai','junho':'jun','julho':'jul','agosto':'ago','setembro':'set','outubro':'out','novembro':'nov','dezembro':'dez'};
+
+function dateVal(d) {
+  const [day, mon] = (d||'').split(' ');
+  return (MONTH_NUM[mon] || 0) * 100 + (parseInt(day, 10) || 0);
+}
+
+function normalizeSearchDate(q) {
+  let s = q.toLowerCase().trim();
+  for (const [full, abbr] of Object.entries(MONTH_ABBR_MAP)) s = s.replace(new RegExp(full, 'g'), abbr);
+  s = s.replace(/(\d{1,2})\/(\d{2})(?:\/\d{4})?/, (_, day, month) => {
+    const mn = parseInt(month, 10);
+    const abbr = Object.keys(MONTH_NUM).find(k => MONTH_NUM[k] === mn);
+    return abbr ? `${day} ${abbr}` : `${day}/${month}`;
+  });
+  return s;
+}
+
+function toggleDateSort() {
+  dateSortOrder = dateSortOrder === 'desc' ? 'asc' : 'desc';
+  renderMain();
+}
+
+const STATUS_CFG = {
+  'pendente':  { bg:'#F6ECDB', fg:'#B5751F' },
+  'aprovado':  { bg:'#E8EFE3', fg:'#4F7A4A' },
+  'recusado':  { bg:'#FCEAEA', fg:'#CC0000' },
+  'estornado': { bg:'var(--paper-deep)', fg:'var(--muted)' },
+  'rascunho':  { bg:'#E5E8EE', fg:'#4A5A7A' },
+};
+
+function statusPill(status) {
+  const s = STATUS_CFG[status] || STATUS_CFG['rascunho'];
+  return `<span class="status-pill" style="background:${s.bg};color:${s.fg}">
+    <span class="status-dot" style="background:${s.fg}"></span>${status}
+  </span>`;
+}
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+function toggleSidebar() {
+  const sb    = document.getElementById('sidebar');
+  const shell = sb.closest('.app-shell');
+  const isPeeking = sidebarCollapsed && sb.classList.contains('hovered');
+
+  if (isPeeking) {
+    // Clique enquanto fazendo peek = travar fechado, não expandir
+    sb.classList.remove('hovered');
+    renderSidebar();
+    return;
+  }
+
+  sidebarCollapsed = !sidebarCollapsed;
+  sb.classList.remove('hovered');
+  sb.classList.toggle('collapsed', sidebarCollapsed);
+  shell.classList.toggle('sidebar-collapsed', sidebarCollapsed);
+  renderSidebar();
+}
+
+function goTo(s, arg) {
+  screen              = s;
+  orderId             = arg || null;
+  filtersOpen         = false;
+  novoManualOpen      = false;
+  estornoOpen         = false;
+  cadastrarPintorOpen = false;
+  editarPintorOpen    = false;
+  multOpen            = false;
+  editRewardId        = null;
+  addItemOpen             = false;
+  addItemCatalogSelected  = false;
+  addItemVenda            = 0;
+  addItemSearch       = '';
+  const sb = document.getElementById('sidebar');
+  if (sb) sb.classList.remove('hovered');
+  render();
+}
+
+function setFilter(f) {
+  filter = f;
+  renderMain();
+}
+
+function onSearch(q) {
+  searchQuery = q.toLowerCase().trim();
+  const normalized = normalizeSearchDate(searchQuery);
+  document.querySelectorAll('.orders-table .table-row').forEach(row => {
+    row.style.display = (!searchQuery || row.textContent.toLowerCase().includes(normalized)) ? '' : 'none';
+  });
+}
+
+function toggleFiltersPanel(e) {
+  if (e) e.stopPropagation();
+  filtersOpen = !filtersOpen;
+  renderMain();
+}
+
+function applyAdvFilters() {
+  const pEl  = document.querySelector('#adv-pintor');
+  const pmEl = document.querySelector('#adv-payment');
+  advFilters.pintor   = pEl  ? pEl.value  : '';
+  advFilters.payment  = pmEl ? pmEl.value : '';
+  filtersOpen = false;
+  renderMain();
+}
+
+function clearAdvFilters() {
+  advFilters  = { pintor: '', payment: '' };
+  filtersOpen = false;
+  renderMain();
+}
+
+function openNovoManual() {
+  novoManualOpen = true;
+  renderMain();
+}
+
+function closeNovoManual() {
+  nmPintorValue  = '';
+  nmCart         = {};
+  novoManualOpen = false;
+  renderMain();
+}
+
+function openEstorno() {
+  estornoOpen = true;
+  renderMain();
+}
+
+function closeEstorno() {
+  estornoOpen = false;
+  renderMain();
+}
+
+function confirmEstorno() {
+  const motivo = (document.getElementById('estorno-motivo') || {}).value?.trim();
+  if (!motivo) {
+    const el = document.getElementById('estorno-motivo');
+    if (el) el.classList.add('form-error');
+    return;
+  }
+  const o = ORDERS.find(x => x.id === orderId);
+  if (o) {
+    o.status       = 'estornado';
+    o.estornoMotivo = motivo;
+    o.estornoDate  = '19 mai';
+  }
+  estornoOpen = false;
+  renderMain();
+}
+
+function onNmPintorInput(val) {
+  nmPintorValue = val;
+  const q    = val.toLowerCase().trim();
+  const list = document.getElementById('nm-pintor-list');
+  if (!list) return;
+  if (!q) { list.innerHTML = ''; list.style.display = 'none'; return; }
+  const matches = PAINTERS.filter(p => p.active && p.name.toLowerCase().includes(q));
+  if (!matches.length) { list.innerHTML = ''; list.style.display = 'none'; return; }
+  list.innerHTML = matches.map(p =>
+    `<div class="autocomplete-item" onmousedown="selectNmPintor('${p.name}')">
+      <span class="ac-emoji" style="color:var(--muted)">${icon('hard-hat', 16)}</span>
+      <div class="ac-info">
+        <span class="ac-name">${p.name}</span>
+        <span class="ac-city">${p.city}</span>
+      </div>
+      <button class="ac-profile" onmousedown="event.stopPropagation(); closeNovoManual(); goTo('pintores');" title="Ver perfil do pintor">
+        ${icon('user', 12)} Ver perfil
+      </button>
+    </div>`
+  ).join('');
+  list.style.display = 'block';
+  if (window.lucide) lucide.createIcons({ attrs: { 'stroke-width': '1.75' } });
+}
+
+function selectNmPintor(name) {
+  nmPintorValue = name;
+  const input = document.getElementById('nm-pintor-input');
+  if (input) { input.value = name; input.classList.remove('form-error'); }
+  const list  = document.getElementById('nm-pintor-list');
+  if (list)  { list.innerHTML = ''; list.style.display = 'none'; }
+}
+
+function onNmObraInput(val) {
+  const q    = val.toLowerCase().trim();
+  const list = document.getElementById('nm-obra-list');
+  if (!list) return;
+  if (!q) { list.innerHTML = ''; list.style.display = 'none'; return; }
+  const matches = CLIENTS.filter(c => c.name.toLowerCase().includes(q)).slice(0, 6);
+  if (!matches.length) { list.innerHTML = ''; list.style.display = 'none'; return; }
+  list.innerHTML = matches.map(c => {
+    const ic = c.type === 'empresa' ? 'building-2' : 'user';
+    return `<div class="autocomplete-item" onmousedown="selectNmObra('${c.name.replace(/'/g,"\\'")}')">
+      <span class="ac-emoji" style="color:var(--muted)">${icon(ic, 15)}</span>
+      <div class="ac-info">
+        <span class="ac-name">${c.name}</span>
+        <span class="ac-city">${c.type === 'empresa' ? 'Empresa' : 'Pessoa física'}</span>
+      </div>
+    </div>`;
+  }).join('');
+  list.style.display = 'block';
+  if (window.lucide) lucide.createIcons({ attrs: { 'stroke-width': '1.75' } });
+}
+
+function selectNmObra(name) {
+  const input = document.getElementById('nm-obra');
+  if (input) { input.value = name; input.classList.remove('form-error'); }
+  const list  = document.getElementById('nm-obra-list');
+  if (list)  { list.innerHTML = ''; list.style.display = 'none'; }
+}
+
+function onNmProductSearch(val) {
+  const q    = val.toLowerCase().trim();
+  const list = document.getElementById('nm-product-list');
+  if (!list) return;
+  if (!q) { list.innerHTML = ''; list.style.display = 'none'; return; }
+  const matches = CATALOG.filter(p =>
+    p.name.toLowerCase().includes(q) ||
+    p.brand.toLowerCase().includes(q) ||
+    p.code.toLowerCase().includes(q)
+  ).slice(0, 5);
+  if (!matches.length) { list.innerHTML = ''; list.style.display = 'none'; return; }
+  list.innerHTML = matches.map(p => {
+    const margin    = Math.round((1 - p.cost / p.price) * 100);
+    const mColor    = margin >= 30 ? 'var(--success)' : margin >= 15 ? '#B5751F' : 'var(--brand)';
+    const stockWarn = p.stock <= 6;
+    const stockColor = stockWarn ? 'var(--brand)' : 'var(--muted)';
+    const stockLabel = p.stock === 0 ? 'sem estoque' : `${p.stock} un.`;
+    return `<div class="autocomplete-item" onmousedown="selectNmProduct('${p.id}')">
+      <span class="ac-emoji" style="color:var(--muted)">${icon(p.icon, 15)}</span>
+      <div class="ac-info">
+        <span class="ac-name">${p.name}</span>
+        <span class="ac-city" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+          <span>${p.brand}</span>
+          <span>·</span>
+          <span>R$ ${p.price.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+          <span>·</span>
+          <span style="color:${mColor};font-weight:600;">Margem ${margin}%</span>
+          <span>·</span>
+          <span style="color:${stockColor};font-weight:${stockWarn?'600':'400'}">${stockLabel}</span>
+        </span>
+      </div>
+    </div>`;
+  }).join('');
+  list.style.display = 'block';
+  if (window.lucide) lucide.createIcons({ attrs: { 'stroke-width': '1.75' } });
+}
+
+function selectNmProduct(id) {
+  nmCart[id] = (nmCart[id] || 0) + 1;
+  const list  = document.getElementById('nm-product-list');
+  const input = document.getElementById('nm-product-search');
+  if (list)  { list.innerHTML = ''; list.style.display = 'none'; }
+  if (input) input.value = '';
+  updateNmCartDOM();
+}
+
+function addNmCart(id, delta) {
+  const next = (nmCart[id] || 0) + delta;
+  if (next <= 0) delete nmCart[id]; else nmCart[id] = next;
+  updateNmCartDOM();
+}
+
+function updateNmCartDOM() {
+  const el   = document.getElementById('nm-cart-items');
+  if (!el) return;
+  const keys = Object.keys(nmCart).filter(id => nmCart[id] > 0);
+  if (!keys.length) {
+    el.innerHTML = `<div class="nm-cart-empty">Nenhum produto adicionado ainda.</div>`;
+    return;
+  }
+  const total    = keys.reduce((s, id) => { const p = CATALOG.find(x => x.id === id); return p ? s + p.price * nmCart[id] : s; }, 0);
+  const bonusPts = Math.round(total * 0.10);
+  el.innerHTML = `
+    <div class="nm-cart-list">
+      ${keys.map(id => {
+        const p = CATALOG.find(x => x.id === id);
+        if (!p) return '';
+        const qty = nmCart[id];
+        return `<div class="nm-cart-item">
+          <span style="color:var(--muted);flex-shrink:0">${icon(p.icon, 14)}</span>
+          <span class="nm-cart-name">${p.name}</span>
+          <div class="nm-cart-ctrl">
+            <div class="qty-ctrl-sm">
+              <button class="qty-btn-sm" onclick="addNmCart('${id}',-1)">−</button>
+              <span class="qty-val-sm">${qty}</span>
+              <button class="qty-btn-sm" onclick="addNmCart('${id}',1)">+</button>
+            </div>
+            <span class="nm-cart-sub">R$ ${(p.price * qty).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="nm-cart-total">
+      <span style="color:var(--muted)">Total estimado</span>
+      <span><strong>R$ ${total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</strong> · <span style="color:var(--success);font-weight:600">${bonusPts.toLocaleString('pt-BR')} pts</span></span>
+    </div>`;
+  if (window.lucide) lucide.createIcons({ attrs: { 'stroke-width': '1.75' } });
+}
+
+function selectNmPayment(btn) {
+  const opts = document.querySelectorAll('#nm-payment-options .payment-option');
+  opts.forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (window.lucide) lucide.createIcons({ attrs: { 'stroke-width': '1.75' } });
+}
+
+function submitNovoManual() {
+  const pInput  = document.getElementById('nm-pintor-input');
+  const oEl     = document.getElementById('nm-obra');
+  const pmBtn   = document.querySelector('#nm-payment-options .payment-option.active');
+  let valid     = true;
+  const pValid  = !!(nmPintorValue && PAINTERS.find(p => p.name === nmPintorValue));
+  if (pInput) pInput.classList.toggle('form-error', !pValid);
+  if (!pValid) valid = false;
+  if (oEl) {
+    const empty = !oEl.value.trim();
+    oEl.classList.toggle('form-error', empty);
+    if (empty) valid = false;
+  }
+  const pmContainer = document.getElementById('nm-payment-options');
+  if (pmContainer) pmContainer.classList.toggle('form-error', !pmBtn);
+  if (!pmBtn) valid = false;
+  if (!valid) return;
+  const painter  = PAINTERS.find(p => p.name === nmPintorValue);
+  const newId    = String(Number(ORDERS[0].id) + 1).padStart(4, '0');
+  const cartKeys = Object.keys(nmCart).filter(id => nmCart[id] > 0);
+  const total    = cartKeys.reduce((s, id) => {
+    const p = CATALOG.find(x => x.id === id);
+    return p ? s + p.price * nmCart[id] : s;
+  }, 0);
+  const items = cartKeys.map(id => {
+    const p = CATALOG.find(x => x.id === id);
+    return p ? { name: p.name, qty: nmCart[id], unit: p.price } : null;
+  }).filter(Boolean);
+  ORDERS.unshift({
+    id: newId, painter: nmPintorValue,
+    location: painter ? painter.city : 'São João del-Rei',
+    title: oEl.value.trim(), date: '19 mai',
+    total, items, status: 'pendente', payment: pmBtn.dataset.payment,
+    notes: (document.getElementById('nm-notes') || {}).value?.trim() || '',
+  });
+  nmPintorValue  = '';
+  nmCart         = {};
+  novoManualOpen = false;
+  renderMain();
+}
+
+function updateURL() {
+  const el = document.getElementById('chrome-url');
+  if (!el) return;
+  if (!isLoggedIn) { el.textContent = 'app.minastintas.com.br/admin/login'; return; }
+  const pathMap = { home: '', pedido: `pedidos/${orderId}` };
+  const path = pathMap[screen] !== undefined ? pathMap[screen] : screen;
+  el.textContent = path
+    ? `app.minastintas.com.br/admin/${path}`
+    : `app.minastintas.com.br/admin`;
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function render() {
+  if (!isLoggedIn) { renderLoginScreen(); return; }
+  renderSidebar();
+  renderMain();
+  updateURL();
+}
+
+function renderLoginScreen() {
+  const content = document.getElementById('app-content');
+  content.innerHTML = renderLogin();
+  updateURL();
+  if (window.lucide) lucide.createIcons({ attrs: { 'stroke-width': '1.75' } });
+}
+
+function doAdminLogin() {
+  isLoggedIn = true;
+  const content = document.getElementById('app-content');
+  content.innerHTML = `
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar"></aside>
+      <main id="main"></main>
+    </div>`;
+  const sb = document.getElementById('sidebar');
+  sb.addEventListener('mouseenter', () => { if (sidebarCollapsed) sb.classList.add('hovered'); });
+  sb.addEventListener('mouseleave', () => { sb.classList.remove('hovered'); });
+  render();
+}
+
+function renderLogin() {
+  return `
+  <div style="display:flex;height:820px;">
+
+    <!-- Painel esquerdo: escuro + padrão topográfico -->
+    <div style="flex:0 0 40%;background:#373131;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;">
+
+      <!-- Padrão topográfico -->
+      <svg width="100%" height="100%" viewBox="0 0 420 820" preserveAspectRatio="xMidYMid slice"
+           style="position:absolute;inset:0;width:100%;height:100%;">
+        <!-- Anéis — canto superior direito -->
+        <ellipse cx="420" cy="0"   rx="110" ry="80"  fill="none" stroke="rgba(255,255,255,.15)" stroke-width="1.4" transform="rotate(18 420 0)"/>
+        <ellipse cx="420" cy="0"   rx="190" ry="145" fill="none" stroke="rgba(255,255,255,.11)" stroke-width="1.4" transform="rotate(18 420 0)"/>
+        <ellipse cx="420" cy="0"   rx="270" ry="210" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="1.4" transform="rotate(18 420 0)"/>
+        <ellipse cx="420" cy="0"   rx="350" ry="275" fill="none" stroke="rgba(255,255,255,.055)" stroke-width="1.4" transform="rotate(18 420 0)"/>
+        <!-- Anéis — canto inferior esquerdo -->
+        <ellipse cx="0"   cy="820" rx="100" ry="72"  fill="none" stroke="rgba(255,255,255,.13)" stroke-width="1.4" transform="rotate(-12 0 820)"/>
+        <ellipse cx="0"   cy="820" rx="180" ry="132" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="1.4" transform="rotate(-12 0 820)"/>
+        <ellipse cx="0"   cy="820" rx="260" ry="192" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="1.4" transform="rotate(-12 0 820)"/>
+        <!-- Anéis — canto central (profundidade) -->
+        <ellipse cx="210" cy="820" rx="140" ry="100" fill="none" stroke="rgba(255,255,255,.05)" stroke-width="1.4" transform="rotate(5 210 820)"/>
+        <!-- Sparkles -->
+        <path d="M68,220 l2.4,-10 l2.4,10 l10,2.4 l-10,2.4 l-2.4,10 l-2.4,-10 l-10,-2.4Z" fill="rgba(255,255,255,.30)"/>
+        <path d="M360,120 l1.8,-7.5 l1.8,7.5 l7.5,1.8 l-7.5,1.8 l-1.8,7.5 l-1.8,-7.5 l-7.5,-1.8Z" fill="rgba(255,255,255,.22)"/>
+        <path d="M130,580 l1.4,-5.5 l1.4,5.5 l5.5,1.4 l-5.5,1.4 l-1.4,5.5 l-1.4,-5.5 l-5.5,-1.4Z" fill="rgba(255,255,255,.17)"/>
+        <path d="M320,500 l1.0,-4.2 l1.0,4.2 l4.2,1.0 l-4.2,1.0 l-1.0,4.2 l-1.0,-4.2 l-4.2,-1.0Z" fill="rgba(255,255,255,.14)"/>
+      </svg>
+
+      <!-- Logo + tag -->
+      <div style="position:relative;z-index:1;text-align:center;">
+        <img src="../../assets/minas-tintas-logo.png" alt="Minas Tintas" style="height:80px;display:block;margin:0 auto;">
+        <div style="margin-top:14px;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:rgba(255,255,255,.4);">ADMIN · CENTRO</div>
+      </div>
+
+    </div>
+
+    <!-- Painel direito: formulário -->
+    <div style="flex:1;background:#FAF7F2;display:flex;align-items:center;justify-content:center;padding:48px;">
+      <div style="width:100%;max-width:360px;">
+
+        <div class="eyebrow" style="margin-bottom:10px;">PAINEL ADMINISTRATIVO</div>
+        <h1 class="page-title" style="font-size:40px;line-height:1.1;margin-bottom:8px;">Bem-vindo<br>de volta.</h1>
+        <div style="width:40px;height:3px;background:#373131;border-radius:2px;margin-bottom:10px;"></div>
+        <p style="color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:36px;">
+          Acesse o painel de gestão<br>da Minas Tintas.
+        </p>
+
+        <!-- E-mail -->
+        <div style="margin-bottom:20px;">
+          <div class="eyebrow" style="margin-bottom:8px;font-size:10px;">E-MAIL</div>
+          <div style="display:flex;align-items:center;gap:10px;border-bottom:1.5px solid var(--line-strong);padding:10px 0;">
+            <i data-lucide="mail" style="width:16px;height:16px;color:var(--muted);flex-shrink:0;"></i>
+            <input id="adm-email" type="email" placeholder="seu@email.com" autocomplete="email"
+              style="flex:1;border:0;background:transparent;font-family:var(--font-body);font-size:14px;color:var(--ink);outline:none;">
+          </div>
+        </div>
+
+        <!-- Senha -->
+        <div style="margin-bottom:10px;">
+          <div class="eyebrow" style="margin-bottom:8px;font-size:10px;">SENHA</div>
+          <div style="display:flex;align-items:center;gap:10px;border-bottom:1.5px solid var(--line-strong);padding:10px 0;">
+            <i data-lucide="lock" style="width:16px;height:16px;color:var(--muted);flex-shrink:0;"></i>
+            <input id="adm-senha" type="password" placeholder="••••••••" autocomplete="current-password"
+              style="flex:1;border:0;background:transparent;font-family:var(--font-body);font-size:14px;color:var(--ink);outline:none;"
+              onkeydown="if(event.key==='Enter') doAdminLogin()">
+            <button onclick="toggleAdmSenha()"
+              style="background:transparent;border:0;padding:2px;cursor:pointer;display:flex;align-items:center;">
+              <i data-lucide="eye" id="adm-senha-eye" style="width:16px;height:16px;color:var(--muted);"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Esqueci -->
+        <div style="text-align:right;margin-bottom:32px;">
+          <button style="background:transparent;border:0;font-size:12.5px;font-weight:600;color:#373131;cursor:pointer;font-family:var(--font-body);">
+            Esqueci minha senha
+          </button>
+        </div>
+
+        <!-- CTA -->
+        <button onclick="doAdminLogin()"
+          style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;
+                 padding:16px;border-radius:14px;background:var(--brand);color:#fff;border:0;
+                 font-family:var(--font-body);font-size:16px;font-weight:600;cursor:pointer;
+                 box-shadow:0 4px 14px rgba(204,0,0,.28);transition:opacity .12s;"
+          onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+          Entrar
+          <i data-lucide="arrow-right" style="width:18px;height:18px;"></i>
+        </button>
+
+      </div>
+    </div>
+
+  </div>`;
+}
+
+function toggleAdmSenha() {
+  const inp = document.getElementById('adm-senha');
+  const ic  = document.getElementById('adm-senha-eye');
+  if (!inp) return;
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  if (ic) ic.setAttribute('data-lucide', show ? 'eye-off' : 'eye');
+  if (window.lucide) lucide.createIcons({ attrs: { 'stroke-width': '1.75' } });
+}
+
+function renderSidebar() {
+  const items = [
+    { id:'home',      label:'Início',          icon:'house' },
+    { id:'pedidos',   label:'Pedidos',         icon:'receipt',     badge: ORDERS.filter(o=>o.status==='pendente').length },
+    { id:'pintores',  label:'Pintores',        icon:'users' },
+    { id:'lojinha',   label:'Lojinha',         icon:'store' },
+    { id:'relatorios',label:'Relatórios',      icon:'trending-up' },
+    { id:'config',    label:'Configurações',   icon:'settings' },
+  ];
+  const sidebarActive = screen === 'pedido' ? 'pedidos' : screen === 'pintor' ? 'pintores' : screen;
+
+  const sb = document.getElementById('sidebar');
+  sb.innerHTML = `
+    <div class="sidebar-brand">
+      <div class="brand-logo" style="margin-bottom:14px;">
+        <img src="../../assets/minas-tintas-logo.png" alt="Minas Tintas" style="height:52px;display:block;">
+      </div>
+      <div class="brand-row">
+        <div class="sidebar-tag">ADMIN · CENTRO</div>
+        <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="${sidebarCollapsed ? 'Expandir menu' : 'Recolher menu'}">
+          ${icon('panel-left', 15)}
+        </button>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      ${items.map(it => `
+        <div class="nav-item${sidebarActive === it.id ? ' active' : ''}" onclick="goTo('${it.id}')">
+          ${icon(it.icon, 17)}
+          <span class="nav-label">${it.label}</span>
+          ${it.badge ? `<span class="nav-badge">${it.badge}</span>` : ''}
+        </div>
+      `).join('')}
+    </nav>
+    <div class="sidebar-user">
+      <div class="user-avatar">R</div>
+      <div class="user-info">
+        <div class="user-name">Rayane</div>
+        <div class="user-role">gerente · centro</div>
+      </div>
+    </div>
+  `;
+  sb.classList.toggle('collapsed', sidebarCollapsed);
+  if (window.lucide) lucide.createIcons({ attrs: { 'stroke-width': '1.75' } });
+}
+
+function renderMain() {
+  const main = document.getElementById('main');
+  switch (screen) {
+    case 'home':       main.innerHTML = renderHome();          break;
+    case 'pedidos':    main.innerHTML = renderPedidos();       break;
+    case 'pedido':     main.innerHTML = renderPedidoDetail();  break;
+    case 'pintores':   main.innerHTML = renderPintores();      break;
+    case 'pintor':     main.innerHTML = renderPintorPerfil();  break;
+    case 'lojinha':    main.innerHTML = renderLojinha();       break;
+    case 'relatorios': main.innerHTML = renderRelatorios();    break;
+    default: main.innerHTML = `<div class="placeholder">Em construção.</div>`; break;
+  }
+  if (window.lucide) lucide.createIcons({ attrs: { 'stroke-width': '1.75' } });
+  // Restore search state after any re-render
+  const inp = document.querySelector('.search-input');
+  if (inp) { inp.value = searchQuery; if (searchQuery) onSearch(searchQuery); }
+  // Restore pintor autocomplete input
+  const nmInp = document.getElementById('nm-pintor-input');
+  if (nmInp) nmInp.value = nmPintorValue;
+}
+
+/* ============================================================
+   SCREEN: HOME
+   ============================================================ */
+function renderHome() {
+  return `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:32px;">
+      <div style="width:100%;max-width:560px;">
+
+        <div class="eyebrow" style="text-align:center;margin-bottom:10px;">MINAS TINTAS · CENTRO</div>
+        <h1 class="page-title" style="text-align:center;font-size:34px;margin-bottom:8px;">Quem é esse cliente?</h1>
+        <p style="text-align:center;color:var(--muted);font-size:14px;margin-bottom:36px;line-height:1.6;">
+          Pesquise pelo nome ou telefone para ver se há um pintor vinculado.
+        </p>
+
+        <div style="position:relative;">
+          <div style="display:flex;align-items:center;gap:10px;background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:0 18px;height:54px;transition:border-color .15s;"
+               onfocuswithin="this.style.borderColor='var(--ink)'" onblur="this.style.borderColor='var(--line)'">
+            <span style="color:var(--muted);flex-shrink:0;">${icon('search', 18)}</span>
+            <input id="home-search" type="text" placeholder="Nome completo ou telefone…"
+              oninput="onHomeSearch(this.value)"
+              autocomplete="off"
+              style="flex:1;border:none;background:transparent;font-family:var(--font-body);font-size:14.5px;color:var(--ink);outline:none;">
+            <button id="home-clear" onclick="clearHomeSearch()"
+              style="display:none;background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;border-radius:6px;align-items:center;justify-content:center;">
+              ${icon('x', 14)}
+            </button>
+          </div>
+
+          <div id="home-results" style="margin-top:10px;"></div>
+        </div>
+
+      </div>
+    </div>
+  `;
+}
+
+function onHomeSearch(val) {
+  homeSearchQuery = val;
+  const q = val.toLowerCase().trim();
+
+  const clearBtn = document.getElementById('home-clear');
+  if (clearBtn) clearBtn.style.display = q ? 'flex' : 'none';
+
+  const results = document.getElementById('home-results');
+  if (!results) return;
+
+  if (!q) { results.innerHTML = ''; return; }
+
+  const digits = q.replace(/\D/g, '');
+  const matches = CLIENTS.filter(c =>
+    c.name.toLowerCase().includes(q) ||
+    (digits.length >= 4 && c.phone && c.phone.replace(/\D/g,'').includes(digits))
+  ).slice(0, 8);
+
+  if (!matches.length) {
+    results.innerHTML = `
+      <div style="text-align:center;padding:36px 0;color:var(--muted);font-size:13.5px;">
+        Nenhum cliente encontrado.
+      </div>`;
+    return;
+  }
+
+  results.innerHTML = `
+    <div style="background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;">
+      ${matches.map((c, i) => {
+        const painter = c.painter ? PAINTERS.find(p => p.name === c.painter) : null;
+        const typeIcon = c.type === 'empresa' ? 'building-2' : 'user';
+        const isLast   = i === matches.length - 1;
+        return `
+          <div style="display:flex;align-items:center;gap:14px;padding:16px 20px;${isLast ? '' : 'border-bottom:1px solid var(--line);'}">
+            <div style="width:40px;height:40px;border-radius:50%;background:var(--paper-deep);border:1px solid var(--line);
+                        display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0;">
+              ${icon(typeIcon, 17)}
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13.5px;font-weight:600;color:var(--ink);">${c.name}</div>
+              <div style="font-size:12px;color:var(--muted);margin-top:2px;">
+                ${c.type === 'empresa' ? 'Empresa' : 'Pessoa física'}${c.phone ? ' · ' + c.phone : ''}
+              </div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+              ${painter
+                ? `<div style="display:inline-flex;align-items:center;gap:6px;background:rgba(79,122,74,.1);
+                              color:#4F7A4A;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:600;">
+                    ${icon('hard-hat', 13)}&nbsp;${painter.name}
+                  </div>
+                  <div style="font-size:11px;color:var(--muted);margin-top:4px;">
+                    ${painter.city}
+                    <span style="cursor:pointer;color:var(--brand);font-weight:600;margin-left:6px;"
+                          onclick="goTo('pintores')">Ver perfil →</span>
+                  </div>`
+                : `<span style="font-size:12px;color:var(--muted);font-style:italic;">Sem pintor vinculado</span>`
+              }
+            </div>
+          </div>`;
+      }).join('')}
+    </div>`;
+
+  if (window.lucide) lucide.createIcons({ attrs: { 'stroke-width': '1.75' } });
+}
+
+function clearHomeSearch() {
+  homeSearchQuery = '';
+  const inp = document.getElementById('home-search');
+  if (inp) { inp.value = ''; inp.focus(); }
+  const clearBtn = document.getElementById('home-clear');
+  if (clearBtn) clearBtn.style.display = 'none';
+  const results = document.getElementById('home-results');
+  if (results) results.innerHTML = '';
+}
+
+/* ============================================================
+   SCREEN: PEDIDOS
+   ============================================================ */
+function renderPedidos() {
+  const approvedOrders = ORDERS.filter(o => o.status === 'aprovado');
+  const approvedTotal  = approvedOrders.reduce((acc, o) => acc + o.total, 0);
+  const pendingOrders  = ORDERS.filter(o => o.status === 'pendente');
+  const todayOrders    = ORDERS.filter(o => o.date === '19 mai' && o.status === 'aprovado');
+  const todayTotal     = todayOrders.reduce((acc, o) => acc + o.total, 0);
+  const todayAllOrders = ORDERS.filter(o => o.date === '19 mai');
+  const todayAllTotal  = todayAllOrders.reduce((acc, o) => acc + o.total, 0);
+  const bonusTotal     = approvedOrders.reduce((acc, o) => acc + bonus(o.total), 0);
+
+  const FILTERS = [
+    { key:'todos',     label:'Todos',    count: ORDERS.length,                                      dot: null      },
+    { key:'pendente',  label:'Pendente', count: ORDERS.filter(o=>o.status==='pendente').length,      dot: '#B5751F' },
+    { key:'aprovado',  label:'Aprovado', count: approvedOrders.length,                              dot: '#4F7A4A' },
+    { key:'recusado',  label:'Recusado', count: ORDERS.filter(o=>o.status==='recusado').length,      dot: '#CC0000' },
+    { key:'estornado', label:'Estornado',count: ORDERS.filter(o=>o.status==='estornado').length,     dot: '#8A817A' },
+  ];
+
+  let filtered = filter === 'todos' ? [...ORDERS] : ORDERS.filter(o => o.status === filter);
+  if (advFilters.pintor)  filtered = filtered.filter(o => o.painter  === advFilters.pintor);
+  if (advFilters.payment) filtered = filtered.filter(o => o.payment  === advFilters.payment);
+  if (dateSortOrder === 'asc')  filtered.sort((a, b) => dateVal(a.date) - dateVal(b.date));
+  if (dateSortOrder === 'desc') filtered.sort((a, b) => dateVal(b.date) - dateVal(a.date));
+  const hasAdv = !!(advFilters.pintor || advFilters.payment);
+
+  return `
+    <div class="page-header">
+      <div>
+        <div class="eyebrow">LOJA · CENTRO · SÃO JOÃO DEL-REI</div>
+        <h1 class="page-title">Pedidos para aprovação</h1>
+        <p class="page-subtitle">Confirme pagamentos e libere bônus.</p>
+      </div>
+      <div class="page-actions">
+        <div class="search-box">
+          ${icon('search', 15)}
+          <input class="search-input" type="text" placeholder="Buscar por pintor, obra, número ou data…"
+            oninput="onSearch(this.value)"
+            style="border:none;outline:none;background:transparent;font-family:var(--font-body);font-size:13px;color:var(--ink);width:100%">
+        </div>
+
+        <div style="position:relative">
+          <button class="btn btn-ghost filters-btn" onclick="toggleFiltersPanel(event)">
+            ${icon('sliders-horizontal')} Filtros
+            ${hasAdv ? '<span class="filters-active-dot"></span>' : ''}
+          </button>
+          ${filtersOpen ? `
+            <div class="filters-panel" onclick="event.stopPropagation()">
+              <div class="fp-row">
+                <label class="fp-label">Pintor</label>
+                <select id="adv-pintor" class="fp-select">
+                  <option value="">Todos os pintores</option>
+                  ${[...new Set(ORDERS.map(o => o.painter))].sort().map(p =>
+                    `<option value="${p}"${advFilters.pintor === p ? ' selected' : ''}>${p}</option>`
+                  ).join('')}
+                </select>
+              </div>
+              <div class="fp-row">
+                <label class="fp-label">Forma de pagamento</label>
+                <select id="adv-payment" class="fp-select">
+                  <option value="">Todas</option>
+                  ${['Cartão', 'Dinheiro', 'Notinha', 'Pix'].map(p =>
+                    `<option value="${p}"${advFilters.payment === p ? ' selected' : ''}>${p}</option>`
+                  ).join('')}
+                </select>
+              </div>
+              <div class="fp-actions">
+                <button class="btn btn-ghost btn-sm" onclick="clearAdvFilters()">Limpar</button>
+                <button class="btn btn-dark btn-sm" onclick="applyAdvFilters()">${icon('check', 13)} Aplicar</button>
+              </div>
+            </div>
+          ` : ''}
+        </div>
+        <button class="btn btn-dark" onclick="openNovoManual()">${icon('plus')} Novo manual</button>
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-tile t-warn">
+        <div class="stat-label">PENDENTES</div>
+        <div class="stat-value">${pendingOrders.length}</div>
+        <div class="stat-foot">aguardando pagamento</div>
+      </div>
+      <div class="stat-tile t-success">
+        <div class="stat-label">HOJE · 19 MAI</div>
+        <div class="stat-value">R$ ${todayTotal.toLocaleString('pt-BR', {minimumFractionDigits:0, maximumFractionDigits:0})}</div>
+        <div class="stat-foot">${todayOrders.length} pedido${todayOrders.length !== 1 ? 's' : ''} aprovado${todayOrders.length !== 1 ? 's' : ''}</div>
+      </div>
+      <div class="stat-tile t-purple">
+        <div class="stat-label">BÔNUS LIBERADO · TOTAL</div>
+        <div class="stat-value">${bonusTotal.toLocaleString('pt-BR')}</div>
+        <div class="stat-foot">pts creditados aos pintores</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-label">HOJE · VOLUME</div>
+        <div class="stat-value">R$ ${todayAllTotal.toLocaleString('pt-BR', {minimumFractionDigits:0, maximumFractionDigits:0})}</div>
+        <div class="stat-foot">${todayAllOrders.length} pedido${todayAllOrders.length !== 1 ? 's' : ''} no dia</div>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      ${FILTERS.map(t => `
+        <button class="filter-pill${filter === t.key ? ' active' : ''}" onclick="setFilter('${t.key}')">
+          ${t.dot ? `<span style="width:6px;height:6px;border-radius:50%;background:${t.dot};flex-shrink:0;display:inline-block"></span>` : ''}
+          ${t.label} <span class="filter-count">${t.count}</span>
+        </button>
+      `).join('')}
+    </div>
+
+    <div class="table-wrap">
+      <div class="data-table orders-table">
+        <div class="table-head">
+          <div>#</div>
+          <div>Pintor</div>
+          <div>Obra</div>
+          <div style="cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:4px" onclick="toggleDateSort()">
+            Data ${dateSortOrder === 'desc' ? icon('arrow-down', 11) : dateSortOrder === 'asc' ? icon('arrow-up', 11) : icon('chevrons-up-down', 11)}
+          </div>
+          <div style="text-align:right">Total</div>
+          <div>Status</div>
+          <div></div>
+        </div>
+        ${filtered.length === 0 ? `<div style="padding:32px;text-align:center;color:var(--muted);font-size:13px">Nenhum pedido neste filtro.</div>` :
+          filtered.map(o => `
+            <div class="table-row" onclick="goTo('pedido','${o.id}')">
+              <div style="font-variant-numeric:tabular-nums;color:var(--muted)">${o.id}</div>
+              <div>
+                <div class="td-primary">${o.painter}</div>
+                <div class="td-secondary">${o.location}</div>
+              </div>
+              <div style="color:var(--ink-2)">${o.title}</div>
+              <div style="color:var(--muted);font-size:12.5px">${o.date}</div>
+              <div class="td-right"><strong>R$ ${brl(o.total)}</strong></div>
+              <div>${statusPill(o.status)}</div>
+              <div style="text-align:right">
+                <button class="btn btn-ghost btn-sm">Abrir ${icon('chevron-right', 13)}</button>
+              </div>
+            </div>
+          `).join('')
+        }
+      </div>
+    </div>
+
+    ${novoManualOpen ? `
+      <div class="modal-overlay" onclick="closeNovoManual()">
+        <div class="modal-panel" onclick="event.stopPropagation()">
+          <div class="modal-head">
+            <span class="modal-title">Novo pedido manual</span>
+            <button class="btn btn-quiet btn-sm" onclick="closeNovoManual()">${icon('x', 15)}</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-row">
+              <label class="form-label">Pintor</label>
+              <div class="autocomplete-wrap">
+                <input id="nm-pintor-input" type="text" class="form-input"
+                  placeholder="Buscar por nome…"
+                  oninput="onNmPintorInput(this.value)"
+                  onblur="setTimeout(()=>{ const l=document.getElementById('nm-pintor-list'); if(l) l.style.display='none'; },150)"
+                  autocomplete="off">
+                <div id="nm-pintor-list" class="autocomplete-list" style="display:none"></div>
+              </div>
+            </div>
+            <div class="form-row">
+              <label class="form-label">Obra / cliente</label>
+              <div class="autocomplete-wrap">
+                <input id="nm-obra" type="text" class="form-input" placeholder=""
+                  oninput="onNmObraInput(this.value)"
+                  onblur="setTimeout(()=>{ const l=document.getElementById('nm-obra-list'); if(l) l.style.display='none'; },150)"
+                  autocomplete="off">
+                <div id="nm-obra-list" class="autocomplete-list" style="display:none"></div>
+              </div>
+            </div>
+            <div class="form-row">
+              <label class="form-label">Produtos</label>
+              <div class="autocomplete-wrap">
+                <input id="nm-product-search" type="text" class="form-input"
+                  placeholder="Buscar produto, marca ou código…"
+                  oninput="onNmProductSearch(this.value)"
+                  onblur="setTimeout(()=>{ const l=document.getElementById('nm-product-list'); if(l) l.style.display='none'; },150)"
+                  autocomplete="off">
+                <div id="nm-product-list" class="autocomplete-list" style="display:none"></div>
+              </div>
+              <div id="nm-cart-items"><div class="nm-cart-empty">Nenhum produto adicionado ainda.</div></div>
+            </div>
+            <div class="form-row">
+              <label class="form-label">Pagamento informado</label>
+              <div class="payment-options" id="nm-payment-options">
+                <button class="payment-option" type="button" data-payment="Dinheiro" onclick="selectNmPayment(this)">
+                  ${icon('banknote', 15)} Dinheiro
+                </button>
+                <button class="payment-option" type="button" data-payment="Pix" onclick="selectNmPayment(this)">
+                  ${icon('qr-code', 15)} Pix
+                </button>
+                <button class="payment-option" type="button" data-payment="Cartão" onclick="selectNmPayment(this)">
+                  ${icon('credit-card', 15)} Cartão
+                </button>
+                <button class="payment-option" type="button" data-payment="Notinha" onclick="selectNmPayment(this)">
+                  ${icon('receipt', 15)} Notinha
+                </button>
+              </div>
+            </div>
+            <div class="form-row">
+              <label class="form-label">Anotação interna</label>
+              <textarea id="nm-notes" class="form-input" rows="3"
+                placeholder="Observações visíveis apenas para a equipe da loja…"
+                style="resize:vertical;min-height:72px;line-height:1.5;"></textarea>
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button class="btn btn-ghost" onclick="closeNovoManual()">Cancelar</button>
+            <button class="btn btn-primary" onclick="submitNovoManual()">${icon('check')} Criar pedido</button>
+          </div>
+        </div>
+      </div>
+    ` : ''}
+  `;
+}
+
+/* ============================================================
+   SCREEN: PEDIDO DETAIL
+   ============================================================ */
+function renderPedidoDetail() {
+  const o = ORDERS.find(x => x.id === orderId) || ORDERS[0];
+  const items = [
+    { name:'Tinta látex acrílica fosca 18L — Branco Neve · Suvinil', qty:4, unit:320.00 },
+    { name:'Massa corrida 25kg · Suvinil',                            qty:3, unit:84.90  },
+    { name:'Rolo de lã 23 cm anti-gota · Tigre',                     qty:2, unit:28.50  },
+  ];
+  const bonusPts = bonus(o.total);
+
+  return `
+    <div class="page-header">
+      <div>
+        <button class="back-btn" onclick="goTo('pedidos')">${icon('arrow-left', 14)} Pedidos</button>
+        <div class="eyebrow">PEDIDO #${o.id} · ${o.date}</div>
+        <h1 class="page-title">${o.title}</h1>
+        <p class="page-subtitle"><span class="painter-dot"></span><span style="color:var(--muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;">Pintor vinculado</span> &nbsp;<strong>${o.painter}</strong> <span style="color:var(--muted);font-weight:400">· ${o.location}</span></p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-ghost" onclick="window.print()">${icon('printer')} Imprimir</button>
+        ${o.status === 'pendente' ? `
+          <button class="btn btn-ghost btn-danger">${icon('x')} Recusar</button>
+          <button class="btn btn-primary">${icon('check')} Aprovar pedido</button>
+        ` : `
+          <button class="btn btn-ghost btn-danger" onclick="openEstorno()">${icon('rotate-ccw')} Estornar</button>
+        `}
+      </div>
+    </div>
+
+    ${estornoOpen ? `
+      <div class="modal-overlay" onclick="closeEstorno()">
+        <div class="modal-panel" style="max-width:420px;" onclick="event.stopPropagation()">
+          <div class="modal-head">
+            <span class="modal-title">Confirmar estorno</span>
+            <button class="btn btn-quiet btn-sm" onclick="closeEstorno()">${icon('x', 15)}</button>
+          </div>
+          <div class="modal-body" style="gap:12px;">
+            <p style="font-size:13.5px;color:var(--muted);line-height:1.55;margin:0;">
+              O estorno cancela o pedido e reverte o bônus creditado ao pintor. Essa ação não pode ser desfeita.
+            </p>
+            <div class="form-row">
+              <label class="form-label">Motivo do estorno <span style="color:var(--brand)">*</span></label>
+              <textarea id="estorno-motivo" class="form-input" rows="3"
+                placeholder="Descreva o motivo: pagamento recusado, produto devolvido, erro no pedido…"
+                style="resize:vertical;min-height:80px;line-height:1.5;"
+                oninput="this.classList.remove('form-error')"></textarea>
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button class="btn btn-ghost" onclick="closeEstorno()">Cancelar</button>
+            <button class="btn btn-primary" style="background:var(--brand);border-color:var(--brand);" onclick="confirmEstorno()">
+              ${icon('rotate-ccw', 15)} Confirmar estorno
+            </button>
+          </div>
+        </div>
+      </div>
+    ` : ''}
+
+    <div class="detail-grid">
+
+      <!-- Receipt -->
+      <div class="card">
+        <div class="receipt-header">
+          <h2 class="card-title">Itens do orçamento</h2>
+          ${statusPill(o.status)}
+        </div>
+        ${items.map((it, i) => `
+          <div class="receipt-row${i === items.length-1 ? ' last' : ''}">
+            <div class="receipt-name">${it.name}</div>
+            <div class="receipt-qty">${it.qty} un.</div>
+            <div class="receipt-unit">R$ ${brl(it.unit)}</div>
+            <div class="receipt-subtotal">R$ ${brl(it.qty * it.unit)}</div>
+          </div>
+        `).join('')}
+        <div class="receipt-total">
+          <span class="receipt-total-label">TOTAL</span>
+          <span class="receipt-total-value">R$ ${brl(o.total)}</span>
+        </div>
+        ${o.payment ? `
+          <div class="receipt-payment">
+            ${icon('credit-card', 14)}
+            Pagamento informado: <strong>${o.payment}</strong>
+          </div>` : ''}
+        ${o.notes ? `
+          <div class="receipt-payment" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line);align-items:flex-start;gap:7px;">
+            ${icon('notebook-pen', 14)}
+            <span><span style="font-weight:600;color:var(--ink-2);">Anotação interna</span><br><span style="line-height:1.55;">${o.notes}</span></span>
+          </div>` : ''}
+        ${o.estornoMotivo ? `
+          <div class="receipt-payment" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line);align-items:flex-start;gap:7px;color:var(--brand);">
+            ${icon('rotate-ccw', 14)}
+            <span><span style="font-weight:600;">Motivo do estorno</span><br><span style="line-height:1.55;color:var(--muted);">${o.estornoMotivo}</span></span>
+          </div>` : ''}
+      </div>
+
+      <!-- Side: bonus + timeline -->
+      <div class="detail-side">
+        <div class="card">
+          ${o.status === 'pendente' ? `
+            <div class="bonus-label">BÔNUS A CREDITAR</div>
+            <div class="bonus-value" style="color:var(--muted)">${pts(bonusPts)}<small>pts</small></div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-top:6px;flex-wrap:wrap;">
+              <span>R$ ${brl(o.total)}</span>
+              <span>×</span>
+              <span>1%</span>
+              <span>=</span>
+              <span style="font-weight:600;color:var(--ink)">${bonusPts.toLocaleString('pt-BR')} pts</span>
+            </div>
+            <div class="bonus-desc" style="margin-top:6px;">Creditado ao pintor na aprovação.</div>
+          ` : `
+            <div class="bonus-label">BÔNUS CREDITADO ✓</div>
+            <div class="bonus-value" style="color:#4F7A4A">${pts(bonusPts)}<small>pts</small></div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-top:6px;flex-wrap:wrap;">
+              <span>R$ ${brl(o.total)}</span>
+              <span>×</span>
+              <span>1%</span>
+              <span>=</span>
+              <span style="font-weight:600;color:#4F7A4A">${bonusPts.toLocaleString('pt-BR')} pts</span>
+            </div>
+          `}
+        </div>
+
+        <div class="card">
+          <div class="timeline-label">LINHA DO TEMPO</div>
+          ${(o.status === 'pendente' ? [
+            { t:'12 mar · 14:32', l:'Orçamento criado pelo pintor', done:true  },
+            { t:'12 mar · 16:08', l:'Orçamento em análise',         done:true  },
+            { t:'agora',          l:'Aguardando aprovação',          done:false },
+          ] : [
+            { t:'12 mar · 14:32',    l:'Orçamento criado pelo pintor',     done:true },
+            { t:'12 mar · 16:08',    l:'Orçamento em análise',             done:true },
+            { t:`${o.date} · 18:45`, l:'Pedido aprovado · bônus creditado', done:true },
+          ]).map((s, i, arr) => `
+            <div class="timeline-entry">
+              <div class="timeline-spine">
+                <span class="timeline-dot ${s.done ? 'done' : 'pending'}"></span>
+                ${i !== arr.length-1 ? '<span class="timeline-line"></span>' : ''}
+              </div>
+              <div>
+                <div class="timeline-text${!s.done ? ' bold' : ''}">${s.l}</div>
+                <div class="timeline-time">${s.t}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+    </div>
+  `;
+}
+
+/* ============================================================
+   SCREEN: PINTORES
+   ============================================================ */
+function renderPintores() {
+  const q = pintoresSearch.toLowerCase().trim();
+  const filtered = q
+    ? PAINTERS.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        p.cpf.includes(q) ||
+        p.city.toLowerCase().includes(q))
+    : PAINTERS;
+
+  return `
+    <div class="page-header">
+      <div>
+        <div class="eyebrow">CADASTRO</div>
+        <h1 class="page-title">Pintores parceiros</h1>
+        <p class="page-subtitle">${PAINTERS.filter(p=>p.active).length} pintores ativos · 18 cadastros no último mês.</p>
+      </div>
+      <div class="page-actions">
+        <div class="search-box">
+          ${icon('search', 15)}
+          <input id="pintores-search" type="text"
+            placeholder="Buscar por nome, CPF, cidade…"
+            value="${pintoresSearch}"
+            oninput="onPintoresSearch(this.value)"
+            style="border:none;outline:none;background:transparent;font-family:var(--font-body);font-size:13px;color:var(--ink);width:100%">
+        </div>
+        <button class="btn btn-ghost">${icon('download')} Exportar</button>
+        <button class="btn btn-primary" onclick="openCadastrarPintor()">${icon('user-plus')} Cadastrar pintor</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <div class="data-table painters-table">
+        <div class="table-head">
+          <div>Pintor</div>
+          <div>Cidade</div>
+          <div>Desde</div>
+          <div style="text-align:right">Pedidos</div>
+          <div style="text-align:right">Saldo</div>
+          <div>Status</div>
+        </div>
+        ${filtered.length === 0
+          ? `<div style="padding:32px;text-align:center;color:var(--muted);font-size:13px">Nenhum pintor encontrado.</div>`
+          : filtered.map(p => `
+            <div class="table-row" onclick="openPintor('${p.name}')">
+              <div class="td-with-avatar">
+                <div class="avatar">${initials(p.name)}</div>
+                <div>
+                  <div class="td-primary">${p.name}</div>
+                  <div class="td-secondary">${p.cpf}</div>
+                </div>
+              </div>
+              <div style="color:var(--ink-2);font-size:13px">${p.city}</div>
+              <div style="color:var(--muted);font-size:12.5px">${p.since}</div>
+              <div class="td-right"><strong>${p.orders}</strong></div>
+              <div class="td-right"><strong>${pts(p.points)} pts</strong></div>
+              <div>
+                <span class="status-pill" style="background:${p.active ? '#E8EFE3' : 'var(--paper-deep)'};color:${p.active ? '#4F7A4A' : 'var(--muted)'}">
+                  <span class="status-dot" style="background:${p.active ? '#4F7A4A' : 'var(--muted)'}"></span>
+                  ${p.active ? 'ativo' : 'inativo'}
+                </span>
+              </div>
+            </div>
+          `).join('')
+        }
+      </div>
+    </div>
+
+    ${cadastrarPintorOpen ? `
+      <div class="modal-overlay" onclick="closeCadastrarPintor()">
+        <div class="modal-panel" style="max-width:480px;" onclick="event.stopPropagation()">
+          <div class="modal-head">
+            <span class="modal-title">Cadastrar pintor</span>
+            <button class="btn btn-quiet btn-sm" onclick="closeCadastrarPintor()">${icon('x', 15)}</button>
+          </div>
+          <div class="modal-body" style="gap:14px;max-height:60vh;overflow-y:auto;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+              <div class="form-row" style="grid-column:1/-1">
+                <label class="form-label">Nome completo <span style="color:var(--brand)">*</span></label>
+                <input id="cp-nome" type="text" class="form-input" placeholder="Ex.: João da Silva"
+                  oninput="this.classList.remove('form-error')" autocomplete="off">
+              </div>
+              <div class="form-row">
+                <label class="form-label">CPF <span style="color:var(--brand)">*</span></label>
+                <input id="cp-cpf" type="text" class="form-input" placeholder="000.000.000-00"
+                  oninput="this.classList.remove('form-error')" autocomplete="off">
+              </div>
+              <div class="form-row">
+                <label class="form-label">Telefone</label>
+                <input id="cp-telefone" type="text" class="form-input" placeholder="(32) 99999-9999" autocomplete="off">
+              </div>
+              <div class="form-row">
+                <label class="form-label">CEP</label>
+                <input id="cp-cep" type="text" class="form-input" placeholder="00000-000" autocomplete="off">
+              </div>
+              <div class="form-row">
+                <label class="form-label">Cidade <span style="color:var(--brand)">*</span></label>
+                <input id="cp-cidade" type="text" class="form-input" placeholder="Ex.: São João del-Rei"
+                  oninput="this.classList.remove('form-error')" autocomplete="off">
+              </div>
+              <div class="form-row" style="grid-column:1/-1">
+                <label class="form-label">Endereço</label>
+                <input id="cp-endereco" type="text" class="form-input" placeholder="Ex.: Rua das Flores, Av. Brasil…" autocomplete="off">
+              </div>
+              <div class="form-row" style="grid-column:1/2;max-width:140px;">
+                <label class="form-label">Número</label>
+                <input id="cp-numero" type="text" class="form-input" placeholder="Ex.: 142" autocomplete="off">
+              </div>
+              <div class="form-row">
+                <label class="form-label">Complemento</label>
+                <input id="cp-complemento" type="text" class="form-input" placeholder="Apto, sala, casa…" autocomplete="off">
+              </div>
+              <div class="form-row">
+                <label class="form-label">Bairro</label>
+                <input id="cp-bairro" type="text" class="form-input" placeholder="Ex.: Centro" autocomplete="off">
+              </div>
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button class="btn btn-ghost" onclick="closeCadastrarPintor()">Cancelar</button>
+            <button class="btn btn-primary" onclick="submitCadastrarPintor()">${icon('user-plus', 15)} Cadastrar</button>
+          </div>
+        </div>
+      </div>
+    ` : ''}
+  `;
+}
+
+/* ============================================================
+   PINTORES — ACTIONS & DETAIL
+   ============================================================ */
+function openPintor(name) {
+  painterId = name;
+  screen    = 'pintor';
+  renderSidebar();
+  renderMain();
+}
+
+function onPintoresSearch(q) {
+  pintoresSearch = q.toLowerCase().trim();
+  renderMain();
+}
+
+function openCadastrarPintor() {
+  cadastrarPintorOpen = true;
+  renderMain();
+}
+
+function closeCadastrarPintor() {
+  cadastrarPintorOpen = false;
+  renderMain();
+}
+
+function submitCadastrarPintor() {
+  const nomeEl   = document.getElementById('cp-nome');
+  const cpfEl    = document.getElementById('cp-cpf');
+  const cidadeEl = document.getElementById('cp-cidade');
+  const nome   = nomeEl?.value?.trim()   || '';
+  const cpf    = cpfEl?.value?.trim()    || '';
+  const cidade = cidadeEl?.value?.trim() || '';
+  let valid = true;
+  if (!nome)   { nomeEl?.classList.add('form-error');   valid = false; }
+  if (!cpf)    { cpfEl?.classList.add('form-error');    valid = false; }
+  if (!cidade) { cidadeEl?.classList.add('form-error'); valid = false; }
+  if (!valid) return;
+  const tel         = document.getElementById('cp-telefone')?.value?.trim()    || '';
+  const cep         = document.getElementById('cp-cep')?.value?.trim()         || '';
+  const endereco    = document.getElementById('cp-endereco')?.value?.trim()    || '';
+  const numero      = document.getElementById('cp-numero')?.value?.trim()      || '';
+  const complemento = document.getElementById('cp-complemento')?.value?.trim() || '';
+  const bairro      = document.getElementById('cp-bairro')?.value?.trim()      || '';
+  PAINTERS.unshift({
+    name: nome, cpf, city: cidade,
+    since: 'mai 2025', orders: 0, points: 0, active: true,
+    phone: tel, cep, endereco, numero, complemento, bairro,
+  });
+  cadastrarPintorOpen = false;
+  renderMain();
+}
+
+function openEditarPintor(name) {
+  painterId        = name;
+  editarPintorOpen = true;
+  renderMain();
+}
+
+function closeEditarPintor() {
+  editarPintorOpen = false;
+  renderMain();
+}
+
+function submitEditarPintor(originalName) {
+  const nomeEl   = document.getElementById('ep-nome');
+  const cpfEl    = document.getElementById('ep-cpf');
+  const cidadeEl = document.getElementById('ep-cidade');
+  const nome   = nomeEl?.value?.trim()   || '';
+  const cpf    = cpfEl?.value?.trim()    || '';
+  const cidade = cidadeEl?.value?.trim() || '';
+  let valid = true;
+  if (!nome)   { nomeEl?.classList.add('form-error');   valid = false; }
+  if (!cpf)    { cpfEl?.classList.add('form-error');    valid = false; }
+  if (!cidade) { cidadeEl?.classList.add('form-error'); valid = false; }
+  if (!valid) return;
+  const p = PAINTERS.find(x => x.name === originalName);
+  if (!p) return;
+  p.name        = nome;
+  p.cpf         = cpf;
+  p.city        = cidade;
+  p.phone       = document.getElementById('ep-telefone')?.value?.trim()    || p.phone       || '';
+  p.cep         = document.getElementById('ep-cep')?.value?.trim()         || p.cep         || '';
+  p.endereco    = document.getElementById('ep-endereco')?.value?.trim()    || p.endereco    || '';
+  p.numero      = document.getElementById('ep-numero')?.value?.trim()      || p.numero      || '';
+  p.complemento = document.getElementById('ep-complemento')?.value?.trim() || p.complemento || '';
+  p.bairro      = document.getElementById('ep-bairro')?.value?.trim()      || p.bairro      || '';
+  painterId        = nome;
+  editarPintorOpen = false;
+  renderMain();
+}
+
+function togglePainterStatus(name) {
+  const p = PAINTERS.find(x => x.name === name);
+  if (p) { p.active = !p.active; renderMain(); }
+}
+
+function renderPintorPerfil() {
+  const p = PAINTERS.find(x => x.name === painterId) || PAINTERS[0];
+  const painterOrders  = ORDERS.filter(o => o.painter === p.name);
+  const approvedOrders = painterOrders.filter(o => o.status === 'aprovado');
+  const totalSpent     = approvedOrders.reduce((s, o) => s + o.total, 0);
+
+  return `
+    <div class="page-header">
+      <div>
+        <button class="back-btn" onclick="goTo('pintores')">${icon('arrow-left', 14)} Pintores</button>
+        <div class="eyebrow" style="margin-top:10px">PERFIL DO PINTOR</div>
+        <div style="display:flex;align-items:center;gap:14px;margin-top:10px">
+          <div class="avatar" style="width:52px;height:52px;font-size:19px;flex-shrink:0">${initials(p.name)}</div>
+          <div>
+            <h1 class="page-title" style="font-size:24px;letter-spacing:-0.025em">${p.name}</h1>
+            <p class="page-subtitle" style="margin-top:5px">
+              ${p.cpf}
+              <span style="color:var(--line-strong)">·</span>
+              ${p.city}
+              <span style="color:var(--line-strong)">·</span>
+              parceiro desde ${p.since}
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-ghost" onclick="openEditarPintor('${p.name}')">${icon('pencil')} Editar cadastro</button>
+        <button class="btn btn-ghost${p.active ? ' btn-danger' : ''}" onclick="togglePainterStatus('${p.name}')">
+          ${p.active ? icon('user-x') + ' Inativar' : icon('user-check') + ' Ativar'}
+        </button>
+      </div>
+    </div>
+
+    <div class="stat-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="stat-tile">
+        <div class="stat-label">PEDIDOS</div>
+        <div class="stat-value">${painterOrders.length}</div>
+        <div class="stat-foot">${approvedOrders.length} aprovados</div>
+      </div>
+      <div class="stat-tile t-success">
+        <div class="stat-label">SALDO EM PONTOS</div>
+        <div class="stat-value">${pts(p.points)}</div>
+        <div class="stat-foot">pts disponíveis na lojinha</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-label">VOLUME TOTAL</div>
+        <div class="stat-value" style="font-size:22px;letter-spacing:-.02em">R$ ${brl(totalSpent)}</div>
+        <div class="stat-foot">em pedidos aprovados</div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <div style="font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">
+        Histórico de pedidos
+      </div>
+      <div class="data-table orders-table">
+        <div class="table-head">
+          <div>#</div>
+          <div>Pintor</div>
+          <div>Obra</div>
+          <div>Data</div>
+          <div style="text-align:right">Total</div>
+          <div>Status</div>
+          <div></div>
+        </div>
+        ${painterOrders.length === 0
+          ? `<div style="padding:32px;text-align:center;color:var(--muted);font-size:13px">Nenhum pedido encontrado.</div>`
+          : painterOrders.map(o => `
+            <div class="table-row" onclick="goTo('pedido','${o.id}')">
+              <div style="font-variant-numeric:tabular-nums;color:var(--muted)">${o.id}</div>
+              <div>
+                <div class="td-primary">${o.painter}</div>
+                <div class="td-secondary">${o.location}</div>
+              </div>
+              <div style="color:var(--ink-2)">${o.title}</div>
+              <div style="color:var(--muted);font-size:12.5px">${o.date}</div>
+              <div class="td-right"><strong>R$ ${brl(o.total)}</strong></div>
+              <div>${statusPill(o.status)}</div>
+              <div style="text-align:right">
+                <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();goTo('pedido','${o.id}')">
+                  Ver ${icon('chevron-right', 13)}
+                </button>
+              </div>
+            </div>
+          `).join('')
+        }
+      </div>
+    </div>
+
+    ${editarPintorOpen ? `
+      <div class="modal-overlay" onclick="closeEditarPintor()">
+        <div class="modal-panel" style="max-width:480px;" onclick="event.stopPropagation()">
+          <div class="modal-head">
+            <span class="modal-title">Editar cadastro</span>
+            <button class="btn btn-quiet btn-sm" onclick="closeEditarPintor()">${icon('x', 15)}</button>
+          </div>
+          <div class="modal-body" style="gap:14px;max-height:60vh;overflow-y:auto;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+              <div class="form-row" style="grid-column:1/-1">
+                <label class="form-label">Nome completo <span style="color:var(--brand)">*</span></label>
+                <input id="ep-nome" type="text" class="form-input" value="${p.name}"
+                  oninput="this.classList.remove('form-error')" autocomplete="off">
+              </div>
+              <div class="form-row">
+                <label class="form-label">CPF <span style="color:var(--brand)">*</span></label>
+                <input id="ep-cpf" type="text" class="form-input" value="${p.cpf || ''}"
+                  oninput="this.classList.remove('form-error')" autocomplete="off">
+              </div>
+              <div class="form-row">
+                <label class="form-label">Telefone</label>
+                <input id="ep-telefone" type="text" class="form-input" value="${p.phone || ''}" autocomplete="off">
+              </div>
+              <div class="form-row">
+                <label class="form-label">CEP</label>
+                <input id="ep-cep" type="text" class="form-input" value="${p.cep || ''}" placeholder="00000-000" autocomplete="off">
+              </div>
+              <div class="form-row">
+                <label class="form-label">Cidade <span style="color:var(--brand)">*</span></label>
+                <input id="ep-cidade" type="text" class="form-input" value="${p.city || ''}"
+                  oninput="this.classList.remove('form-error')" autocomplete="off">
+              </div>
+              <div class="form-row" style="grid-column:1/-1">
+                <label class="form-label">Endereço</label>
+                <input id="ep-endereco" type="text" class="form-input" value="${p.endereco || ''}" placeholder="Ex.: Rua das Flores, Av. Brasil…" autocomplete="off">
+              </div>
+              <div class="form-row" style="grid-column:1/2;max-width:140px;">
+                <label class="form-label">Número</label>
+                <input id="ep-numero" type="text" class="form-input" value="${p.numero || ''}" placeholder="Ex.: 142" autocomplete="off">
+              </div>
+              <div class="form-row">
+                <label class="form-label">Complemento</label>
+                <input id="ep-complemento" type="text" class="form-input" value="${p.complemento || ''}" placeholder="Apto, sala, casa…" autocomplete="off">
+              </div>
+              <div class="form-row">
+                <label class="form-label">Bairro</label>
+                <input id="ep-bairro" type="text" class="form-input" value="${p.bairro || ''}" placeholder="Ex.: Centro" autocomplete="off">
+              </div>
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button class="btn btn-ghost" onclick="closeEditarPintor()">Cancelar</button>
+            <button class="btn btn-primary" onclick="submitEditarPintor('${p.name}')">${icon('check', 15)} Salvar alterações</button>
+          </div>
+        </div>
+      </div>
+    ` : ''}
+  `;
+}
+
+/* ============================================================
+   SCREEN: LOJINHA ADMIN
+   ============================================================ */
+function renderLojinha() {
+  const editR = editRewardId ? REWARDS.find(x => x.id === editRewardId) : null;
+  return `
+    <div class="page-header" style="border-bottom:none">
+      <div>
+        <div class="eyebrow">${lojinhaTab === 'produtos' ? 'CATÁLOGO DE RESGATES' : 'GESTÃO DE RESGATES'}</div>
+        <h1 class="page-title">Lojinha</h1>
+        <p class="page-subtitle">${lojinhaTab === 'produtos'
+          ? `Itens disponíveis para os pintores trocarem por pontos.`
+          : 'Solicitações de resgate aguardando retirada na loja.'
+        }</p>
+      </div>
+      <div class="page-actions">
+        ${lojinhaTab === 'produtos' ? `
+          <button class="btn btn-ghost" onclick="openMult()">${icon('sliders-horizontal')} Multiplicadores</button>
+          <button class="btn btn-primary" onclick="openAddItem()">${icon('plus')} Adicionar item</button>
+        ` : ''}
+      </div>
+    </div>
+
+    <div class="lojinha-tabs">
+      ${(() => {
+        const pendentes = RESGATES.filter(r => r.status === 'pendente').length;
+        return `
+          <button class="lojinha-tab ${lojinhaTab === 'produtos' ? 'active' : ''}" onclick="setLojinhaTab('produtos')">
+            ${icon('package', 14)} Produtos
+          </button>
+          <button class="lojinha-tab ${lojinhaTab === 'resgates' ? 'active' : ''}" onclick="setLojinhaTab('resgates')">
+            ${icon('gift', 14)} Resgates
+            ${pendentes > 0 ? `<span class="tab-badge">${pendentes}</span>` : ''}
+          </button>
+        `;
+      })()}
+    </div>
+
+    ${lojinhaTab === 'produtos' ? `
+    <div class="reward-grid">
+      ${REWARDS.map(r => {
+        const rPts  = rewardPts(r);
+        const rOrig = rewardOrigPts(r);
+        const rPromo = rewardIsPromo(r);
+        const isHidden = hiddenRewards.has(r.id);
+        return `
+        <div class="reward-card${isHidden ? ' hidden-reward' : ''}">
+          <div class="reward-thumb">
+            ${r.img
+              ? (() => {
+                  const src  = r.img.startsWith('data:') ? r.img : `../../assets/${r.img}`;
+                  const pos  = r.imgPos ? `${r.imgPos.x}% ${r.imgPos.y}%` : '50% 50%';
+                  return `<img src="${src}" alt="${r.name}" style="object-position:${pos}"
+                    onerror="this.style.display='none';this.parentElement.querySelector('.fallback-icon').style.display='flex'">`;
+                })()
+              : ''}
+            <span class="fallback-icon" style="${r.img ? 'display:none;' : ''}align-items:center;justify-content:center;width:100%;height:100%">
+              ${icon(r.icon, 40)}
+            </span>
+            ${rPromo ? '<span class="promo-badge">PROMO</span>' : ''}
+            ${isHidden ? '<span class="oculto-badge">Oculto</span>' : ''}
+          </div>
+          <div class="reward-name">${r.name}</div>
+          <div class="reward-desc">${r.desc}</div>
+          <div class="reward-meta">
+            <div class="reward-pts">
+              ${rOrig ? `<span class="reward-pts-original">${pts(rOrig)} pts</span>` : ''}
+              <span class="reward-pts-current">${pts(rPts)}<img class="coin" src="../../assets/dollar-coin.svg" alt="pts"><small>pts</small></span>
+            </div>
+            <div class="reward-stock">${r.stock} disponíveis</div>
+          </div>
+          <div class="reward-actions">
+            <button class="btn btn-ghost btn-sm btn-full" onclick="openEditReward('${r.id}')">${icon('pencil', 13)} Editar</button>
+            <button class="btn btn-quiet btn-sm" onclick="toggleRewardVisibility('${r.id}')" title="${isHidden ? 'Tornar visível' : 'Ocultar dos pintores'}">${icon(isHidden ? 'eye' : 'eye-off', 13)}</button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+    ` : `
+    <div class="resgates-toolbar">
+      <button class="pill ${resgatesFiltro === 'pendentes' ? 'pill-active' : ''}" onclick="setResgatesFiltro('pendentes')">Pendentes</button>
+      <button class="pill ${resgatesFiltro === 'todos'     ? 'pill-active' : ''}" onclick="setResgatesFiltro('todos')">Todos</button>
+    </div>
+    <div class="resgates-list">
+      ${(() => {
+        const lista = resgatesFiltro === 'pendentes'
+          ? RESGATES.filter(re => re.status === 'pendente')
+          : RESGATES;
+        if (!lista.length) return `<div class="resgates-empty">${icon('check-circle', 32)}<br><br>Nenhum resgate pendente.</div>`;
+        return lista.map(re => {
+          const item = REWARDS.find(x => x.id === re.itemId);
+          if (!item) return '';
+          const src = item.img
+            ? (item.img.startsWith('data:') ? item.img : `../../assets/${item.img}`)
+            : null;
+          const dataFmt = re.data.split('-').reverse().join('/');
+          return `
+          <div class="resgate-row">
+            <div class="resgate-thumb">
+              ${src
+                ? `<img src="${src}" alt="${item.name}" onerror="this.style.display='none'">`
+                : icon(item.icon, 24)}
+            </div>
+            <div class="resgate-info">
+              <div class="resgate-item-name">${item.name}</div>
+              <div class="resgate-pintor">${icon('user', 12)} ${re.pintorName}</div>
+            </div>
+            <div class="resgate-meta">
+              <div class="resgate-pts">${pts(re.pts)} pts</div>
+              <div class="resgate-data">${dataFmt}</div>
+              ${re.status === 'pendente'
+                ? `<div style="display:flex;gap:6px;margin-top:6px;justify-content:flex-end">
+                    <button class="btn btn-ghost btn-danger btn-sm" onclick="recusarResgate('${re.id}')">${icon('x', 12)} Recusar</button>
+                    <button class="btn btn-dark btn-sm" onclick="confirmarEntrega('${re.id}')">${icon('check', 12)} Confirmar entrega</button>
+                   </div>`
+                : re.status === 'entregue'
+                  ? `<div class="resgate-status-entregue">${icon('check-circle', 12)} Entregue</div>`
+                  : `<div style="font-size:11px;font-weight:600;color:var(--brand);display:flex;align-items:center;gap:4px;margin-top:4px;justify-content:flex-end">${icon('x-circle', 12)} Recusado</div>`
+              }
+            </div>
+          </div>`;
+        }).join('');
+      })()}
+    </div>
+    `}
+
+    ${multOpen ? `
+      <div class="modal-overlay" onclick="closeMult()">
+        <div class="modal-panel" style="max-width:460px;" onclick="event.stopPropagation()">
+          <div class="modal-head">
+            <span class="modal-title">Multiplicadores</span>
+            <button class="btn btn-quiet btn-sm" onclick="closeMult()">${icon('x', 15)}</button>
+          </div>
+          <div class="modal-body" style="gap:20px;">
+            <div>
+              <div class="form-label" style="margin-bottom:10px">Multiplicador global</div>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <div class="stepper">
+                  <button class="stepper-btn" onclick="stepMult(-0.25)">−</button>
+                  <span class="stepper-val" id="mult-val-display">${multDraft}×</span>
+                  <button class="stepper-btn" onclick="stepMult(+0.25)">+</button>
+                </div>
+                <span style="font-size:12px;color:var(--muted);line-height:1.4">Afeta o preço base de<br>todos os itens ao mesmo tempo.</span>
+              </div>
+            </div>
+            <div class="mult-formula-box">
+              <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Como o preço é calculado</div>
+              <div class="mult-formula-row">
+                <span>Custo</span>
+                <span class="mult-formula-op">×</span>
+                <span id="mult-formula-mult">${multDraft}</span>
+                <span class="mult-formula-op">=</span>
+                <span>Preço em pts</span>
+              </div>
+              <div style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.5">
+                Ex: R$ 300 × <span id="mult-formula-ex">${multDraft}</span> = <strong id="mult-formula-res">${pts(300 * multDraft)}</strong> pts
+              </div>
+            </div>
+            <div style="background:var(--success-tint);border-radius:10px;padding:14px 16px;font-size:12.5px;color:var(--ink);line-height:1.5;border:1.5px solid var(--success)20;">
+              <strong>Quando vira promoção?</strong><br>
+              Cada item pode ter um modificador individual. Se o modificador resultar em um preço <em>abaixo</em> do multiplicador global, o item entra automaticamente em <strong>PROMO</strong> — com o preço original riscado.<br>
+              <span style="color:var(--muted);font-size:11.5px;margin-top:6px;display:block">Ex: R$ 400 × (${multDraft > 0 ? multDraft : 3} − 0,75) = ${pts(400 * ((multDraft > 0 ? multDraft : 3) - 0.75))} pts <span class="promo-badge" style="font-size:10px;padding:1px 6px;vertical-align:middle">PROMO</span> (de ${pts(400 * (multDraft > 0 ? multDraft : 3))} pts)</span>
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button class="btn btn-ghost" onclick="closeMult()">Cancelar</button>
+            <button class="btn btn-primary" onclick="saveMult()">${icon('check', 15)} Salvar</button>
+          </div>
+        </div>
+      </div>
+    ` : ''}
+
+    ${editR ? `
+      <div class="modal-overlay" onclick="closeEditReward()">
+        <div class="modal-panel" style="max-width:460px;" onclick="event.stopPropagation()">
+          <div class="modal-head">
+            <span class="modal-title">Editar item</span>
+            <button class="btn btn-quiet btn-sm" onclick="closeEditReward()">${icon('x', 15)}</button>
+          </div>
+          <div class="modal-body" style="gap:16px;max-height:60vh;overflow-y:auto;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+              <div class="form-row" style="grid-column:1/-1">
+                <label class="form-label">Nome do item <span style="color:var(--brand)">*</span></label>
+                <input id="er-nome" type="text" class="form-input" value="${editR.name.replace(/"/g, '&quot;')}" autocomplete="off">
+              </div>
+              <div class="form-row">
+                <label class="form-label">Preço de venda</label>
+                <div class="form-input" style="background:var(--paper-deep);color:var(--muted);height:42px;display:flex;align-items:center;font-size:13px;user-select:none">
+                  R$ ${editR.venda ? editR.venda.toLocaleString('pt-BR',{minimumFractionDigits:2}) : '—'}
+                </div>
+              </div>
+              <div class="form-row">
+                <label class="form-label">Unidades disponíveis</label>
+                <input id="er-stock" type="number" class="form-input" value="${editR.stock}" min="0">
+              </div>
+            </div>
+            <div class="form-row">
+              <label class="form-label" style="margin-bottom:10px">Modificador individual</label>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <div class="stepper">
+                  <button class="stepper-btn" onclick="stepEditMod(-0.25)">−</button>
+                  <span class="stepper-val" id="er-mod-display">${fmtMod(editRewardMod)}</span>
+                  <button class="stepper-btn" onclick="stepEditMod(+0.25)">+</button>
+                </div>
+                <span style="font-size:12px;color:var(--muted);line-height:1.4">Ajuste em relação ao<br>multiplicador global (${globalMult}×)</span>
+              </div>
+            </div>
+            <div class="form-row">
+              <label class="form-label" style="margin-bottom:8px">Pontos resultantes</label>
+              <div class="pts-preview" id="er-pts-preview">
+                ${calcPreviewHtml(editR.custo, editRewardMod)}
+              </div>
+              <div id="er-pedidos-equiv" style="padding:6px 2px 0;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;min-height:22px">
+                ${(() => { const n = Math.ceil(rewardPts(editR) / 300); return icon('clock',12) + ` Equivale a <strong>${n} pedido${n!==1?'s':''}</strong> de R$ 3.000 aprovados`; })()}
+              </div>
+            </div>
+            <div class="form-row" style="grid-column:1/-1">
+              <label class="form-label">Foto do item</label>
+              <input id="er-photo-input" type="file" accept="image/*" style="display:none" onchange="handleEditPhotoUpload(event)">
+              ${editRewardPhoto ? (() => {
+                  const src = editRewardPhoto.startsWith('data:') ? editRewardPhoto : `../../assets/${editRewardPhoto}`;
+                  const pos = `${editRewardPhotoPos.x}% ${editRewardPhotoPos.y}%`;
+                  return `
+                    <div style="display:flex;align-items:flex-start;gap:14px;">
+                      <div id="er-photo-frame"
+                        style="width:120px;height:120px;flex-shrink:0;border-radius:10px;overflow:hidden;border:1.5px solid var(--line);cursor:grab;background-image:url('${src}');background-size:cover;background-position:${pos};user-select:none;"
+                        onmousedown="startEditPhotoDrag(event)"></div>
+                      <div style="display:flex;flex-direction:column;gap:8px;padding-top:4px;">
+                        <div style="font-size:11.5px;color:var(--muted);line-height:1.6">${icon('move',12)} Arraste para<br>reposicionar.</div>
+                        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('er-photo-input').click()">${icon('image',13)} Trocar</button>
+                        <button class="btn btn-quiet btn-sm" onclick="removeEditPhoto()">${icon('trash-2',13)} Remover</button>
+                      </div>
+                    </div>`;
+                })() : `
+                <div onclick="document.getElementById('er-photo-input').click()"
+                  style="width:120px;height:120px;border-radius:10px;border:1.5px dashed var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;background:var(--paper-deep);color:var(--muted);transition:border-color .15s,color .15s;"
+                  onmouseenter="this.style.borderColor='var(--brand)';this.style.color='var(--brand)'"
+                  onmouseleave="this.style.borderColor='var(--line)';this.style.color='var(--muted)'">
+                  ${icon('image-plus',26)}
+                  <span style="font-size:12px;text-align:center;line-height:1.4">Adicionar<br>foto</span>
+                </div>`}
+            </div>
+            <div class="form-row" style="grid-column:1/-1">
+              <label class="form-label">Descrição</label>
+              <textarea id="er-desc" class="form-input" rows="3" style="resize:vertical">${editR.desc || ''}</textarea>
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button class="btn btn-ghost" onclick="closeEditReward()">Cancelar</button>
+            <button class="btn btn-primary" onclick="saveEditReward('${editR.id}')">${icon('check', 15)} Salvar</button>
+          </div>
+        </div>
+      </div>
+    ` : ''}
+
+    ${addItemOpen ? `
+      <div class="modal-overlay" onclick="closeAddItem()">
+        <div class="modal-panel" style="max-width:480px;" onclick="event.stopPropagation()">
+          <div class="modal-head">
+            <span class="modal-title">Adicionar item</span>
+            <button class="btn btn-quiet btn-sm" onclick="closeAddItem()">${icon('x', 15)}</button>
+          </div>
+          <div class="modal-body" style="gap:16px;max-height:68vh;overflow-y:auto;">
+
+            <!-- nome / busca no catálogo -->
+            <div class="form-row" style="position:relative">
+              <label class="form-label">Nome do brinde <span style="color:var(--brand)">*</span></label>
+              <input id="ai-search" type="text" class="form-input"
+                placeholder="Buscar produto da loja ou digitar nome do brinde…"
+                oninput="filterAddCatalog(this.value)" autocomplete="off">
+              <div id="ai-ac-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:20;background:var(--card);border:1.5px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.12);"></div>
+            </div>
+            <div style="font-size:11.5px;color:var(--muted);margin-top:-8px;line-height:1.5">
+              Produto da loja? O preço de custo e venda serão preenchidos automaticamente ao selecionar.
+            </div>
+
+            <!-- custo + venda (venda só aparece quando produto do catálogo é selecionado) -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+              <div class="form-row">
+                <label class="form-label">Custo (R$) <span style="color:var(--brand)">*</span></label>
+                <input id="ai-custo" type="number" class="form-input" placeholder="0,00" min="0" step="0.01"
+                  oninput="updateAddPreview()">
+              </div>
+              <div class="form-row" id="ai-venda-row" style="display:none">
+                <label class="form-label">Preço de venda</label>
+                <div class="form-input" style="background:var(--paper-deep);color:var(--muted);height:42px;display:flex;align-items:center;font-size:13px;user-select:none">
+                  <span id="ai-venda-display">—</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- foto -->
+            <div class="form-row">
+              <label class="form-label">Foto do item</label>
+              <input id="ai-photo-input" type="file" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)">
+              ${addItemPhoto ? `
+                <div style="display:flex;align-items:flex-start;gap:14px;">
+                  <div id="ai-photo-frame"
+                    style="width:120px;height:120px;flex-shrink:0;border-radius:10px;overflow:hidden;border:1.5px solid var(--line);cursor:grab;background-image:url('${addItemPhoto}');background-size:cover;background-position:${addItemPhotoPos.x}% ${addItemPhotoPos.y}%;user-select:none;"
+                    onmousedown="startPhotoDrag(event)"></div>
+                  <div style="display:flex;flex-direction:column;gap:8px;padding-top:4px;">
+                    <div style="font-size:11.5px;color:var(--muted);line-height:1.6">${icon('move',12)} Arraste para<br>reposicionar.</div>
+                    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('ai-photo-input').click()">${icon('image',13)} Trocar</button>
+                    <button class="btn btn-quiet btn-sm" onclick="removeAddPhoto()">${icon('trash-2',13)} Remover</button>
+                  </div>
+                </div>
+              ` : `
+                <div onclick="document.getElementById('ai-photo-input').click()"
+                  style="width:120px;height:120px;border-radius:10px;border:1.5px dashed var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;background:var(--paper-deep);color:var(--muted);transition:border-color .15s,color .15s;"
+                  onmouseenter="this.style.borderColor='var(--brand)';this.style.color='var(--brand)'"
+                  onmouseleave="this.style.borderColor='var(--line)';this.style.color='var(--muted)'">
+                  ${icon('image-plus',26)}
+                  <span style="font-size:12px;text-align:center;line-height:1.4">Adicionar<br>foto</span>
+                </div>
+              `}
+            </div>
+
+            <!-- modificador -->
+            <div class="form-row">
+              <label class="form-label" style="margin-bottom:10px">Modificador individual</label>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <div class="stepper">
+                  <button class="stepper-btn" onclick="stepAddMod(-0.25)">−</button>
+                  <span class="stepper-val" id="ai-mod-display">${fmtMod(addItemMod)}</span>
+                  <button class="stepper-btn" onclick="stepAddMod(+0.25)">+</button>
+                </div>
+                <span style="font-size:12px;color:var(--muted);line-height:1.4">Ajuste em relação ao multiplicador global (${globalMult}×).<br>Negativo = <strong>PROMO</strong> automático.</span>
+              </div>
+            </div>
+
+            <!-- pts + equivale -->
+            <div class="form-row">
+              <label class="form-label" style="margin-bottom:8px">Pontos resultantes</label>
+              <div class="pts-preview" id="ai-pts-preview">—</div>
+              <div id="ai-pedidos-equiv" style="padding:6px 2px 0;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;min-height:22px"></div>
+            </div>
+
+            <!-- unidades + descrição -->
+            <div class="form-row">
+              <label class="form-label">Unidades disponíveis</label>
+              <input id="ai-stock" type="number" class="form-input" placeholder="0" min="0">
+            </div>
+            <div class="form-row">
+              <label class="form-label">Descrição</label>
+              <textarea id="ai-desc" class="form-input" rows="3" style="resize:vertical" placeholder="Descreva o item…"></textarea>
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button class="btn btn-ghost" onclick="closeAddItem()">Cancelar</button>
+            <button class="btn btn-primary" onclick="submitAddItem()">${icon('plus', 15)} Adicionar</button>
+          </div>
+        </div>
+      </div>
+    ` : ''}
+  `;
+}
+
+/* ============================================================
+   LOJINHA — MULTIPLICADORES
+   ============================================================ */
+function openMult() {
+  multDraft = globalMult;
+  multOpen  = true;
+  renderMain();
+}
+function closeMult() { multOpen = false; renderMain(); }
+function stepMult(delta) {
+  multDraft = Math.round((multDraft + delta) * 100) / 100;
+  if (multDraft < 0.25) multDraft = 0.25;
+  const d = document.getElementById('mult-val-display');
+  const m = document.getElementById('mult-formula-mult');
+  const ex = document.getElementById('mult-formula-ex');
+  const res = document.getElementById('mult-formula-res');
+  if (d)   d.textContent   = multDraft + '×';
+  if (m)   m.textContent   = multDraft;
+  if (ex)  ex.textContent  = multDraft;
+  if (res) res.textContent = pts(300 * multDraft);
+}
+function saveMult() {
+  globalMult = multDraft;
+  multOpen   = false;
+  renderMain();
+}
+
+/* ============================================================
+   LOJINHA — EDITAR ITEM
+   ============================================================ */
+function toggleRewardVisibility(id) {
+  if (hiddenRewards.has(id)) hiddenRewards.delete(id);
+  else hiddenRewards.add(id);
+  goTo('lojinha');
+}
+
+function openEditReward(id) {
+  const r = REWARDS.find(x => x.id === id);
+  if (!r) return;
+  editRewardId       = id;
+  editRewardMod      = r.itemMod || 0;
+  editRewardPhoto    = r.img || null;
+  editRewardPhotoPos = r.imgPos ? { ...r.imgPos } : { x: 50, y: 50 };
+  renderMain();
+}
+function closeEditReward() { editRewardId = null; renderMain(); }
+function setLojinhaTab(tab) { lojinhaTab = tab; renderMain(); }
+function setResgatesFiltro(f) { resgatesFiltro = f; renderMain(); }
+function confirmarEntrega(id) {
+  const re = RESGATES.find(x => x.id === id);
+  if (re) { re.status = 'entregue'; renderMain(); }
+}
+function recusarResgate(id) {
+  const re = RESGATES.find(x => x.id === id);
+  if (re) { re.status = 'recusado'; renderMain(); }
+}
+function stepEditMod(delta) {
+  editRewardMod = Math.round((editRewardMod + delta) * 100) / 100;
+  const d = document.getElementById('er-mod-display');
+  if (d) d.textContent = fmtMod(editRewardMod);
+  updateRewardPreview();
+}
+function updateRewardPreview() {
+  const prev    = document.getElementById('er-pts-preview');
+  const equivEl = document.getElementById('er-pedidos-equiv');
+  if (!prev) return;
+  const r = REWARDS.find(x => x.id === editRewardId);
+  const custo = r ? r.custo : 0;
+  prev.innerHTML = custo > 0 ? calcPreviewHtml(custo, editRewardMod) : '—';
+  if (equivEl && custo > 0) {
+    const ptsVal = Math.round(custo * (globalMult + editRewardMod));
+    const n = Math.ceil(ptsVal / 300);
+    equivEl.innerHTML = `${icon('clock',12)} Equivale a <strong>${n} pedido${n !== 1 ? 's' : ''}</strong> de R$ 3.000 aprovados`;
+  }
+}
+function saveEditReward(id) {
+  const r = REWARDS.find(x => x.id === id);
+  if (!r) return;
+  r.name    = document.getElementById('er-nome')?.value?.trim()  || r.name;
+  r.stock   = parseInt(document.getElementById('er-stock')?.value)   || r.stock;
+  r.desc    = document.getElementById('er-desc')?.value?.trim()  || r.desc;
+  r.itemMod = editRewardMod;
+  r.img     = editRewardPhoto;
+  r.imgPos  = { ...editRewardPhotoPos };
+  editRewardId = null;
+  renderMain();
+}
+
+function handleEditPhotoUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    editRewardPhoto    = ev.target.result;
+    editRewardPhotoPos = { x: 50, y: 50 };
+    renderMain();
+  };
+  reader.readAsDataURL(file);
+}
+function removeEditPhoto() {
+  editRewardPhoto    = null;
+  editRewardPhotoPos = { x: 50, y: 50 };
+  renderMain();
+}
+function startEditPhotoDrag(e) {
+  e.preventDefault();
+  const frame = document.getElementById('er-photo-frame');
+  if (!frame) return;
+  _editPhotoDrag = { startX: e.clientX, startY: e.clientY, startPX: editRewardPhotoPos.x, startPY: editRewardPhotoPos.y };
+  frame.style.cursor = 'grabbing';
+  document.addEventListener('mousemove', moveEditPhotoDrag);
+  document.addEventListener('mouseup', endEditPhotoDrag);
+}
+function moveEditPhotoDrag(e) {
+  if (!_editPhotoDrag) return;
+  const frame = document.getElementById('er-photo-frame');
+  if (!frame) return;
+  const dx = (e.clientX - _editPhotoDrag.startX) / 2;
+  const dy = (e.clientY - _editPhotoDrag.startY) / 2;
+  editRewardPhotoPos.x = Math.min(100, Math.max(0, _editPhotoDrag.startPX - dx));
+  editRewardPhotoPos.y = Math.min(100, Math.max(0, _editPhotoDrag.startPY - dy));
+  frame.style.backgroundPosition = `${editRewardPhotoPos.x}% ${editRewardPhotoPos.y}%`;
+}
+function endEditPhotoDrag() {
+  _editPhotoDrag = null;
+  const frame = document.getElementById('er-photo-frame');
+  if (frame) frame.style.cursor = 'grab';
+  document.removeEventListener('mousemove', moveEditPhotoDrag);
+  document.removeEventListener('mouseup', endEditPhotoDrag);
+}
+
+/* ============================================================
+   LOJINHA — ADICIONAR ITEM
+   ============================================================ */
+function openAddItem() {
+  addItemMod              = 0;
+  addItemCatalogSelected  = false;
+  addItemVenda            = 0;
+  addItemSearch           = '';
+  addItemPhoto            = null;
+  addItemPhotoPos         = { x: 50, y: 50 };
+  addItemOpen             = true;
+  renderMain();
+}
+function closeAddItem() { addItemOpen = false; renderMain(); }
+function clearAddSelection() {
+  addItemCatalogSelected = false;
+  addItemVenda = 0;
+  const custoEl  = document.getElementById('ai-custo');
+  const vendaRow = document.getElementById('ai-venda-row');
+  if (custoEl)  { custoEl.type = 'number'; custoEl.removeAttribute('readonly'); custoEl.style.background = ''; custoEl.style.color = ''; custoEl.value = ''; delete custoEl.dataset.rawValue; }
+  if (vendaRow) vendaRow.style.display = 'none';
+  updateAddPreview();
+}
+function filterAddCatalog(val) {
+  addItemSearch = val;
+  if (addItemCatalogSelected) clearAddSelection();
+  const dropdown = document.getElementById('ai-ac-dropdown');
+  if (!dropdown) return;
+  if (!val.trim()) { dropdown.style.display = 'none'; return; }
+  const q = val.toLowerCase();
+  const matches = CATALOG.filter(p =>
+    p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q)
+  ).slice(0, 6);
+  if (!matches.length) { dropdown.style.display = 'none'; return; }
+  dropdown.innerHTML = matches.map(p => `
+    <div class="autocomplete-item" onmousedown="selectAddProduct('${p.id}')">
+      <span class="ac-emoji" style="color:var(--muted)">${icon(p.icon, 15)}</span>
+      <div class="ac-body">
+        <span class="ac-name">${p.name}</span>
+        <span class="ac-meta">
+          <span>${p.brand} · ${p.code}</span>
+          <span>·</span>
+          <span>Custo <strong>R$ ${p.cost.toLocaleString('pt-BR',{minimumFractionDigits:2})}</strong></span>
+          <span>·</span>
+          <span>Venda R$ ${p.price.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+        </span>
+      </div>
+    </div>`).join('');
+  dropdown.style.display = 'block';
+}
+function selectAddProduct(id) {
+  const p = CATALOG.find(x => x.id === id);
+  if (!p) return;
+  const searchEl  = document.getElementById('ai-search');
+  const custoEl   = document.getElementById('ai-custo');
+  const vendaDisp = document.getElementById('ai-venda-display');
+  const vendaRow  = document.getElementById('ai-venda-row');
+  const dropdown  = document.getElementById('ai-ac-dropdown');
+  if (searchEl)  searchEl.value = p.name;
+  if (custoEl)   { custoEl.type = 'text'; custoEl.value = `R$ ${p.cost.toLocaleString('pt-BR',{minimumFractionDigits:2})}`; custoEl.dataset.rawValue = p.cost; custoEl.setAttribute('readonly', ''); custoEl.style.background = 'var(--paper-deep)'; custoEl.style.color = 'var(--muted)'; }
+  if (vendaDisp) vendaDisp.textContent = `R$ ${p.price.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+  if (vendaRow)  vendaRow.style.display = 'block';
+  if (dropdown)  dropdown.style.display = 'none';
+  addItemCatalogSelected = true;
+  addItemVenda           = p.price;
+  addItemSearch          = p.name;
+  updateAddPreview();
+}
+function handlePhotoUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    addItemPhoto    = ev.target.result;
+    addItemPhotoPos = { x: 50, y: 50 };
+    renderMain();
+  };
+  reader.readAsDataURL(file);
+}
+function removeAddPhoto() {
+  addItemPhoto    = null;
+  addItemPhotoPos = { x: 50, y: 50 };
+  renderMain();
+}
+function startPhotoDrag(e) {
+  e.preventDefault();
+  const frame = document.getElementById('ai-photo-frame');
+  if (!frame) return;
+  _photoDrag = { startX: e.clientX, startY: e.clientY, startPX: addItemPhotoPos.x, startPY: addItemPhotoPos.y };
+  frame.style.cursor = 'grabbing';
+  document.addEventListener('mousemove', movePhotoDrag);
+  document.addEventListener('mouseup', endPhotoDrag);
+}
+function movePhotoDrag(e) {
+  if (!_photoDrag) return;
+  const frame = document.getElementById('ai-photo-frame');
+  if (!frame) return;
+  const dx = (e.clientX - _photoDrag.startX) / 2;
+  const dy = (e.clientY - _photoDrag.startY) / 2;
+  addItemPhotoPos.x = Math.min(100, Math.max(0, _photoDrag.startPX - dx));
+  addItemPhotoPos.y = Math.min(100, Math.max(0, _photoDrag.startPY - dy));
+  frame.style.backgroundPosition = `${addItemPhotoPos.x}% ${addItemPhotoPos.y}%`;
+}
+function endPhotoDrag() {
+  _photoDrag = null;
+  const frame = document.getElementById('ai-photo-frame');
+  if (frame) frame.style.cursor = 'grab';
+  document.removeEventListener('mousemove', movePhotoDrag);
+  document.removeEventListener('mouseup', endPhotoDrag);
+}
+function stepAddMod(delta) {
+  addItemMod = Math.round((addItemMod + delta) * 100) / 100;
+  const d = document.getElementById('ai-mod-display');
+  if (d) d.textContent = fmtMod(addItemMod);
+  updateAddPreview();
+}
+function updateAddPreview() {
+  const custoEl  = document.getElementById('ai-custo');
+  const prev     = document.getElementById('ai-pts-preview');
+  const equivEl  = document.getElementById('ai-pedidos-equiv');
+  if (!custoEl || !prev) return;
+  const custo = parseFloat(custoEl.dataset.rawValue ?? custoEl.value) || 0;
+  if (custo > 0) {
+    prev.innerHTML = calcPreviewHtml(custo, addItemMod);
+    if (equivEl) {
+      const ptsVal = Math.round(custo * (globalMult + addItemMod));
+      const n = Math.ceil(ptsVal / 300);
+      equivEl.innerHTML = `${icon('clock',12)} Equivale a <strong>${n} pedido${n !== 1 ? 's' : ''}</strong> de R$ 3.000 aprovados`;
+    }
+  } else {
+    prev.innerHTML = '—';
+    if (equivEl) equivEl.innerHTML = '';
+  }
+}
+function submitAddItem() {
+  const nomeEl  = document.getElementById('ai-search');
+  const custoEl = document.getElementById('ai-custo');
+  const nome  = nomeEl?.value?.trim()  || '';
+  const custo = parseFloat(custoEl?.dataset?.rawValue ?? custoEl?.value) || 0;
+  if (!nome)  { nomeEl?.classList.add('form-error');  return; }
+  if (!custo) { custoEl?.classList.add('form-error'); return; }
+  REWARDS.push({
+    id:      'item_' + Date.now(),
+    name:    nome,
+    custo,
+    itemMod: addItemMod,
+    stock:   parseInt(document.getElementById('ai-stock')?.value) || 0,
+    desc:    document.getElementById('ai-desc')?.value?.trim() || '',
+    icon:    'package',
+    img:     addItemPhoto || null,
+    imgPos:  { ...addItemPhotoPos },
+  });
+  addItemOpen = false;
+  renderMain();
+}
+
+/* ============================================================
+   RELATÓRIOS — NAVEGAÇÃO TEMPORAL
+   ============================================================ */
+const MONTH_SHORT = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const MONTH_FULL  = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+function toggleReportView(v) { reportView = v; renderMain(); }
+function prevReportPeriod() {
+  if (reportView === 'mes') { reportMonth--; if (reportMonth < 0) { reportMonth = 11; reportYear--; } }
+  else reportYear--;
+  renderMain();
+}
+function nextReportPeriod() {
+  if (reportView === 'mes') { reportMonth++; if (reportMonth > 11) { reportMonth = 0; reportYear++; } }
+  else reportYear++;
+  renderMain();
+}
+
+/* ============================================================
+   SCREEN: RELATÓRIOS
+   ============================================================ */
+function renderRelatorios() {
+  // ── Filter by period ─────────────────────────────────────────
+  const periodOrders = reportView === 'mes'
+    ? ORDERS.filter(o => o.date.split(' ')[1] === MONTH_SHORT[reportMonth])
+    : ORDERS;
+
+  const approved    = periodOrders.filter(o => o.status === 'aprovado');
+  const totalVol    = approved.reduce((s, o) => s + o.total, 0);
+  const totalBonus  = approved.reduce((s, o) => s + Math.round(o.total * 0.10), 0);
+  const ticketMedio = approved.length > 0 ? totalVol / approved.length : 0;
+
+  const sc = {
+    aprovado:  periodOrders.filter(o => o.status === 'aprovado').length,
+    pendente:  periodOrders.filter(o => o.status === 'pendente').length,
+    recusado:  periodOrders.filter(o => o.status === 'recusado').length,
+    estornado: periodOrders.filter(o => o.status === 'estornado').length,
+  };
+  const sTotal = periodOrders.length;
+
+  // ── Ranking ───────────────────────────────────────────────────
+  const ps = {};
+  PAINTERS.forEach(p => { ps[p.name] = { volume:0, bonus:0, orders:0, city:p.city }; });
+  approved.forEach(o => {
+    if (!ps[o.painter]) ps[o.painter] = { volume:0, bonus:0, orders:0, city:'' };
+    ps[o.painter].volume += o.total;
+    ps[o.painter].bonus  += Math.round(o.total * 0.10);
+    ps[o.painter].orders++;
+  });
+  const ranking = PAINTERS
+    .map(p => ({ name:p.name, city:p.city, ...(ps[p.name] || { volume:0, bonus:0, orders:0 }) }))
+    .sort((a, b) => b.volume - a.volume);
+  const maxVol = ranking[0]?.volume || 1;
+  const top    = ranking[0];
+
+  // ── Chart data ────────────────────────────────────────────────
+  let volData, bonusData;
+  if (reportView === 'mes') {
+    const wv = [0,0,0,0], wb = [0,0,0,0];
+    approved.forEach(o => {
+      const day = parseInt(o.date.split(' ')[0]);
+      const wi = day <= 7 ? 0 : day <= 14 ? 1 : day <= 21 ? 2 : 3;
+      wv[wi] += o.total;
+      wb[wi] += Math.round(o.total * 0.10);
+    });
+    volData   = ['Sem 1','Sem 2','Sem 3','Sem 4'].map((label,i) => ({ label, v: Math.round(wv[i]) }));
+    bonusData = ['Sem 1','Sem 2','Sem 3','Sem 4'].map((label,i) => ({ label, v: Math.round(wb[i]) }));
+  } else {
+    const presentMonths = [...new Set(ORDERS.map(o => o.date.split(' ')[1]))];
+    const sortedMonths  = MONTH_SHORT.filter(m => presentMonths.includes(m));
+    volData   = sortedMonths.map(m => ({
+      label: MONTH_FULL[MONTH_SHORT.indexOf(m)].slice(0,3),
+      v: Math.round(approved.filter(o => o.date.split(' ')[1] === m).reduce((s,o) => s + o.total, 0))
+    }));
+    bonusData = sortedMonths.map(m => ({
+      label: MONTH_FULL[MONTH_SHORT.indexOf(m)].slice(0,3),
+      v: approved.filter(o => o.date.split(' ')[1] === m).reduce((s,o) => s + Math.round(o.total * 0.10), 0)
+    }));
+  }
+
+  const periodLabel   = reportView === 'mes' ? `${MONTH_FULL[reportMonth]} ${reportYear}` : String(reportYear);
+  const chartGranLabel = reportView === 'mes' ? 'por semana' : 'por mês';
+  const topLabel       = reportView === 'mes' ? 'Pintor do Mês' : 'Pintor do Ano';
+
+  const donutSegs = [
+    { label:'Aprovado',  v:sc.aprovado,  color:'#4F7A4A' },
+    { label:'Pendente',  v:sc.pendente,  color:'#B5751F' },
+    { label:'Recusado',  v:sc.recusado,  color:'#CC0000' },
+    { label:'Estornado', v:sc.estornado, color:'#8A817A' },
+  ];
+  const barColors = ['#4F7A4A','#6B46C1','#B5751F','var(--muted)','var(--muted)','var(--muted)'];
+  const fmtVol    = v => v >= 10000 ? `R$ ${(v/1000).toFixed(0)}k` : `R$ ${(v/1000).toFixed(1)}k`;
+  const fmtBonus  = v => v >= 1000  ? `${(v/1000).toFixed(1)}k pts` : `${v} pts`;
+
+  // ── SVG helpers ───────────────────────────────────────────────
+  function lineChartSVG(data, id, color, fmt) {
+    if (!data.length) return `<div style="height:120px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">Sem dados no período</div>`;
+    const W=440, H=150, pl=10, pr=10, pt=26, pb=24;
+    const iW=W-pl-pr, iH=H-pt-pb;
+    const maxV = Math.max(...data.map(d => d.v), 1);
+    const xs = data.length === 1
+      ? [pl + iW/2]
+      : data.map((_,i) => pl + (i / (data.length - 1)) * iW);
+    const ys = data.map(d => pt + iH - (d.v / maxV) * iH);
+    let lp = `M ${xs[0].toFixed(1)},${ys[0].toFixed(1)}`;
+    for (let i = 0; i < data.length - 1; i++) {
+      const mx = ((xs[i] + xs[i+1]) / 2).toFixed(1);
+      lp += ` C ${mx},${ys[i].toFixed(1)} ${mx},${ys[i+1].toFixed(1)} ${xs[i+1].toFixed(1)},${ys[i+1].toFixed(1)}`;
+    }
+    const ap = data.length === 1
+      ? `${lp} L${xs[0].toFixed(1)},${(pt+iH).toFixed(1)} Z`
+      : `${lp} L${xs[xs.length-1].toFixed(1)},${(pt+iH).toFixed(1)} L${xs[0].toFixed(1)},${(pt+iH).toFixed(1)} Z`;
+    return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;overflow:visible">
+      <defs><linearGradient id="lg-${id}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${color}" stop-opacity=".18"/>
+        <stop offset="100%" stop-color="${color}" stop-opacity=".01"/>
+      </linearGradient></defs>
+      ${[.25,.5,.75,1].map(t => `<line x1="${pl}" y1="${(pt+iH*t).toFixed(1)}" x2="${(pl+iW).toFixed(1)}" y2="${(pt+iH*t).toFixed(1)}" stroke="var(--line)" stroke-width="1"/>`).join('')}
+      <path d="${ap}" fill="url(#lg-${id})"/>
+      <path d="${lp}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+      ${data.map((d,i) => `
+        <circle cx="${xs[i].toFixed(1)}" cy="${ys[i].toFixed(1)}" r="4.5" fill="${color}" stroke="var(--card)" stroke-width="2.5"/>
+        ${d.v > 0 ? `<text x="${xs[i].toFixed(1)}" y="${(ys[i]-10).toFixed(1)}" text-anchor="middle" font-family="'Plus Jakarta Sans',sans-serif" font-size="10" font-weight="800" letter-spacing="-.02em" fill="${color}">${fmt(d.v)}</text>` : ''}
+        <text x="${xs[i].toFixed(1)}" y="${H-5}" text-anchor="middle" font-family="Inter,sans-serif" font-size="10.5" fill="var(--muted)">${d.label}</text>
+      `).join('')}
+    </svg>`;
+  }
+
+  function donutSVG(segs) {
+    const r=54, ri=34, cx=70, cy=70, W=140, H=140;
+    const tot = segs.reduce((s,g) => s + g.v, 0);
+    const total = tot || 1;
+    let a = -Math.PI / 2;
+    const paths = segs.filter(g => g.v > 0).map(g => {
+      const sw = (g.v / total) * 2 * Math.PI, e = a + sw, lg = sw > Math.PI ? 1 : 0;
+      const p = `M ${(cx+r*Math.cos(a)).toFixed(2)},${(cy+r*Math.sin(a)).toFixed(2)} A ${r} ${r} 0 ${lg} 1 ${(cx+r*Math.cos(e)).toFixed(2)},${(cy+r*Math.sin(e)).toFixed(2)} L ${(cx+ri*Math.cos(e)).toFixed(2)},${(cy+ri*Math.sin(e)).toFixed(2)} A ${ri} ${ri} 0 ${lg} 0 ${(cx+ri*Math.cos(a)).toFixed(2)},${(cy+ri*Math.sin(a)).toFixed(2)} Z`;
+      a = e;
+      return `<path d="${p}" fill="${g.color}"/>`;
+    });
+    if (!tot) paths.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--line)" stroke-width="${r-ri}"/>`);
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
+      ${paths.join('')}
+      <text x="${cx}" y="${cy-2}" text-anchor="middle" font-family="'Plus Jakarta Sans',sans-serif" font-size="22" font-weight="800" fill="var(--ink)">${tot}</text>
+      <text x="${cx}" y="${cy+14}" text-anchor="middle" font-family="Inter,sans-serif" font-size="9.5" fill="var(--muted)">pedidos</text>
+    </svg>`;
+  }
+
+  function rankIcon(i) {
+    if (i === 0) return `<i data-lucide="trophy" style="width:15px;height:15px;color:#C9A227;flex-shrink:0"></i>`;
+    if (i === 1) return `<i data-lucide="award"  style="width:15px;height:15px;color:#9AA5B1;flex-shrink:0"></i>`;
+    if (i === 2) return `<i data-lucide="award"  style="width:15px;height:15px;color:#9C6B3A;flex-shrink:0"></i>`;
+    return `<span style="width:15px;height:15px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--muted);flex-shrink:0">${i+1}</span>`;
+  }
+
+  // ── HTML ──────────────────────────────────────────────────────
+  return `
+  <div class="page-header">
+    <div>
+      <div class="eyebrow">LOJA · CENTRO · SÃO JOÃO DEL-REI</div>
+      <h1 class="page-title">Relatórios</h1>
+    </div>
+    <div class="page-actions" style="align-items:center">
+      <div style="display:flex;background:var(--paper-deep);border-radius:8px;padding:3px;gap:2px">
+        <button onclick="toggleReportView('mes')" style="padding:5px 18px;border-radius:6px;border:none;font-family:var(--font-body);font-size:12.5px;font-weight:600;cursor:pointer;transition:all .15s;${reportView==='mes'?'background:var(--card);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.10)':'background:transparent;color:var(--muted)'}">Mês</button>
+        <button onclick="toggleReportView('ano')" style="padding:5px 18px;border-radius:6px;border:none;font-family:var(--font-body);font-size:12.5px;font-weight:600;cursor:pointer;transition:all .15s;${reportView==='ano'?'background:var(--card);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.10)':'background:transparent;color:var(--muted)'}">Ano</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:2px">
+        <button class="btn btn-ghost btn-sm" onclick="prevReportPeriod()" style="width:28px;height:28px;padding:0;display:flex;align-items:center;justify-content:center">${icon('chevron-left',14)}</button>
+        <span style="font-size:13.5px;font-weight:700;color:var(--ink);min-width:100px;text-align:center;letter-spacing:-.02em">${periodLabel}</span>
+        <button class="btn btn-ghost btn-sm" onclick="nextReportPeriod()" style="width:28px;height:28px;padding:0;display:flex;align-items:center;justify-content:center">${icon('chevron-right',14)}</button>
+      </div>
+      <button class="btn btn-ghost" onclick="window.print()" style="margin-left:12px">${icon('printer')} Imprimir</button>
+    </div>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-tile">
+      <span class="stat-label">Pedidos gerados</span>
+      <span class="stat-value">${sTotal}</span>
+      <span class="stat-foot">${sc.aprovado} aprovados · ${sc.pendente} pendentes</span>
+    </div>
+    <div class="stat-tile t-success">
+      <span class="stat-label">Volume aprovado</span>
+      <span class="stat-value" style="font-size:24px">R$ ${(totalVol/1000).toFixed(1)}k</span>
+      <span class="stat-foot">em ${approved.length} pedidos</span>
+    </div>
+    <div class="stat-tile t-purple">
+      <span class="stat-label">Bônus distribuídos</span>
+      <span class="stat-value" style="font-size:22px">${totalBonus.toLocaleString('pt-BR')} pts</span>
+      <span class="stat-foot">via programa de fidelidade</span>
+    </div>
+    <div class="stat-tile">
+      <span class="stat-label">Ticket médio</span>
+      <span class="stat-value" style="font-size:24px">${ticketMedio > 0 ? `R$ ${(ticketMedio/1000).toFixed(1)}k` : '—'}</span>
+      <span class="stat-foot">${approved.length > 0 ? 'por pedido aprovado' : 'sem pedidos aprovados'}</span>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 32px 14px">
+
+    <div class="stat-tile" style="gap:0;padding:20px 20px 12px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px">
+        <span class="stat-label">Volume aprovado ${chartGranLabel}</span>
+        <span style="font-size:11px;color:var(--muted)">${periodLabel}</span>
+      </div>
+      ${lineChartSVG(volData, 'vol', '#4F7A4A', fmtVol)}
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:14px">
+
+      <div class="stat-tile" style="gap:0;padding:20px">
+        <span class="stat-label" style="margin-bottom:12px;display:block">Status dos pedidos</span>
+        <div style="display:flex;align-items:center;gap:14px">
+          ${donutSVG(donutSegs)}
+          <div style="display:flex;flex-direction:column;gap:8px;flex:1">
+            ${donutSegs.map(s => `
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="width:7px;height:7px;border-radius:50%;background:${s.color};flex-shrink:0"></span>
+                <span style="font-size:12px;color:var(--ink-2);flex:1">${s.label}</span>
+                <span style="font-size:12px;font-weight:700;color:var(--ink)">${s.v}</span>
+                <span style="font-size:11px;color:var(--muted);min-width:26px;text-align:right">${Math.round(s.v/(sTotal||1)*100)}%</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+
+      <div style="background:#1C1A17;border-radius:14px;padding:18px 20px;display:flex;align-items:center;gap:14px;flex:1">
+        <div style="position:relative;flex-shrink:0">
+          <div style="width:50px;height:50px;border-radius:50%;background:rgba(201,162,39,.15);border:2px solid #C9A227;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;font-size:16px;color:#fff">${initials(top.name)}</div>
+          <div style="position:absolute;bottom:-2px;right:-4px;width:18px;height:18px;background:#C9A227;border-radius:50%;display:flex;align-items:center;justify-content:center">
+            <i data-lucide="star" style="width:10px;height:10px;color:#1C1A17"></i>
+          </div>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:9.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:2px">${topLabel}</div>
+          <div style="font-family:var(--font-display);font-weight:800;font-size:15px;color:#fff;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${top.name}</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:1px">${top.city}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-family:var(--font-display);font-weight:800;font-size:16px;color:#C9A227;letter-spacing:-.02em">R$ ${(top.volume/1000).toFixed(1)}k</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:3px">${top.bonus.toLocaleString('pt-BR')} pts</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 32px 32px">
+
+    <div class="stat-tile" style="gap:0;padding:20px 20px 12px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px">
+        <span class="stat-label">Bônus distribuídos ${chartGranLabel}</span>
+        <span style="font-size:11px;color:var(--muted)">${periodLabel}</span>
+      </div>
+      ${lineChartSVG(bonusData, 'bonus', '#6B46C1', fmtBonus)}
+    </div>
+
+    <div class="stat-tile" style="gap:0;padding:20px">
+      <span class="stat-label" style="margin-bottom:14px;display:block">Ranking de pintores</span>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        ${ranking.map((p, i) => {
+          const pct = Math.round((p.volume / maxVol) * 100);
+          return `<div>
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+              ${rankIcon(i)}
+              <span style="flex:1;font-size:12.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</span>
+              <span style="font-size:11.5px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;flex-shrink:0">R$ ${(p.volume/1000).toFixed(1)}k</span>
+            </div>
+            <div style="height:4px;background:var(--paper-deep);border-radius:999px;overflow:hidden">
+              <div style="height:100%;width:${pct}%;background:${barColors[i]||'var(--muted)'};border-radius:999px"></div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+  </div>
+  `;
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', function() {
+  render();
+
+  /* Sidebar hover events são anexados dinamicamente em doAdminLogin()
+     pois o sidebar só existe após o login. */
+
+  /* Close filter panel when clicking outside */
+  document.addEventListener('click', (e) => {
+    if (filtersOpen && !e.target.closest('.filters-panel') && !e.target.closest('.filters-btn')) {
+      filtersOpen = false;
+      renderMain();
+    }
+  });
+});
+</script>
+</body>
+</html>

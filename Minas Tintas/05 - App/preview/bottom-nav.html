@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Bottom nav</title>
+<link rel="stylesheet" href="_card.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<style>
+  body { padding: 30px 40px; }
+  .nav {
+    background: rgba(250, 247, 242, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 10px 8px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+    box-shadow: 0 8px 24px rgba(28,26,23,0.06);
+  }
+  .item {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 8px 4px;
+    border-radius: 12px;
+    color: var(--muted);
+    font-size: 11px; font-weight: 500;
+    cursor: pointer;
+  }
+  .item.active { color: var(--ink); }
+  .item.active .mark { background: var(--brand); }
+  .item i { width: 22px; height: 22px; }
+  .mark { width: 5px; height: 5px; border-radius: 50%; background: transparent; margin-top: 1px; }
+  .label { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin: 0 0 12px; letter-spacing: 0.08em; text-transform: uppercase; }
+</style>
+</head>
+<body>
+  <div class="label">Pintor app — bottom tab bar</div>
+  <div class="nav">
+    <div class="item active"><i data-lucide="home"></i><span>Início</span><span class="mark"></span></div>
+    <div class="item"><i data-lucide="file-plus-2"></i><span>Orçamento</span><span class="mark"></span></div>
+    <div class="item"><i data-lucide="receipt"></i><span>Pedidos</span><span class="mark"></span></div>
+    <div class="item"><i data-lucide="store"></i><span>Lojinha</span><span class="mark"></span></div>
+    <div class="item"><i data-lucide="user"></i><span>Perfil</span><span class="mark"></span></div>
+  </div>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

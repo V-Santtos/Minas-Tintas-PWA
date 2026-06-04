@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Type — Numerals</title>
+<link rel="stylesheet" href="_card.css">
+<style>
+  .layout { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; }
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 22px 24px;
+  }
+  .eyebrow { color: var(--muted); margin-bottom: 8px; }
+  .display-num {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 72px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .display-num small {
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 18px;
+    color: var(--muted);
+    margin-left: 6px;
+    letter-spacing: 0;
+  }
+  .table { width: 100%; border-collapse: collapse; }
+  .table td { padding: 9px 0; font-size: 14px; color: var(--ink-2); font-variant-numeric: tabular-nums; border-bottom: 1px dashed var(--line-strong); }
+  .table td:last-child { text-align: right; font-weight: 600; color: var(--ink); }
+  .table tr:last-child td { border-bottom: 0; padding-top: 12px; font-weight: 700; }
+  .meta-line { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-top: 14px; }
+</style>
+</head>
+<body>
+  <div class="layout">
+    <div class="panel">
+      <div class="eyebrow">PONTOS</div>
+      <div class="display-num">12.480<small>pts</small></div>
+      <div class="meta-line">Playfair 700 / 72 / tabular-nums · for hero figures</div>
+    </div>
+    <div class="panel">
+      <table class="table">
+        <tr><td>Tinta látex 18L</td><td>R$ 320,00</td></tr>
+        <tr><td>Massa corrida 25kg</td><td>R$ 84,90</td></tr>
+        <tr><td>Rolo lã 23 cm</td><td>R$ 28,50</td></tr>
+        <tr><td>Total</td><td>R$ 433,40</td></tr>
+      </table>
+      <div class="meta-line">Inter tabular-nums · for ledgers / tables</div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Minas Tintas — Pintor (PWA)</title>
+<link rel="stylesheet" href="../../colors_and_type.css">
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+
+<style>
+  html, body { background: #EAE3D6; margin: 0; padding: 0; font-family: var(--font-body); color: var(--ink); }
+  .stage {
+    padding: 40px 48px 64px;
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+  }
+  .stage-head {
+    max-width: 880px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .stage-head .brand img { height: 28px; }
+  .stage-head .eyebrow {
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .stage-head h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 42px;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin: 4px 0 0;
+  }
+  .stage-head p {
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--ink-2);
+    max-width: 62ch;
+    margin: 10px 0 0;
+  }
+  .strip {
+    display: flex;
+    gap: 28px;
+    overflow-x: auto;
+    padding-bottom: 16px;
+  }
+  .frame-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .frame-cap {
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--muted);
+    padding: 0 6px;
+  }
+  .device-inner {
+    position: relative;
+    height: 100%;
+    background: var(--paper);
+    overflow: hidden;
+  }
+  .scroll {
+    height: 100%;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .scroll::-webkit-scrollbar { display: none; }
+</style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" src="ios-frame.jsx"></script>
+  <script type="text/babel" src="components.jsx"></script>
+  <script type="text/babel" src="screens.jsx"></script>
+  <script type="text/babel" data-presets="react">
+    // ---------- mock data ----------
+    const DATA = {
+      painter: { name: 'Carlos H. Almeida', firstName: 'Carlos' },
+      points: 12480,
+      orders: [
+        { id: '0481', title: 'Obra Vila Esperança', date: '12 mar', total: 1840.00, status: 'pago', items: [
+          { name: 'Tinta látex acrílica 18L — Branco Neve', qty: 4, unit: 320.00 },
+          { name: 'Massa corrida 25kg', qty: 3, unit: 84.90 },
+          { name: 'Rolo lã 23 cm', qty: 2, unit: 28.50 },
+        ]},
+        { id: '0480', title: 'Casa Sr. Antônio', date: '10 mar', total: 642.00, status: 'aguardando pagamento', items: [] },
+        { id: '0479', title: 'Salão Bela Vista', date: '06 mar', total: 2310.50, status: 'bônus liberado', items: [] },
+        { id: '0478', title: 'Apto 304 — Ed. Glória', date: '02 mar', total: 458.00, status: 'pago', items: [] },
+        { id: '0477', title: 'Reforma cozinha — Lúcia', date: '28 fev', total: 184.00, status: 'rascunho', items: [] },
+      ],
+      catalog: [
+        { id: 'p1', name: 'Tinta látex acrílica fosca 18L — Branco Neve', brand: 'Suvinil', price: 320.00, icon: 'paint-roller' },
+        { id: 'p2', name: 'Tinta látex 18L — Areia',                    brand: 'Coral',   price: 298.00, icon: 'paint-roller' },
+        { id: 'p3', name: 'Massa corrida 25kg',                          brand: 'Suvinil', price: 84.90,  icon: 'package' },
+        { id: 'p4', name: 'Selador acrílico 18L',                        brand: 'Coral',   price: 162.00, icon: 'package' },
+        { id: 'p5', name: 'Rolo de lã 23 cm — anti-gota',                brand: 'Tigre',   price: 28.50,  icon: 'paint-roller' },
+        { id: 'p6', name: 'Pincel chato 2"',                             brand: 'Atlas',   price: 14.90,  icon: 'paintbrush' },
+        { id: 'p7', name: 'Fita crepe 50mm × 50m',                       brand: 'Eurocel', price: 12.40,  icon: 'package' },
+      ],
+      rewards: [
+        { id: 'r1', name: 'Rolo profissional anti-gota 23 cm',  points: 1200, icon: 'paint-roller' },
+        { id: 'r2', name: 'Kit pincéis (3 peças) Atlas',         points: 1800, icon: 'paintbrush' },
+        { id: 'r3', name: 'Camiseta Minas Tintas — algodão',     points: 2400, icon: 'shirt' },
+        { id: 'r4', name: 'Caixa de ferramentas 16"',            points: 4200, icon: 'briefcase' },
+        { id: 'r5', name: 'Macacão de pintor — tamanho G',       points: 3600, icon: 'shirt' },
+        { id: 'r6', name: 'Lixadeira orbital 5"',                points: 18000, icon: 'wrench' },
+      ],
+    };
+
+    // ---------- screen wrapper ----------
+    function Phone({ initial = 'home', initialArg = null, label }) {
+      const [route, setRoute] = React.useState({ name: initial, arg: initialArg });
+      const [cart, setCart] = React.useState({ p1: 4, p3: 3, p5: 2 });
+      const go = (name, arg = null) => {
+        if (name === 'ped' && arg) setRoute({ name: 'ped-detail', arg });
+        else setRoute({ name, arg });
+      };
+      const tab = ({ home: 'home', ped: 'ped', 'ped-detail': 'ped', orc: 'orc', loja: 'loja', resgate: 'loja', perfil: 'perfil' })[route.name];
+
+      let body;
+      if (route.name === 'home') body = <ScreenHome data={DATA} go={go} />;
+      else if (route.name === 'ped') body = <ScreenPedidos data={DATA} go={go} />;
+      else if (route.name === 'ped-detail') body = <ScreenPedidoDetail data={DATA} orderId={route.arg} go={go} />;
+      else if (route.name === 'orc') body = <ScreenOrcamento data={DATA} cart={cart} setCart={setCart} go={go} />;
+      else if (route.name === 'loja') body = <ScreenLojinha data={DATA} go={go} />;
+      else if (route.name === 'resgate') body = <ScreenResgate data={DATA} rewardId={route.arg} go={go} />;
+      else body = <ScreenPerfil data={DATA} go={go} />;
+
+      return (
+        <div className="frame-wrap">
+          <div className="frame-cap">{label}</div>
+          <IOSDevice width={372} height={780}>
+            <div className="device-inner">
+              <div className="scroll">{body}</div>
+              <BottomNav active={tab} onChange={(t) => go(t)} />
+            </div>
+          </IOSDevice>
+        </div>
+      );
+    }
+
+    function App() {
+      return (
+        <div className="stage">
+          <div className="stage-head">
+            <div className="brand"><img src="../../assets/minas-tintas-logo.png" alt="Minas Tintas"/></div>
+            <div className="eyebrow">UI KIT · PINTOR (PWA)</div>
+            <h1>Um caderninho de pedidos, no bolso.</h1>
+            <p>O lado pintor do programa Minas Tintas — orçar na obra, acompanhar o pagamento, ver o bônus cair e gastar na lojinha. Cada tela abaixo é interativa: toque na aba de baixo, abra um pedido, adicione produto, abra um resgate.</p>
+          </div>
+
+          <div className="strip">
+            <Phone initial="home" label="01 · INÍCIO" />
+            <Phone initial="orc" label="02 · NOVO ORÇAMENTO" />
+            <Phone initial="ped" label="03 · MEUS PEDIDOS" />
+            <Phone initial="ped-detail" initialArg="0481" label="04 · PEDIDO" />
+            <Phone initial="loja" label="05 · LOJINHA" />
+            <Phone initial="resgate" initialArg="r4" label="06 · RESGATE" />
+            <Phone initial="perfil" label="07 · PERFIL" />
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

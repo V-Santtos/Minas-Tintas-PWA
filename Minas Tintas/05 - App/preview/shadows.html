@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Shadows</title>
+<link rel="stylesheet" href="_card.css">
+<style>
+  body { background: var(--paper); padding: 36px 28px; }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  .item { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .box {
+    width: 120px;
+    height: 90px;
+    background: var(--card);
+    border-radius: 14px;
+  }
+  .b1 { box-shadow: 0 1px 2px rgba(28,26,23,0.04), 0 1px 1px rgba(28,26,23,0.03); }
+  .b2 { box-shadow: 0 2px 6px rgba(28,26,23,0.06), 0 1px 2px rgba(28,26,23,0.04); }
+  .b3 { box-shadow: 0 8px 24px rgba(28,26,23,0.08), 0 2px 6px rgba(28,26,23,0.04); }
+  .b4 { box-shadow: 0 16px 40px rgba(28,26,23,0.10), 0 4px 10px rgba(28,26,23,0.06); }
+  .name { font-size: 12px; font-weight: 600; color: var(--ink); }
+  .val { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div class="item"><div class="box b1"></div><div class="name">--shadow-1</div><div class="val">card resting</div></div>
+    <div class="item"><div class="box b2"></div><div class="name">--shadow-2</div><div class="val">raised card</div></div>
+    <div class="item"><div class="box b3"></div><div class="name">--shadow-3</div><div class="val">popover, FAB</div></div>
+    <div class="item"><div class="box b4"></div><div class="name">--shadow-4</div><div class="val">modal sheet</div></div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,2847 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minas Tintas — Handoff Completo</title>
+<style>
+  :root{
+    --bg:#FAFAF8; --fg:#1C1A17; --muted:#8A817A; --border:#E8E4DE;
+    --accent:#CC0000; --surface:#FFFFFF; --code-bg:#1C1A17; --code-fg:#F4F1EC;
+    --crit:#CC0000; --info:#3B82F6; --warn:#F59E0B; --integ:#4F7A4A;
+    --sidebar-w:248px; --content-max:820px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    line-height:1.6; font-size:15px; -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--accent); text-decoration:none;}
+  a:hover{text-decoration:underline;}
+
+  /* ---------- Layout ---------- */
+  .layout{display:flex; align-items:flex-start;}
+  .sidebar{
+    width:var(--sidebar-w); flex:0 0 var(--sidebar-w);
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+    border-right:1px solid var(--border); background:var(--surface);
+    padding:28px 20px;
+  }
+  .content{flex:1 1 auto; min-width:0; padding:56px 48px; }
+  .content-inner{max-width:var(--content-max); margin:0 auto;}
+
+  /* ---------- Sidebar nav ---------- */
+  .brand{display:flex; flex-direction:column; gap:2px; margin-bottom:6px;}
+  .brand .logo{font-weight:800; letter-spacing:-0.02em; font-size:18px;}
+  .brand .logo span{color:var(--accent);}
+  .brand .sub{font-size:12px; color:var(--muted);}
+  .nav-divider{height:1px; background:var(--border); margin:20px 0 14px;}
+  .nav-group-label{
+    font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--muted); margin:0 0 8px 6px;
+  }
+  .nav a{
+    display:block; padding:7px 10px; border-radius:8px; color:var(--fg);
+    font-size:14px; margin-bottom:2px;
+  }
+  .nav a:hover{background:var(--bg); text-decoration:none;}
+  .nav a.active{background:#1C1A17; color:#fff;}
+  .nav a .num{color:var(--muted); font-variant-numeric:tabular-nums; margin-right:6px;}
+  .nav a.active .num{color:rgba(255,255,255,0.6);}
+
+  /* ---------- Section ---------- */
+  .section{padding-top:48px; margin-top:48px; border-top:1px solid var(--border);}
+  .section:first-of-type{border-top:none; margin-top:0; padding-top:0;}
+  .eyebrow{font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--accent); margin-bottom:8px;}
+  h1{font-size:40px; letter-spacing:-0.03em; font-weight:800; line-height:1.1; margin:0 0 8px;}
+  h2{font-size:28px; letter-spacing:-0.02em; font-weight:700; margin:0 0 6px;}
+  h3{font-size:18px; font-weight:700; margin:32px 0 10px;}
+  h4{font-size:15px; font-weight:700; margin:22px 0 8px; color:var(--fg);}
+  .lead{color:var(--muted); font-size:16px; margin:6px 0 4px;}
+
+  .badges{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 4px;}
+  .badge{font-size:12px; padding:3px 10px; border-radius:6px; font-weight:600;}
+  .badge.route{font-family:ui-monospace,"SF Mono",Menlo,monospace; background:var(--border); color:var(--fg);}
+  .badge.profile{background:#1C1A17; color:#fff;}
+  .badge.method-list{background:transparent; border:1px solid var(--border); color:var(--muted);}
+
+  /* ---------- Bloco de comportamento ---------- */
+  .behavior{
+    border:1px solid var(--border); border-left:3px solid var(--accent);
+    border-radius:0 12px 12px 0; background:var(--surface);
+    padding:18px 22px; margin:18px 0 28px;
+  }
+  .behavior .bh-label{
+    font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--accent); margin-bottom:9px;
+  }
+  .behavior p{margin:8px 0; font-size:15.5px; line-height:1.7;}
+  .behavior p:first-of-type{margin-top:0;}
+  .behavior p:last-child{margin-bottom:0;}
+  .behavior strong{font-weight:700;}
+
+  /* ---------- Tables ---------- */
+  table{width:100%; border-collapse:collapse; margin:14px 0; font-size:14px;}
+  th,td{text-align:left; padding:9px 12px; border-bottom:1px solid var(--border); vertical-align:top;}
+  th{font-size:12px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; color:var(--muted); background:var(--bg);}
+  td code{background:var(--bg); padding:1px 6px; border-radius:4px; font-size:12.5px; font-family:ui-monospace,Menlo,monospace;}
+  .req{color:var(--accent); font-weight:700;}
+  .opt{color:var(--muted);}
+
+  /* ---------- Endpoints ---------- */
+  .endpoint{border:1px solid var(--border); border-radius:12px; overflow:hidden; margin:16px 0; background:var(--surface);}
+  .endpoint .ep-head{display:flex; align-items:center; gap:10px; padding:11px 14px; border-bottom:1px solid var(--border); background:var(--bg);}
+  .method{font-family:ui-monospace,Menlo,monospace; font-size:12px; font-weight:700; padding:3px 9px; border-radius:5px; color:#fff; letter-spacing:0.04em;}
+  .method.get{background:#3B82F6;} .method.post{background:#4F7A4A;}
+  .method.put{background:#B5751F;} .method.delete{background:#CC0000;}
+  .ep-path{font-family:ui-monospace,Menlo,monospace; font-size:13.5px; font-weight:600;}
+  .ep-body{padding:4px 14px 12px;}
+  .ep-label{font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); margin:14px 0 4px;}
+  pre{background:var(--code-bg); color:var(--code-fg); border-radius:10px; padding:14px 16px; overflow-x:auto; font-size:12.5px; line-height:1.55; font-family:ui-monospace,"SF Mono",Menlo,monospace; margin:6px 0;}
+  pre .k{color:#9CDCFE;} pre .s{color:#CE9178;} pre .n{color:#B5CEA8;} pre .c{color:#6A9955;}
+
+  /* ---------- Callouts ---------- */
+  .callout{border-left:3px solid; border-radius:0 8px 8px 0; padding:12px 16px; margin:14px 0; background:var(--surface); font-size:14px;}
+  .callout .co-title{font-weight:700; font-size:12px; letter-spacing:0.04em; text-transform:uppercase; margin-bottom:4px;}
+  .callout p{margin:4px 0;}
+  .callout.crit{border-color:var(--crit); background:#FCEEEE;} .callout.crit .co-title{color:var(--crit);}
+  .callout.info{border-color:var(--info); background:#EEF4FD;} .callout.info .co-title{color:var(--info);}
+  .callout.warn{border-color:var(--warn); background:#FEF6E9;} .callout.warn .co-title{color:#B5751F;}
+  .callout.integ{border-color:var(--integ); background:#EEF4ED;} .callout.integ .co-title{color:var(--integ);}
+
+  /* legend pills */
+  .legend{display:flex; flex-wrap:wrap; gap:10px; margin:18px 0;}
+  .legend .lp{display:inline-flex; align-items:center; gap:7px; font-size:12.5px; color:var(--muted);}
+  .legend .lp::before{content:""; width:12px; height:12px; border-radius:3px; display:inline-block;}
+  .legend .lp.crit::before{background:var(--crit);} .legend .lp.info::before{background:var(--info);}
+  .legend .lp.warn::before{background:var(--warn);} .legend .lp.integ::before{background:var(--integ);}
+
+  ul.tight{margin:8px 0; padding-left:20px;} ul.tight li{margin:3px 0;}
+  .status-dot{display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:5px; vertical-align:middle;}
+  .dot-pend{background:#B5751F;} .dot-aprov{background:#4F7A4A;} .dot-recus{background:#CC0000;} .dot-estorn{background:#8A817A;}
+  hr{border:none; border-top:1px solid var(--border); margin:28px 0;}
+  .note{font-size:13px; color:var(--muted); font-style:italic;}
+
+  /* ---------- App Pintor — segundo acento (azul) ---------- */
+  :root{
+    --accent-p:#1D4ED8; --accent-p-muted:#EFF6FF;
+  }
+  .eyebrow-p{font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--accent-p); margin-bottom:8px;}
+  .behavior-p{
+    border:1px solid var(--border); border-left:3px solid var(--accent-p);
+    border-radius:0 12px 12px 0; background:var(--surface);
+    padding:18px 22px; margin:18px 0 28px;
+  }
+  .behavior-p .bh-label{font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--accent-p); margin-bottom:9px;}
+  .behavior-p p{margin:8px 0; font-size:15.5px; line-height:1.7;}
+  .behavior-p p:first-of-type{margin-top:0;}
+  .behavior-p p:last-child{margin-bottom:0;}
+  .behavior-p strong{font-weight:700;}
+  .badge.profile-p{background:var(--accent-p); color:#fff;}
+  .nav.nav-pintor a.active{background:var(--accent-p); color:#fff;}
+  .nav.nav-pintor a.active .num{color:rgba(255,255,255,0.6);}
+  .nav-group-label.pintor-label{color:var(--accent-p);}
+  /* Bloco de transição visual Admin → Pintor */
+  .app-transition{
+    margin:64px 0 0; padding:48px 40px 44px;
+    background:var(--accent-p-muted);
+    border-radius:16px; border-left:4px solid var(--accent-p);
+  }
+  .app-transition .at-label{font-size:11px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--accent-p); margin-bottom:10px;}
+  .app-transition h1{font-size:40px; letter-spacing:-0.03em; font-weight:800; line-height:1.1; margin:0 0 10px; color:var(--accent-p);}
+  .app-transition .at-sub{font-size:15px; color:var(--muted);}
+  .app-transition table{margin-top:24px;}
+  /* Transição DB */
+  .app-transition.db-transition{background:var(--accent-db-muted); border-left-color:var(--accent-db);}
+  .app-transition.db-transition h1{color:var(--accent-db);}
+  .app-transition.db-transition .at-label{color:var(--accent-db);}
+
+  /* ---------- Banco de Dados — terceiro acento (verde) ---------- */
+  :root{ --accent-db:#4F7A4A; --accent-db-muted:#EEF4ED; }
+  .eyebrow-db{font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--accent-db); margin-bottom:8px;}
+  .behavior-db{border:1px solid var(--border); border-left:3px solid var(--accent-db); border-radius:0 12px 12px 0; background:var(--surface); padding:18px 22px; margin:18px 0 28px;}
+  .behavior-db .bh-label{font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--accent-db); margin-bottom:9px;}
+  .nav.nav-db a.active{background:var(--accent-db); color:#fff;}
+  .nav.nav-db a.active .num{color:rgba(255,255,255,0.6);}
+  .nav-group-label.db-label{color:var(--accent-db);}
+  .badge.profile-db{background:var(--accent-db); color:#fff;}
+
+  /* ---------- Sidebar colapsável ---------- */
+  .nav-toggle{
+    display:flex; align-items:center; justify-content:space-between;
+    width:100%; background:none; border:none; cursor:pointer;
+    padding:5px 6px; border-radius:6px; margin-bottom:4px;
+    text-align:left; color:var(--fg);
+  }
+  .nav-toggle:hover{background:var(--bg);}
+  .nav-toggle .nav-group-label{margin:0; pointer-events:none;}
+  .chevron{
+    width:14px; height:14px; stroke:var(--muted);
+    flex-shrink:0; transition:transform 0.2s ease;
+  }
+  .nav-toggle[aria-expanded="true"] .chevron{transform:rotate(90deg);}
+  .nav-toggle-p .chevron{stroke:var(--accent-p);}
+  .nav-toggle-db .chevron{stroke:var(--accent-db);}
+  .nav-collapse{max-height:0; overflow:hidden; transition:max-height 0.28s ease;}
+  .nav-collapse.open{max-height:1200px;}
+
+  @media (max-width:900px){
+    .sidebar{display:none;}
+    .content{padding:32px 20px;}
+  }
+  @media print{
+    .sidebar{display:none;}
+    .content{padding:0;}
+    .section{break-inside:avoid-page;}
+    .endpoint,.callout,.ph,table{break-inside:avoid;}
+    a{color:var(--fg);}
+    body{font-size:11pt;}
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">MINAS <span>TINTAS</span></div>
+      <div class="sub">Handoff Completo · Jun 2026</div>
+    </div>
+
+    <!-- Visão Geral — sempre visível -->
+    <div class="nav-divider"></div>
+    <div class="nav-group-label">Visão Geral</div>
+    <nav class="nav">
+      <a href="#stack">Stack &amp; Arquitetura</a>
+      <a href="#bonus">Regras Globais de Bônus</a>
+      <a href="#contratos">Contratos Globais</a>
+      <a href="#entidades">Entidades Principais</a>
+      <a href="#supabase">Decisões Supabase</a>
+      <a href="#implementacao">Ordem de Implementação</a>
+    </nav>
+
+    <!-- Painel Admin — colapsável -->
+    <div class="nav-divider"></div>
+    <button class="nav-toggle" aria-expanded="false" data-target="nav-admin">
+      <span class="nav-group-label">Painel Admin</span>
+      <svg class="chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,4 10,8 6,12"/></svg>
+    </button>
+    <div class="nav-collapse" id="nav-admin">
+      <nav class="nav">
+        <a href="#login"><span class="num">1</span>Login</a>
+        <a href="#inicio"><span class="num">2</span>Início</a>
+        <a href="#pedidos"><span class="num">3</span>Pedidos</a>
+        <a href="#pedido-detalhe"><span class="num">4</span>Detalhe do Pedido</a>
+        <a href="#pintores"><span class="num">5</span>Pintores</a>
+        <a href="#pintor-detalhe"><span class="num">6</span>Detalhe do Pintor</a>
+        <a href="#lojinha"><span class="num">7</span>Lojinha</a>
+        <a href="#relatorios"><span class="num">8</span>Relatórios</a>
+        <a href="#configuracoes"><span class="num">9</span>Configurações</a>
+      </nav>
+    </div>
+
+    <!-- App Pintor — colapsável -->
+    <div class="nav-divider"></div>
+    <button class="nav-toggle nav-toggle-p" aria-expanded="false" data-target="nav-pintor">
+      <span class="nav-group-label pintor-label">App Pintor</span>
+      <svg class="chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,4 10,8 6,12"/></svg>
+    </button>
+    <div class="nav-collapse" id="nav-pintor">
+      <nav class="nav nav-pintor">
+        <a href="#p-contratos">Contratos do Pintor</a>
+        <a href="#p-splash"><span class="num">1</span>Splash / Boas-vindas</a>
+        <a href="#p-login"><span class="num">2</span>Login</a>
+        <a href="#p-home"><span class="num">3</span>Início</a>
+        <a href="#p-orcamento"><span class="num">4</span>Novo orçamento</a>
+        <a href="#p-pedido-enviado"><span class="num">5</span>Pedido enviado</a>
+        <a href="#p-pedidos"><span class="num">6</span>Pedidos</a>
+        <a href="#p-pedido-detalhe"><span class="num">7</span>Detalhe do pedido</a>
+        <a href="#p-loja"><span class="num">8</span>Lojinha</a>
+        <a href="#p-produto"><span class="num">9</span>Detalhe do produto</a>
+        <a href="#p-notificacoes"><span class="num">10</span>Notificações</a>
+        <a href="#p-perfil"><span class="num">11</span>Perfil</a>
+        <a href="#p-meus-dados"><span class="num">12</span>Meus dados</a>
+        <a href="#p-clientes"><span class="num">13</span>Clientes</a>
+        <a href="#p-atividade"><span class="num">14</span>Minha atividade</a>
+        <a href="#p-configuracoes"><span class="num">15</span>Configurações</a>
+        <a href="#p-implementacao">Ordem de implementação</a>
+      </nav>
+    </div>
+
+    <!-- Banco de Dados — colapsável -->
+    <div class="nav-divider"></div>
+    <button class="nav-toggle nav-toggle-db" aria-expanded="false" data-target="nav-db">
+      <span class="nav-group-label db-label">Banco de Dados</span>
+      <svg class="chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,4 10,8 6,12"/></svg>
+    </button>
+    <div class="nav-collapse" id="nav-db">
+      <nav class="nav nav-db">
+        <a href="#db-decisoes">Decisões fechadas</a>
+        <a href="#db-enums">Enums</a>
+        <a href="#db-configuracoes"><span class="num">1</span>configuracoes</a>
+        <a href="#db-usuarios-admin"><span class="num">2</span>usuarios_admin</a>
+        <a href="#db-pintores"><span class="num">3</span>pintores</a>
+        <a href="#db-clientes"><span class="num">4</span>clientes</a>
+        <a href="#db-produtos-catalogo"><span class="num">5</span>produtos_catalogo</a>
+        <a href="#db-itens-lojinha"><span class="num">6</span>itens_lojinha</a>
+        <a href="#db-vinculo"><span class="num">7</span>vinculo_cliente_pintor</a>
+        <a href="#db-pedidos"><span class="num">8</span>pedidos</a>
+        <a href="#db-itens-pedido"><span class="num">9</span>itens_pedido</a>
+        <a href="#db-eventos-pedido"><span class="num">10</span>eventos_pedido</a>
+        <a href="#db-resgates"><span class="num">11</span>resgates</a>
+        <a href="#db-transacoes-pontos"><span class="num">12</span>transacoes_pontos</a>
+        <a href="#db-logs-auditoria"><span class="num">13</span>logs_auditoria</a>
+        <a href="#db-relacionamentos">Relacionamentos</a>
+        <a href="#db-rls">RLS / Policies</a>
+        <a href="#db-calculados">Campos calculados</a>
+        <a href="#db-storage">Storage</a>
+        <a href="#db-futuro">Futuro / Push</a>
+        <a href="#db-duvidas">Dúvidas em aberto</a>
+      </nav>
+    </div>
+  </aside>
+
+  <!-- ===================== CONTENT ===================== -->
+  <main class="content"><div class="content-inner">
+
+    <!-- ===== CAPA / VISÃO GERAL ===== -->
+    <section class="section" id="top">
+      <div class="eyebrow">Documento de Handoff · Frontend → Backend</div>
+      <h1>Minas Tintas — Painel Admin</h1>
+      <p class="lead">Especificação de implementação do backend. O frontend já está construído em Next.js com dados mock; este documento descreve, tela por tela, os campos, endpoints, regras de negócio e integrações que o backend precisa entregar para substituir o mock por dados reais.</p>
+
+      <h3>Como ler este documento</h3>
+      <p>A tela em si você consulta direto no app rodando em <code>localhost:3000</code> — este documento <strong>não descreve aparência</strong>. Cada seção traz, nesta ordem: um bloco de <strong>Comportamento</strong> (o que a tela faz e o que o backend precisa executar, em texto corrido), a tabela de <strong>campos e validações</strong>, os <strong>endpoints</strong> (método, rota, body e resposta) e os <strong>callouts de regra de negócio</strong>. Os callouts seguem este código de cor:</p>
+      <div class="legend">
+        <span class="lp crit">Regra crítica — não pode falhar</span>
+        <span class="lp info">Info / comportamento padrão</span>
+        <span class="lp warn">Atenção — decidir com o dev</span>
+        <span class="lp integ">Integração externa</span>
+      </div>
+    </section>
+
+    <!-- ===== STACK ===== -->
+    <section class="section" id="stack">
+      <h2>Stack &amp; Arquitetura</h2>
+      <p class="lead">Decisões técnicas confirmadas. Não reabrir sem motivo.</p>
+
+      <table>
+        <thead><tr><th>Decisão</th><th>Valor</th></tr></thead>
+        <tbody>
+          <tr><td>Framework</td><td>Next.js 16 (App Router)</td></tr>
+          <tr><td>React</td><td>19</td></tr>
+          <tr><td>CSS</td><td>Tailwind v4 + tokens Warm Editorial em <code>@theme {}</code></td></tr>
+          <tr><td>Gráficos</td><td>Recharts (AreaChart + PieChart)</td></tr>
+          <tr><td>Login Admin</td><td>E-mail + senha (sem OAuth)</td></tr>
+          <tr><td>Login Pintor</td><td>Telefone + senha</td></tr>
+          <tr><td>Dados (fase atual)</td><td>Mock em <code>src/lib/mock.ts</code> — banco real em fase posterior</td></tr>
+          <tr><td>Hosting</td><td>Vercel</td></tr>
+          <tr><td>Tipo de app</td><td>PWA (Progressive Web App)</td></tr>
+          <tr><td>Perfil Admin</td><td>Desktop-first</td></tr>
+          <tr><td>Perfil Pintor</td><td>Mobile-first (PWA) · app em <code>minas-tintas-pintor/</code></td></tr>
+        </tbody>
+      </table>
+
+      <h3>Mapa de rotas</h3>
+      <pre><span class="c">src/app/</span>
+  page.tsx                          <span class="c">→ / (redirect para /login)</span>
+  login/page.tsx                    <span class="c">→ /login</span>
+  (admin)/
+    layout.tsx                      <span class="c">→ Sidebar escura colapsável</span>
+    dashboard/page.tsx              <span class="c">→ /dashboard      (Início)</span>
+    pedidos/page.tsx                <span class="c">→ /pedidos</span>
+    pedidos/[id]/page.tsx           <span class="c">→ /pedidos/[id]</span>
+    pintores/page.tsx               <span class="c">→ /pintores</span>
+    pintores/[slug]/page.tsx        <span class="c">→ /pintores/[slug]</span>
+    lojinha/page.tsx                <span class="c">→ /lojinha</span>
+    relatorios/page.tsx             <span class="c">→ /relatorios</span>
+    configuracoes/page.tsx          <span class="c">→ /configuracoes</span>
+src/lib/mock.ts                     <span class="c">→ ORDERS, CLIENTS, PAINTERS, REWARDS, RESGATES, CATALOG</span>
+src/components/CadastrarClienteModal.tsx</pre>
+
+      <div class="callout integ">
+        <div class="co-title">Integrações externas a mapear</div>
+        <p><strong>Hiper Loja (ERP)</strong> — catálogo e estoque de produtos (telas Pedidos e Lojinha).<br>
+        <strong>ViaCEP</strong> — auto-preenchimento de endereço a partir do CEP (modais de cadastro).<br>
+        <strong>Storage de imagens</strong> — provider a definir (S3, R2, etc.) para fotos de itens da lojinha e foto do admin.</p>
+      </div>
+    </section>
+
+    <!-- ===== BÔNUS ===== -->
+    <section class="section" id="bonus">
+      <h2>Regras Globais de Bônus</h2>
+      <p class="lead">O bônus é o coração do programa de fidelidade dos pintores. Vale para todo o sistema.</p>
+
+      <div class="callout crit">
+        <div class="co-title">Fórmula do bônus</div>
+        <p>O bônus é <strong>1% do valor bruto do pedido em R$</strong>, convertido à proporção <strong>R$ 1 = 10 pts</strong> — o que equivale a <strong>10% do total em pontos</strong>.</p>
+        <p>Exemplo: pedido de R$ 3.480 → <strong>348 pts</strong>. O app exibe o atalho visual <code>R$ [total] × 10% = [pts]</code>.</p>
+        <p>Cálculo de referência: <code>bonus_pts = Math.round(total × 0.10)</code></p>
+      </div>
+
+      <div class="callout crit">
+        <div class="co-title">O desconto NUNCA afeta o bônus</div>
+        <p>O bônus é sempre calculado sobre o <strong>subtotal bruto</strong> (antes do desconto). O desconto ao cliente não reduz os pontos do pintor. O <code>total</code> gravado no pedido é o valor bruto; o desconto fica em campo separado.</p>
+      </div>
+
+      <h3>Bônus × status do pedido</h3>
+      <table>
+        <thead><tr><th>Status</th><th>Comportamento do bônus</th></tr></thead>
+        <tbody>
+          <tr><td><span class="status-dot dot-pend"></span><strong>Pendente</strong></td><td>Bônus <strong>não creditado</strong> — apenas previsto ("a creditar")</td></tr>
+          <tr><td><span class="status-dot dot-aprov"></span><strong>Aprovado</strong></td><td>Bônus <strong>creditado automaticamente</strong> no saldo do pintor, no momento da aprovação</td></tr>
+          <tr><td><span class="status-dot dot-recus"></span><strong>Recusado</strong></td><td>Nenhum bônus gerado — os pontos nunca chegaram a ser creditados</td></tr>
+          <tr><td><span class="status-dot dot-estorn"></span><strong>Estornado</strong></td><td>Bônus que foi creditado é <strong>revertido</strong> (debitado) do saldo do pintor</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout info">
+        <div class="co-title">Multiplicador da lojinha (≠ bônus)</div>
+        <p>Não confundir: o bônus de pedido (10%) é fixo. A <strong>lojinha</strong> tem um <code>multiplicador_global</code> separado (padrão <strong>10</strong>) que converte o custo de cada item em pontos de resgate. Ver seção 7.</p>
+      </div>
+    </section>
+
+    <!-- ===== CONTRATOS GLOBAIS ===== -->
+    <section class="section" id="contratos">
+      <h2>Contratos Globais</h2>
+      <p class="lead">Regras que valem para toda a integração entre os dois apps e sistemas externos.</p>
+
+      <h3>Autenticação do Admin</h3>
+      <ul class="tight">
+        <li>Login via <strong>e-mail + senha</strong>. Sem OAuth.</li>
+        <li>Usar Supabase Auth (<code>supabase.auth.signInWithPassword</code>).</li>
+        <li>Sessão de <strong>30 dias</strong> — "lembrar-me" ativo por padrão. Após 30 dias, o admin re-autentica com e-mail e senha.</li>
+        <li>O Admin opera via <strong>service role key</strong> ou política com <code>is_admin = true</code> — acesso irrestrito (sem RLS de isolamento por pintor).</li>
+      </ul>
+
+      <h3>Integração ADM ↔ Pintor</h3>
+      <p>Os dois apps compartilham o mesmo banco Supabase. Não existe fila de eventos separada. O ADM atualiza tabelas compartilhadas; o Pintor lê essas mesmas tabelas.</p>
+
+      <table>
+        <thead><tr><th>Ação do ADM</th><th>O que o backend deve fazer além de atualizar o status</th></tr></thead>
+        <tbody>
+          <tr><td>Aprovar pedido</td><td>Inserir lançamento em <code>pontos_movimentos</code> (crédito). Inserir linha em <code>notificacoes</code> para o pintor (<code>tipo: 'pedido_aprovado'</code>).</td></tr>
+          <tr><td>Recusar pedido</td><td>Inserir linha em <code>notificacoes</code> para o pintor (<code>tipo: 'pedido_recusado'</code>) — se decidida como necessária.</td></tr>
+          <tr><td>Estornar pedido</td><td>Inserir lançamento em <code>pontos_movimentos</code> (débito estorno).</td></tr>
+          <tr><td>Confirmar entrega de resgate</td><td>Inserir linha em <code>notificacoes</code> para o pintor (<code>tipo: 'resgate_confirmado'</code>).</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout info">
+        <div class="co-title">Responsabilidade das notificações</div>
+        <p>A notificação é <strong>sempre criada pelo backend</strong> no momento da ação do Admin. O app Pintor nunca cria notificações — só as consome via <code>GET /pintores/me/notificacoes</code>.</p>
+      </div>
+
+      <h3>Integração com Hiper Loja</h3>
+      <p>O catálogo de produtos é externo (Hiper Loja — ERP da loja). Usado em dois pontos:</p>
+      <ul class="tight">
+        <li>Modal "Novo pedido manual" → busca de produtos por descrição, marca ou código.</li>
+        <li>Modal "Adicionar item" na lojinha → busca no catálogo para adicionar produto de resgate.</li>
+      </ul>
+
+      <table>
+        <thead><tr><th>Campo</th><th>Descrição</th></tr></thead>
+        <tbody>
+          <tr><td><code>produto_id</code></td><td>Código identificador no Hiper</td></tr>
+          <tr><td><code>descricao</code></td><td>Nome/descrição completa</td></tr>
+          <tr><td><code>marca</code></td><td>Fabricante</td></tr>
+          <tr><td><code>codigo</code></td><td>Código de barras ou SKU</td></tr>
+          <tr><td><code>preco_custo</code></td><td>Preço de custo em R$</td></tr>
+          <tr><td><code>preco_venda</code></td><td>Preço de venda em R$</td></tr>
+          <tr><td><code>estoque</code></td><td>Quantidade em estoque</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout warn">
+        <div class="co-title">A definir — campos exatos do Hiper</div>
+        <p>Mapear os campos da API do Hiper Loja no momento da integração. Os nomes acima são sugeridos — alinhar com a documentação real antes de implementar.</p>
+      </div>
+    </section>
+
+    <!-- ===== ENTIDADES ===== -->
+    <section class="section" id="entidades">
+      <h2>Entidades Principais</h2>
+      <p class="lead">Entidades compartilhadas entre Admin e Pintor no mesmo banco Supabase.</p>
+
+      <ul class="tight">
+        <li><strong>Admin</strong> — usuário do painel, com nome, e-mail, senha e foto.</li>
+        <li><strong>Pintor</strong> — parceiro cadastrado pelo Admin, com nome, CPF, telefone, cidade e status.</li>
+        <li><strong>Cliente</strong> — pessoa física ou empresa vinculada a um ou mais pintores.</li>
+        <li><strong>Pedido</strong> — orçamento criado pelo pintor ou pelo Admin, com itens, pagamento e status.</li>
+        <li><strong>ItemPedido</strong> — produto, quantidade, preço unitário e subtotal dentro do pedido.</li>
+        <li><strong>ProdutoCatalogo</strong> — produto do Hiper Loja, usado na composição de orçamentos.</li>
+        <li><strong>ProdutoLoja</strong> — item cadastrado na lojinha para resgate com pontos.</li>
+        <li><strong>Resgate</strong> — solicitação de troca de pontos por produto da lojinha.</li>
+        <li><strong>PontosMovimento</strong> — lançamento de crédito/débito/estorno de pontos do pintor.</li>
+        <li><strong>Notificacao</strong> — evento gerado pelo backend para consumo do app Pintor.</li>
+        <li><strong>Configuracao</strong> — parâmetros globais do sistema (multiplicador, percentual de bônus).</li>
+      </ul>
+
+      <h3>Relacionamentos</h3>
+      <ul class="tight">
+        <li>Pedido pertence a um pintor e a um cliente.</li>
+        <li>Cliente pode ser vinculado a mais de um pintor.</li>
+        <li>Resgate pertence a um pintor e a um produto da lojinha.</li>
+        <li>Todo crédito, débito ou estorno de pontos deve gerar <code>PontosMovimento</code>.</li>
+        <li>Notificações pertencem ao pintor — criadas sempre pelo backend em resposta a ações do Admin.</li>
+      </ul>
+    </section>
+
+    <!-- ===== DECISÕES SUPABASE ===== -->
+    <section class="section" id="supabase">
+      <h2>Decisões Supabase</h2>
+      <p class="lead">Decisões técnicas de banco e infraestrutura. Não reabrir sem motivo.</p>
+
+      <h3>Autenticação</h3>
+      <ul class="tight">
+        <li>Admin usa Supabase Auth com e-mail e senha (<code>supabase.auth.signInWithPassword</code>).</li>
+        <li>Pintor usa número de telefone + senha. O telefone é normalizado (somente dígitos) e usado como identificador em <code>auth.users</code>. Ver handoff do Pintor para detalhes.</li>
+        <li>A tabela <code>pintores</code> referencia <code>auth.users</code> via <code>pintores.auth_user_id</code>.</li>
+        <li>O Admin cadastra o pintor e define a senha inicial — o pintor altera por suporte (sem fluxo público de recuperação nesta fase).</li>
+      </ul>
+
+      <h3>Storage de imagens</h3>
+      <ul class="tight">
+        <li>Usar Supabase Storage para imagens dos itens da lojinha. <strong>Fluxo:</strong> Admin cadastra o produto e sobe a imagem → imagem é convertida para WebP e otimizada no momento do upload → arquivo armazenado no bucket → banco guarda o caminho/URL resultante.</li>
+        <li>Nunca guardar o binário no banco — apenas o caminho do arquivo no Storage.</li>
+        <li>Supabase Storage permite transformações (resize/quality) para servir thumbnails sem duplicar arquivos.</li>
+      </ul>
+      <p>Campos úteis em <code>produtos_loja</code>: <code>imagem_path</code> · <code>imagem_url</code> · <code>imagem_alt</code> · <code>imagem_bucket</code></p>
+
+      <h3>Auditoria</h3>
+      <p><code>audit_logs</code> — histórico de ações importantes. Não serve para tela do usuário.</p>
+      <ul class="tight" style="margin-bottom:12px;">
+        <li>Admin aprova, recusa ou estorna pedido.</li>
+        <li>Pontos são creditados ou debitados.</li>
+        <li>Resgate é confirmado ou recusado.</li>
+        <li>Estoque de produto da lojinha é alterado.</li>
+        <li>Produto da lojinha é criado ou editado.</li>
+        <li>Pintor é inativado ou reativado.</li>
+        <li>Admin altera o multiplicador global.</li>
+      </ul>
+      <div class="endpoint">
+        <div class="ep-head"><span style="font-family:ui-monospace;font-size:12px;font-weight:700;padding:3px 9px;border-radius:5px;color:#fff;background:#8A817A;letter-spacing:0.04em;">TABLE</span><span class="ep-path">audit_logs</span></div>
+        <div class="ep-body">
+<pre><span class="k">id</span>
+<span class="k">ator_tipo</span>    <span class="c">// admin | sistema</span>
+<span class="k">ator_id</span>
+<span class="k">acao</span>
+<span class="k">entidade</span>
+<span class="k">entidade_id</span>
+<span class="k">antes</span>        <span class="c">// jsonb</span>
+<span class="k">depois</span>       <span class="c">// jsonb</span>
+<span class="k">criado_em</span></pre>
+        </div>
+      </div>
+
+      <h3>Row Level Security (RLS)</h3>
+      <p>O Admin opera com acesso amplo. As políticas RLS para o app Pintor (isolamento por <code>pintor_id</code>) não se aplicam às queries do Admin.</p>
+      <table>
+        <thead><tr><th>Estratégia</th><th>Como funciona</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Service role key</strong></td><td>Backend Admin usa a service role key — bypassa RLS. Mais simples.</td></tr>
+          <tr><td><strong>Política <code>is_admin</code></strong></td><td>Policies que permitem acesso total quando <code>is_admin = true</code>. Mais granular.</td></tr>
+        </tbody>
+      </table>
+      <div class="callout warn">
+        <div class="co-title">Estratégia de acesso — a definir</div>
+        <p>A escolha entre service role key e política <code>is_admin</code> deve ser definida pelo dev conforme a arquitetura de segurança do projeto.</p>
+      </div>
+    </section>
+
+    <!-- ===== ORDEM DE IMPLEMENTAÇÃO ===== -->
+    <section class="section" id="implementacao">
+      <h2>Ordem Sugerida de Implementação</h2>
+
+      <ol style="padding-left:22px; margin:14px 0; line-height:2.2;">
+        <li>Autenticação do Admin (Supabase Auth — e-mail + senha).</li>
+        <li>Autenticação do Pintor (telefone + senha — ver handoff do Pintor).</li>
+        <li>Cadastro e gestão de pintores (<code>POST /pintores</code>, <code>PUT /pintores/[slug]</code>).</li>
+        <li>Cadastro e gestão de clientes (<code>POST /clientes</code>, <code>PUT /clientes/[id]</code>).</li>
+        <li>Integração com Hiper Loja (catálogo de produtos).</li>
+        <li>Criação e listagem de pedidos (<code>POST /pedidos</code>, <code>GET /pedidos</code>).</li>
+        <li>Aprovação, recusa e estorno de pedidos + geração de pontos e notificações.</li>
+        <li>Lojinha: produtos, multiplicador, resgates e confirmação de entrega.</li>
+        <li>Relatórios e agregações por período.</li>
+        <li>Configurações do Admin (perfil e senha).</li>
+      </ol>
+    </section>
+
+    <!-- ===== 1. LOGIN ===== -->
+    <section class="section" id="login">
+      <div class="eyebrow">Tela 1</div>
+      <h2>Login</h2>
+      <div class="badges">
+        <span class="badge route">/login</span>
+        <span class="badge profile">Admin · Desktop</span>
+      </div>
+      <p class="lead">Acesso exclusivo do perfil Admin via e-mail e senha. Sem OAuth.</p>
+
+      <div class="behavior">
+        <div class="bh-label">Comportamento</div>
+        <p>O admin entra no painel digitando <strong>e-mail e senha</strong>. Não existe cadastro de admin pela interface nem login social — as contas são criadas manualmente no backend. Ao enviar, o backend valida as credenciais: se corretas, gera um <strong>token de sessão</strong> e devolve os dados do admin (nome e foto) para montar o cabeçalho do painel.</p>
+        <p>O token deve ser persistido e enviado em <strong>todas as requisições seguintes</strong>; quando faltar ou expirar, o usuário é mandado de volta para esta tela. Se as credenciais estiverem erradas, retorna <code>401</code> — sem dizer se foi o e-mail ou a senha que errou.</p>
+      </div>
+
+      <h3>Endpoint</h3>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method post">POST</span><span class="ep-path">/auth/login</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Body</div>
+<pre>{
+  <span class="k">"email"</span>: <span class="s">"admin@minastintas.com.br"</span>,
+  <span class="k">"senha"</span>: <span class="s">"string"</span>
+}</pre>
+          <div class="ep-label">Resposta · 200 OK</div>
+<pre>{
+  <span class="k">"token"</span>: <span class="s">"string"</span>,
+  <span class="k">"admin"</span>: {
+    <span class="k">"id"</span>: <span class="s">"string"</span>,
+    <span class="k">"nome"</span>: <span class="s">"Admin Minas Tintas"</span>,
+    <span class="k">"foto_url"</span>: <span class="s">"string ou null"</span>
+  }
+}</pre>
+          <div class="ep-label">Erros</div>
+          <ul class="tight">
+            <li><code>401</code> — credenciais inválidas</li>
+            <li><code>400</code> — campos ausentes</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout crit">
+        <div class="co-title">Mensagem de erro genérica</div>
+        <p>No <code>401</code>, <strong>não diferenciar</strong> "e-mail não existe" de "senha incorreta". Retornar mensagem genérica por segurança (evita enumeração de usuários).</p>
+      </div>
+    </section>
+
+    <!-- ===== 2. INÍCIO ===== -->
+    <section class="section" id="inicio">
+      <div class="eyebrow">Tela 2</div>
+      <h2>Início — Busca de Clientes</h2>
+      <div class="badges">
+        <span class="badge route">/dashboard</span>
+        <span class="badge profile">Admin · Desktop</span>
+      </div>
+      <p class="lead">Tela de entrada. Verifica se um cliente já tem cadastro antes de criar um pedido — e é o hub de gestão de clientes (cadastrar e editar).</p>
+
+      <div class="behavior">
+        <div class="bh-label">Comportamento</div>
+        <p>É a porta de entrada do admin. Antes de criar um pedido, ele verifica aqui se o cliente <strong>já existe</strong>: ao digitar nome ou telefone, recebe resultados em tempo real, cada um indicando se aquele cliente já tem um <strong>pintor vinculado</strong>.</p>
+        <p>Se o cliente não existe, o próprio campo de busca vira o atalho para cadastrá-lo — com o termo digitado já preenchido no formulário. Clicar num resultado abre o <strong>mesmo formulário em modo de edição</strong>. Cadastro e edição compartilham o componente: endereço auto-preenchido por CEP (ViaCEP) e <strong>deduplicação obrigatória por telefone</strong>.</p>
+      </div>
+
+      <h3>Campo de busca</h3>
+      <ul class="tight">
+        <li>Busca <strong>simultânea</strong> por nome (qualquer quantidade de caracteres) e por telefone (a partir de 4 dígitos), em tempo real.</li>
+        <li>Retorna até <strong>8 resultados</strong>.</li>
+        <li>Os chips Nome · Telefone · Empresa são <strong>decorativos</strong> (indicam critérios aceitos), não filtros interativos.</li>
+      </ul>
+
+      <h4>Estado sem resultado</h4>
+      <p>Mensagem <code>Nenhum cliente encontrado para "[termo]"</code> + botão <strong>"Cadastrar [termo]"</strong> que abre o modal de cadastro com o nome pré-preenchido.</p>
+
+      <h3>Endpoints</h3>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/clientes?q=texto</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Comportamento do backend</div>
+          <ul class="tight">
+            <li>Correspondência parcial por <strong>nome</strong> (case-insensitive).</li>
+            <li>Correspondência parcial por <strong>telefone</strong> (ignorar máscara — comparar só dígitos).</li>
+            <li>As duas buscas em paralelo com <code>OR</code> — retorna quem satisfizer pelo menos uma.</li>
+          </ul>
+          <div class="ep-label">Resposta · 200 OK</div>
+<pre>[
+  {
+    <span class="k">"id"</span>: <span class="s">"string"</span>,
+    <span class="k">"nome"</span>: <span class="s">"Maria Silva"</span>,
+    <span class="k">"tipo"</span>: <span class="s">"pessoa"</span>,
+    <span class="k">"telefone"</span>: <span class="s">"(32) 99999-0000"</span>,
+    <span class="k">"cpf"</span>: <span class="s">"000.000.000-00 ou null"</span>,
+    <span class="k">"cep"</span>: <span class="s">"string ou null"</span>,
+    <span class="k">"rua"</span>: <span class="s">"string ou null"</span>,
+    <span class="k">"numero"</span>: <span class="s">"string ou null"</span>,
+    <span class="k">"complemento"</span>: <span class="s">"string ou null"</span>,
+    <span class="k">"bairro"</span>: <span class="s">"string ou null"</span>,
+    <span class="k">"cidade"</span>: <span class="s">"string ou null"</span>,
+    <span class="k">"pintor"</span>: {
+      <span class="k">"id"</span>: <span class="s">"string"</span>, <span class="k">"nome"</span>: <span class="s">"João Pereira"</span>,
+      <span class="k">"slug"</span>: <span class="s">"joao-pereira"</span>, <span class="k">"cidade"</span>: <span class="s">"São João del-Rei"</span>
+    }
+  }
+]</pre>
+          <p class="note"><code>pintor</code> é <code>null</code> se não vinculado · campos de endereço <code>null</code> se vazios · retorna <code>[]</code> se nada encontrado.</p>
+        </div>
+      </div>
+
+      <h3>Modal — Cadastrar / Editar cliente</h3>
+      <p>Mesmo componente (<code>CadastrarClienteModal</code>). Abre via "Cadastrar cliente"/"Cadastrar [termo]" (cadastro) ou ao <strong>clicar num card de resultado</strong> (edição, dados pré-preenchidos, título "Editar cliente" · botão "Salvar alterações").</p>
+
+      <table>
+        <thead><tr><th>Campo</th><th>Obrig.</th><th>Máscara / Formato</th><th>Preenchimento</th></tr></thead>
+        <tbody>
+          <tr><td>Tipo</td><td class="req">Sim</td><td>Pessoa física / Empresa</td><td>Toggle — padrão Pessoa física</td></tr>
+          <tr><td>Nome</td><td class="req">Sim</td><td>—</td><td>Manual</td></tr>
+          <tr><td>CPF</td><td class="opt">Não</td><td><code>000.000.000-00</code></td><td>Manual c/ máscara</td></tr>
+          <tr><td>Telefone</td><td class="req">Sim</td><td><code>(00) 00000-0000</code></td><td>Manual</td></tr>
+          <tr><td>CEP</td><td class="opt">Não</td><td><code>00000-000</code></td><td>Auto-preenche Rua, Bairro, Cidade via ViaCEP no 8º dígito</td></tr>
+          <tr><td>Rua</td><td class="opt">Não</td><td>—</td><td>ViaCEP ou manual</td></tr>
+          <tr><td>Número</td><td class="opt">Não</td><td>—</td><td>Manual</td></tr>
+          <tr><td>Complemento</td><td class="opt">Não</td><td>—</td><td>Manual</td></tr>
+          <tr><td>Bairro</td><td class="opt">Não</td><td>—</td><td>ViaCEP ou manual</td></tr>
+          <tr><td>Cidade</td><td class="opt">Não</td><td>—</td><td>ViaCEP ou manual</td></tr>
+          <tr><td>Pintor vinculado</td><td class="opt">Não</td><td>—</td><td>Autocomplete contra pintores ativos (dropdown abre p/ cima)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="endpoint">
+        <div class="ep-head"><span class="method post">POST</span><span class="ep-path">/clientes</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Body</div>
+<pre>{
+  <span class="k">"nome"</span>: <span class="s">"Fernanda Duarte"</span>,
+  <span class="k">"tipo"</span>: <span class="s">"pessoa"</span>,
+  <span class="k">"telefone"</span>: <span class="s">"(32) 98456-3390"</span>,
+  <span class="k">"cpf"</span>: <span class="s">"string ou null"</span>,
+  <span class="k">"cep"</span>: <span class="s">"string ou null"</span>,
+  <span class="k">"rua"</span>: <span class="s">"string ou null"</span>, <span class="k">"numero"</span>: <span class="s">"string ou null"</span>,
+  <span class="k">"complemento"</span>: <span class="s">"string ou null"</span>, <span class="k">"bairro"</span>: <span class="s">"string ou null"</span>,
+  <span class="k">"cidade"</span>: <span class="s">"string ou null"</span>,
+  <span class="k">"pintor_id"</span>: <span class="s">"string ou null"</span>
+}</pre>
+          <div class="ep-label">Resposta · 201 Created</div>
+<pre>{ <span class="k">"id"</span>: <span class="s">"string"</span>, <span class="k">"nome"</span>: <span class="s">"Fernanda Duarte"</span>, <span class="k">"tipo"</span>: <span class="s">"pessoa"</span>, <span class="k">"telefone"</span>: <span class="s">"(32) 98456-3390"</span> }</pre>
+        </div>
+      </div>
+
+      <div class="endpoint">
+        <div class="ep-head"><span class="method put">PUT</span><span class="ep-path">/clientes/[id]</span></div>
+        <div class="ep-body">
+          <p>Mesma estrutura do <code>POST</code>. Resposta <code>200 OK</code> com os dados completos atualizados.</p>
+        </div>
+      </div>
+
+      <div class="callout crit">
+        <div class="co-title">Telefone único = deduplicação</div>
+        <p><code>nome</code> e <code>telefone</code> são obrigatórios (<code>400</code> se ausentes). O <strong>telefone deve ser único</strong> — retornar <code>409</code> se já existir outro cliente com o mesmo número. Esse é o principal mecanismo de deduplicação. Na edição, validar unicidade apenas se o telefone foi alterado.</p>
+      </div>
+      <div class="callout integ">
+        <div class="co-title">ViaCEP</div>
+        <p>Auto-preenchimento de Rua, Bairro e Cidade ao completar o 8º dígito do CEP. Cidade pode ser sobrescrita manualmente.</p>
+      </div>
+    </section>
+
+    <!-- ===== 3. PEDIDOS ===== -->
+    <section class="section" id="pedidos">
+      <div class="eyebrow">Tela 3</div>
+      <h2>Pedidos — Lista</h2>
+      <div class="badges">
+        <span class="badge route">/pedidos</span>
+        <span class="badge profile">Admin · Desktop</span>
+      </div>
+      <p class="lead">Tela central de gestão. Stat tiles do dia, filtros por status e pagamento, busca textual e criação de pedido manual.</p>
+
+      <div class="behavior">
+        <div class="bh-label">Comportamento</div>
+        <p>Tela central de operação. Mostra todos os pedidos numa tabela, com indicadores do dia no topo (pendentes, volume de hoje, bônus liberado). O admin filtra por <strong>status, forma de pagamento e pintor</strong>, ou busca por texto — cada pill de status exibe seu contador.</p>
+        <p>A ação principal é criar um <strong>pedido manual</strong>: escolhe cliente/obra, pintor, monta o carrinho de produtos (catálogo do Hiper Loja), define pagamento e um desconto opcional. Todo pedido <strong>nasce pendente</strong> e nenhum bônus é creditado nesse momento — o crédito só acontece na aprovação. O <code>total</code> gravado é sempre o <strong>valor bruto</strong>; o desconto fica em campo separado e não reduz o bônus.</p>
+      </div>
+
+      <h3>Stat tiles (topo)</h3>
+      <table>
+        <thead><tr><th>Tile</th><th>Dado</th><th>Regra</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Pendentes</strong></td><td>Contagem com <code>status = pendente</code></td><td>Todos os períodos</td></tr>
+          <tr><td><strong>Hoje · [data]</strong></td><td>Soma dos totais aprovados criados hoje</td><td>Só aprovados do dia</td></tr>
+          <tr><td><strong>Bônus Liberado · Total</strong></td><td>Soma de todos os bônus (pts) creditados</td><td>Só pedidos aprovados, todos os períodos</td></tr>
+          <tr><td><strong>Hoje · Volume</strong></td><td>Soma dos totais de todos os pedidos de hoje</td><td>Aprovado + pendente</td></tr>
+        </tbody>
+      </table>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/pedidos/resumo</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Resposta</div>
+<pre>{
+  <span class="k">"pendentes"</span>: <span class="n">2</span>,
+  <span class="k">"hoje_volume_aprovado"</span>: <span class="n">1664.00</span>,
+  <span class="k">"bonus_total_pts"</span>: <span class="n">5244</span>,
+  <span class="k">"hoje_volume_total"</span>: <span class="n">5504.00</span>
+}</pre>
+        </div>
+      </div>
+
+      <h3>Lista, filtros e busca</h3>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/pedidos</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Query params</div>
+          <table>
+            <thead><tr><th>Param</th><th>Tipo</th><th>Descrição</th></tr></thead>
+            <tbody>
+              <tr><td><code>q</code></td><td>string</td><td>Pintor, obra ou número do pedido</td></tr>
+              <tr><td><code>status</code></td><td>enum | null</td><td>pendente · aprovado · recusado · estornado</td></tr>
+              <tr><td><code>pintor_id</code></td><td>string</td><td>Filtro avançado por pintor</td></tr>
+              <tr><td><code>pagamento</code></td><td>enum | null</td><td>dinheiro · pix · cartao · notinha</td></tr>
+              <tr><td><code>page</code></td><td>number</td><td>Paginação</td></tr>
+            </tbody>
+          </table>
+          <div class="ep-label">Resposta</div>
+<pre>{
+  <span class="k">"total"</span>: <span class="n">23</span>,
+  <span class="k">"pedidos"</span>: [
+    {
+      <span class="k">"id"</span>: <span class="s">"0494"</span>,
+      <span class="k">"pintor"</span>: { <span class="k">"id"</span>: <span class="s">"string"</span>, <span class="k">"nome"</span>: <span class="s">"José Mariano"</span>, <span class="k">"cidade"</span>: <span class="s">"Tiradentes"</span> },
+      <span class="k">"obra"</span>: <span class="s">"Igreja São Francisco"</span>,
+      <span class="k">"data"</span>: <span class="s">"2026-05-22"</span>,
+      <span class="k">"total"</span>: <span class="n">3480.00</span>,
+      <span class="k">"status"</span>: <span class="s">"aprovado"</span>,
+      <span class="k">"pagamento"</span>: <span class="s">"pix"</span>
+    }
+  ]
+}</pre>
+          <p class="note">Ordenação padrão: data decrescente. Cada pill de status exibe o contador daquele status.</p>
+        </div>
+      </div>
+
+      <h3>Modal — Novo pedido manual</h3>
+      <p>Padrão canônico de modal do sistema. Campos na ordem:</p>
+      <table>
+        <thead><tr><th>Campo</th><th>Obrig.</th><th>Comportamento</th></tr></thead>
+        <tbody>
+          <tr><td>Obra / cliente</td><td class="req">Sim</td><td>Autocomplete em obras/clientes. Sem resultado → "+ Cadastrar [nome]" abre o <code>CadastrarClienteModal</code>; após salvar, preenche o campo automaticamente.</td></tr>
+          <tr><td>Pintor</td><td class="req">Sim</td><td>Autocomplete contra pintores <strong>ativos</strong>. Não aceita nome inexistente — só seleção.</td></tr>
+          <tr><td>Produtos</td><td class="req">Sim</td><td>Busca por descrição/marca/código (origem Hiper Loja). Carrinho com quantidade editável. Margem % = <code>((venda − custo) / custo) × 100</code>, calculada no front.</td></tr>
+          <tr><td>Forma de pagamento</td><td class="req">Sim</td><td>Grid 2×2: Dinheiro · Pix · Cartão · Notinha (seleção única).</td></tr>
+          <tr><td>Desconto</td><td class="opt">Não</td><td>"Desconto para o cliente" — máscara de centavos (digita <code>1000</code> → <code>10,00</code>). Padrão <code>0</code>.</td></tr>
+          <tr><td>Anotação interna</td><td class="opt">Não</td><td>Textarea visível só para a loja — nunca para o pintor.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="endpoint">
+        <div class="ep-head"><span class="method post">POST</span><span class="ep-path">/pedidos</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Body</div>
+<pre>{
+  <span class="k">"obra"</span>: <span class="s">"Nome da obra ou cliente"</span>,
+  <span class="k">"pintor_id"</span>: <span class="s">"string"</span>,
+  <span class="k">"produtos"</span>: [
+    { <span class="k">"produto_id"</span>: <span class="s">"string"</span>, <span class="k">"descricao"</span>: <span class="s">"string"</span>,
+      <span class="k">"quantidade"</span>: <span class="n">2</span>, <span class="k">"preco_custo"</span>: <span class="n">180.00</span>, <span class="k">"preco_venda"</span>: <span class="n">320.00</span> }
+  ],
+  <span class="k">"pagamento"</span>: <span class="s">"pix"</span>,
+  <span class="k">"notas_internas"</span>: <span class="s">"string ou null"</span>,
+  <span class="k">"total"</span>: <span class="n">640.00</span>,
+  <span class="k">"desconto"</span>: <span class="n">0.00</span>
+}</pre>
+          <div class="ep-label">Resposta · 201 Created</div>
+<pre>{ <span class="k">"id"</span>: <span class="s">"0495"</span>, <span class="k">"status"</span>: <span class="s">"pendente"</span> }</pre>
+        </div>
+      </div>
+
+      <div class="callout crit">
+        <div class="co-title">Pedido manual nasce pendente</div>
+        <p>Todo pedido criado manualmente nasce com <code>status = pendente</code>. O bônus <strong>não é creditado na criação</strong> — só na aprovação. O <code>total</code> é o valor bruto (sem desconto); o backend calcula o bônus sempre sobre o bruto.</p>
+      </div>
+      <div class="callout warn">
+        <div class="co-title">Atenção — API Hiper Loja</div>
+        <p>O endpoint de busca de produtos depende da integração com o <strong>Hiper Loja</strong>. Campos esperados: descrição, marca, preço de custo, preço de venda, estoque e código. Mapear no momento da integração — consultar a documentação do Hiper.</p>
+      </div>
+    </section>
+
+    <!-- ===== 4. DETALHE DO PEDIDO ===== -->
+    <section class="section" id="pedido-detalhe">
+      <div class="eyebrow">Tela 4</div>
+      <h2>Pedido — Detalhe</h2>
+      <div class="badges">
+        <span class="badge route">/pedidos/[id]</span>
+        <span class="badge profile">Admin · Desktop</span>
+      </div>
+      <p class="lead">Itens do orçamento, total, pagamento, bônus calculado, linha do tempo e ações conforme o status.</p>
+
+      <div class="behavior">
+        <div class="bh-label">Comportamento</div>
+        <p>Onde o admin decide o destino de um pedido. Exibe os itens, o total, o bônus calculado e uma <strong>linha do tempo cumulativa</strong> de tudo que aconteceu. As ações disponíveis dependem do status: um pedido <strong>pendente</strong> pode ser aprovado ou recusado; um <strong>aprovado</strong> pode ser estornado, sempre com motivo obrigatório.</p>
+        <p><strong>Aprovar</strong> credita o bônus no saldo do pintor; <strong>estornar</strong> reverte exatamente esse bônus (e nada além dele). Cada ação grava um evento datado na timeline, que <strong>nunca é apagada</strong> — um pedido aprovado e depois estornado mostra os dois eventos em sequência.</p>
+      </div>
+
+      <h3>Card de bônus — por status</h3>
+      <table>
+        <thead><tr><th>Status</th><th>Label do card</th><th>Comportamento</th></tr></thead>
+        <tbody>
+          <tr><td><span class="status-dot dot-pend"></span>pendente</td><td><strong>A CREDITAR</strong></td><td>Mostra o bônus que será creditado se aprovado</td></tr>
+          <tr><td><span class="status-dot dot-aprov"></span>aprovado</td><td><strong>BÔNUS CREDITADO ✓</strong></td><td>Já lançado no saldo do pintor</td></tr>
+          <tr><td><span class="status-dot dot-recus"></span>recusado</td><td><strong>NÃO CREDITADO</strong></td><td>Nenhum bônus gerado</td></tr>
+          <tr><td><span class="status-dot dot-estorn"></span>estornado</td><td><strong>REVERTIDO</strong></td><td>Bônus debitado do saldo do pintor</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Linha do tempo (timeline)</h3>
+      <div class="callout crit">
+        <div class="co-title">Timeline cumulativa e imutável</div>
+        <p>Nenhum evento é apagado. Um pedido aprovado e depois estornado mostra os 4 eventos em ordem: <strong>criado → em análise → aprovado → estornado</strong>. Cada evento tem data/hora registradas pelo backend no momento da ação.</p>
+      </div>
+
+      <div class="endpoint">
+        <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/pedidos/[id]</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Resposta</div>
+<pre>{
+  <span class="k">"id"</span>: <span class="s">"0494"</span>,
+  <span class="k">"obra"</span>: <span class="s">"Igreja São Francisco"</span>,
+  <span class="k">"pintor"</span>: { <span class="k">"id"</span>: <span class="s">"string"</span>, <span class="k">"nome"</span>: <span class="s">"José Mariano"</span>, <span class="k">"cidade"</span>: <span class="s">"Tiradentes"</span>, <span class="k">"slug"</span>: <span class="s">"jose-mariano"</span> },
+  <span class="k">"status"</span>: <span class="s">"aprovado"</span>,
+  <span class="k">"pagamento"</span>: <span class="s">"pix"</span>,
+  <span class="k">"notas_internas"</span>: <span class="s">"string ou null"</span>,
+  <span class="k">"estorno_motivo"</span>: <span class="s">"string ou null"</span>,
+  <span class="k">"total"</span>: <span class="n">3480.00</span>,
+  <span class="k">"bonus_pts"</span>: <span class="n">348</span>,
+  <span class="k">"data_criacao"</span>: <span class="s">"2026-03-12T14:32:00Z"</span>,
+  <span class="k">"data_aprovacao"</span>: <span class="s">"2026-05-22T18:45:00Z"</span>,
+  <span class="k">"data_estorno"</span>: <span class="s">null</span>,
+  <span class="k">"produtos"</span>: [
+    { <span class="k">"descricao"</span>: <span class="s">"Tinta látex acrílica fosca 18L..."</span>, <span class="k">"quantidade"</span>: <span class="n">4</span>, <span class="k">"preco_unitario"</span>: <span class="n">320.00</span>, <span class="k">"subtotal"</span>: <span class="n">1280.00</span> }
+  ],
+  <span class="k">"timeline"</span>: [
+    { <span class="k">"evento"</span>: <span class="s">"criado"</span>, <span class="k">"data"</span>: <span class="s">"2026-03-12T14:32:00Z"</span> },
+    { <span class="k">"evento"</span>: <span class="s">"em_analise"</span>, <span class="k">"data"</span>: <span class="s">"2026-03-12T16:08:00Z"</span> },
+    { <span class="k">"evento"</span>: <span class="s">"aprovado"</span>, <span class="k">"data"</span>: <span class="s">"2026-05-22T18:45:00Z"</span> }
+  ]
+}</pre>
+        </div>
+      </div>
+
+      <h3>Ações</h3>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method put">PUT</span><span class="ep-path">/pedidos/[id]/aprovar</span></div>
+        <div class="ep-body"><ul class="tight">
+          <li>Muda <code>status</code> → <code>aprovado</code>.</li>
+          <li>Calcula o bônus (1% do total bruto) e <strong>credita no saldo do pintor</strong>.</li>
+          <li>Insere lançamento em <code>pontos_movimentos</code> (tipo: crédito).</li>
+          <li>Insere linha em <code>notificacoes</code> para o pintor (<code>tipo: 'pedido_aprovado'</code>, com link para <code>/pedidos/[id]</code>).</li>
+          <li>Adiciona evento "aprovado · bônus creditado" na timeline.</li>
+        </ul></div>
+      </div>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method put">PUT</span><span class="ep-path">/pedidos/[id]/recusar</span></div>
+        <div class="ep-body"><ul class="tight">
+          <li>Muda <code>status</code> → <code>recusado</code>. Nenhum bônus gerado.</li>
+          <li>Adiciona evento "recusado" na timeline.</li>
+        </ul></div>
+      </div>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method put">PUT</span><span class="ep-path">/pedidos/[id]/estornar</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Body</div>
+<pre>{ <span class="k">"motivo"</span>: <span class="s">"Pagamento não confirmado pelo banco"</span> }</pre>
+          <ul class="tight">
+            <li>Muda <code>status</code> → <code>estornado</code>.</li>
+            <li><strong>Reverte o bônus</strong>: debita do saldo do pintor os pontos creditados neste pedido.</li>
+            <li>Salva o motivo em <code>estorno_motivo</code> (exibido no recibo) + timestamp na timeline.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout crit">
+        <div class="co-title">Estorno só reverte este pedido</div>
+        <p>O estorno reverte exatamente o bônus creditado <strong>neste</strong> pedido — não afeta bônus de outros pedidos do pintor. O campo motivo é <strong>obrigatório</strong>.</p>
+      </div>
+      <div class="callout info">
+        <div class="co-title">Imprimir — frontend only</div>
+        <p>O botão "Imprimir" chama <code>window.print()</code> e formata a tela como recibo. Sem chamada à API.</p>
+      </div>
+    </section>
+
+    <!-- ===== 5. PINTORES ===== -->
+    <section class="section" id="pintores">
+      <div class="eyebrow">Tela 5</div>
+      <h2>Pintores — Lista</h2>
+      <div class="badges">
+        <span class="badge route">/pintores</span>
+        <span class="badge profile">Admin · Desktop</span>
+      </div>
+      <p class="lead">Gestão dos pintores parceiros. Lista com busca e cadastro de novos pintores.</p>
+
+      <div class="behavior">
+        <div class="bh-label">Comportamento</div>
+        <p>Gestão dos pintores parceiros. Lista todos com busca por <strong>nome, CPF ou cidade</strong>, mostrando saldo de pontos e status de cada um. Clicar numa linha abre o perfil completo do pintor.</p>
+        <p>A ação principal é <strong>cadastrar um novo pintor</strong>: além dos dados pessoais, o admin define a <strong>senha de acesso ao app</strong>. O telefone é o login do pintor e precisa ser único — assim como o CPF. O pintor nasce <strong>ativo, com saldo zero</strong>, e a senha é salva hashada (nunca em texto puro).</p>
+      </div>
+
+      <h3>Tabela</h3>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/pintores?q=texto&status=ativo</span></div>
+        <div class="ep-body">
+          <p class="note">Busca simultânea por nome, CPF (com ou sem máscara) e cidade. CPF exibido mascarado: <code>048.***.***-99</code>.</p>
+          <div class="ep-label">Resposta</div>
+<pre>{
+  <span class="k">"ativos"</span>: <span class="n">5</span>,
+  <span class="k">"cadastros_ultimo_mes"</span>: <span class="n">18</span>,
+  <span class="k">"pintores"</span>: [
+    {
+      <span class="k">"id"</span>: <span class="s">"string"</span>, <span class="k">"slug"</span>: <span class="s">"joao-pereira"</span>,
+      <span class="k">"nome"</span>: <span class="s">"João Pereira"</span>, <span class="k">"cpf"</span>: <span class="s">"048.***.***-99"</span>,
+      <span class="k">"cidade"</span>: <span class="s">"São João del-Rei"</span>, <span class="k">"desde"</span>: <span class="s">"2024-09-01"</span>,
+      <span class="k">"pedidos"</span>: <span class="n">5</span>, <span class="k">"saldo_pts"</span>: <span class="n">1625</span>, <span class="k">"status"</span>: <span class="s">"ativo"</span>
+    }
+  ]
+}</pre>
+          <p class="note"><code>ativos</code> = pintores ativos · <code>cadastros_ultimo_mes</code> = cadastrados nos últimos 30 dias. Clicar na linha navega para <code>/pintores/[slug]</code>.</p>
+        </div>
+      </div>
+
+      <h3>Modal — Cadastrar pintor</h3>
+      <table>
+        <thead><tr><th>Campo</th><th>Obrig.</th><th>Máscara / Regra</th></tr></thead>
+        <tbody>
+          <tr><td>Nome completo</td><td class="req">Sim</td><td>—</td></tr>
+          <tr><td>CPF</td><td class="req">Sim</td><td><code>000.000.000-00</code> — único no sistema</td></tr>
+          <tr><td>Telefone</td><td class="req">Sim</td><td><code>(00) 00000-0000</code> — único; é o login do pintor</td></tr>
+          <tr><td>CEP</td><td class="opt">Não</td><td><code>00000-000</code></td></tr>
+          <tr><td>Cidade</td><td class="req">Sim</td><td>Manual (sem integração)</td></tr>
+          <tr><td>Endereço / Número / Compl. / Bairro</td><td class="opt">Não</td><td>Manual</td></tr>
+          <tr><td>Senha</td><td class="req">Sim</td><td>Mínimo 6 caracteres</td></tr>
+          <tr><td>Confirmar senha</td><td class="req">Sim</td><td>Idêntica à senha</td></tr>
+        </tbody>
+      </table>
+
+      <div class="endpoint">
+        <div class="ep-head"><span class="method post">POST</span><span class="ep-path">/pintores</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Body</div>
+<pre>{
+  <span class="k">"nome"</span>: <span class="s">"João da Silva"</span>, <span class="k">"cpf"</span>: <span class="s">"048.000.000-99"</span>,
+  <span class="k">"telefone"</span>: <span class="s">"(32) 99999-9999"</span>, <span class="k">"cep"</span>: <span class="s">"36300-000"</span>,
+  <span class="k">"cidade"</span>: <span class="s">"São João del-Rei"</span>, <span class="k">"endereco"</span>: <span class="s">"Rua das Flores"</span>,
+  <span class="k">"numero"</span>: <span class="s">"142"</span>, <span class="k">"complemento"</span>: <span class="s">"Apto 2"</span>,
+  <span class="k">"bairro"</span>: <span class="s">"Centro"</span>, <span class="k">"senha"</span>: <span class="s">"string"</span>
+}</pre>
+          <div class="ep-label">Resposta · 201 Created</div>
+<pre>{ <span class="k">"id"</span>: <span class="s">"string"</span>, <span class="k">"slug"</span>: <span class="s">"joao-da-silva"</span>, <span class="k">"status"</span>: <span class="s">"ativo"</span> }</pre>
+        </div>
+      </div>
+
+      <div class="callout crit">
+        <div class="co-title">Telefone = login do pintor</div>
+        <p>O telefone é o <strong>identificador único de login</strong> do pintor no app. Backend deve: validar CPF (dígitos verificadores), garantir telefone e CPF únicos, criar credenciais com <strong>senha hashada</strong> (nunca texto puro), gerar <code>slug</code> a partir do nome. Pintor nasce <code>ativo</code> com saldo <code>0</code>.</p>
+      </div>
+    </section>
+
+    <!-- ===== 6. DETALHE DO PINTOR ===== -->
+    <section class="section" id="pintor-detalhe">
+      <div class="eyebrow">Tela 6</div>
+      <h2>Pintor — Detalhe</h2>
+      <div class="badges">
+        <span class="badge route">/pintores/[slug]</span>
+        <span class="badge profile">Admin · Desktop</span>
+      </div>
+      <p class="lead">Perfil completo: dados cadastrais, performance, histórico de pedidos e ações de edição/ativação.</p>
+
+      <div class="behavior">
+        <div class="bh-label">Comportamento</div>
+        <p>Perfil completo de um pintor: dados cadastrais, indicadores de performance (pedidos, saldo, volume) e histórico de pedidos. O admin pode <strong>editar o cadastro</strong> — inclusive trocar a senha de acesso — e <strong>ativar ou inativar</strong> o pintor.</p>
+        <p><strong>Inativar</strong> tira o pintor dos autocompletes de seleção e bloqueia o login dele no app, mas <strong>não afeta pedidos já existentes</strong>. A edição revalida a unicidade de telefone e CPF caso sejam alterados.</p>
+      </div>
+
+      <h3>Stat tiles (3 cards)</h3>
+      <table>
+        <thead><tr><th>Card</th><th>Dado</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Pedidos</strong></td><td>Total (todos os status) · rodapé: só aprovados</td></tr>
+          <tr><td><strong>Saldo em pontos</strong></td><td>Saldo atual disponível</td></tr>
+          <tr><td><strong>Volume total</strong></td><td>Soma dos totais dos pedidos aprovados (R$)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="endpoint">
+        <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/pintores/[slug]</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Resposta</div>
+<pre>{
+  <span class="k">"id"</span>: <span class="s">"string"</span>, <span class="k">"slug"</span>: <span class="s">"joao-pereira"</span>, <span class="k">"nome"</span>: <span class="s">"João Pereira"</span>,
+  <span class="k">"cpf"</span>: <span class="s">"048.***.***-99"</span>, <span class="k">"telefone"</span>: <span class="s">"(32) 99999-9999"</span>,
+  <span class="k">"cidade"</span>: <span class="s">"São João del-Rei"</span>, <span class="k">"cep"</span>: <span class="s">"36300-000"</span>,
+  <span class="k">"endereco"</span>: <span class="s">"Rua das Flores"</span>, <span class="k">"numero"</span>: <span class="s">"142"</span>,
+  <span class="k">"complemento"</span>: <span class="s">"Apto 2"</span>, <span class="k">"bairro"</span>: <span class="s">"Centro"</span>,
+  <span class="k">"desde"</span>: <span class="s">"2024-09-01"</span>, <span class="k">"status"</span>: <span class="s">"ativo"</span>,
+  <span class="k">"stats"</span>: { <span class="k">"pedidos_total"</span>: <span class="n">8</span>, <span class="k">"pedidos_aprovados"</span>: <span class="n">5</span>, <span class="k">"saldo_pts"</span>: <span class="n">1625</span>, <span class="k">"volume_aprovado"</span>: <span class="n">14800.00</span> },
+  <span class="k">"pedidos"</span>: [
+    { <span class="k">"id"</span>: <span class="s">"0494"</span>, <span class="k">"obra"</span>: <span class="s">"Igreja São Francisco"</span>, <span class="k">"cidade"</span>: <span class="s">"Tiradentes"</span>, <span class="k">"data"</span>: <span class="s">"2026-05-22"</span>, <span class="k">"total"</span>: <span class="n">3480.00</span>, <span class="k">"status"</span>: <span class="s">"aprovado"</span> }
+  ]
+}</pre>
+          <p class="note">Os pedidos podem vir embutidos (acima) ou em <code>GET /pintores/[slug]/pedidos</code> — decidir com o dev conforme o volume.</p>
+        </div>
+      </div>
+
+      <h3>Ações</h3>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method put">PUT</span><span class="ep-path">/pintores/[slug]/inativar · /ativar</span></div>
+        <div class="ep-body"><p>Sem body. Alterna o <code>status</code> entre <code>ativo</code> e <code>inativo</code>.</p></div>
+      </div>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method put">PUT</span><span class="ep-path">/pintores/[slug]</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Body (edição)</div>
+<pre>{
+  <span class="k">"nome"</span>: <span class="s">"João Pereira"</span>, <span class="k">"cpf"</span>: <span class="s">"048.000.000-99"</span>,
+  <span class="k">"telefone"</span>: <span class="s">"(32) 99999-9999"</span>, <span class="k">"cep"</span>: <span class="s">"36300-000"</span>,
+  <span class="k">"cidade"</span>: <span class="s">"São João del-Rei"</span>, <span class="k">"endereco"</span>: <span class="s">"Rua das Flores"</span>,
+  <span class="k">"numero"</span>: <span class="s">"142"</span>, <span class="k">"complemento"</span>: <span class="s">"Apto 2"</span>, <span class="k">"bairro"</span>: <span class="s">"Centro"</span>,
+  <span class="k">"nova_senha"</span>: <span class="s">"string ou null"</span>
+}</pre>
+          <p class="note"><code>nova_senha</code>: enviar <code>null</code> se o admin não alterou a senha; backend só faz hash e salva se <code>!== null</code>.</p>
+        </div>
+      </div>
+
+      <div class="callout crit">
+        <div class="co-title">Efeitos de inativar um pintor</div>
+        <p>Pintor inativo: <strong>não aparece</strong> nos autocompletes de seleção, <strong>não consegue fazer login</strong> no app. Pedidos existentes <strong>não são afetados</strong>. Na edição, revalidar unicidade de telefone e CPF se alterados.</p>
+      </div>
+      <div class="callout warn">
+        <div class="co-title">Atenção — pedido pendente de pintor inativado</div>
+        <p>O que acontece com pedidos <code>pendente</code> de um pintor que foi inativado? Permanece pendente e o admin aprova normalmente? <strong>Definir antes de implementar.</strong></p>
+      </div>
+    </section>
+
+    <!-- ===== 7. LOJINHA ===== -->
+    <section class="section" id="lojinha">
+      <div class="eyebrow">Tela 7</div>
+      <h2>Lojinha</h2>
+      <div class="badges">
+        <span class="badge route">/lojinha</span>
+        <span class="badge profile">Admin · Desktop</span>
+      </div>
+      <p class="lead">Duas abas: <strong>Produtos</strong> (catálogo de itens para resgate) e <strong>Resgates</strong> (solicitações dos pintores, pendentes ou finalizadas).</p>
+
+      <div class="behavior">
+        <div class="bh-label">Comportamento</div>
+        <p>Onde o admin administra o catálogo de recompensas e processa os resgates. Na aba <strong>Produtos</strong>, cada item tem um <strong>custo</strong> que é convertido em pontos por um multiplicador global ajustável somado a um modificador individual — modificador negativo transforma o item em <strong>promoção</strong> automaticamente.</p>
+        <p>Na aba <strong>Resgates</strong>, o admin vê as solicitações dos pintores e <strong>confirma a entrega ou recusa</strong>. Pontos e estoque são debitados no <strong>momento da solicitação</strong>, não na entrega: se o admin recusa, ambos voltam ao pintor; se confirma a entrega, nada muda nos pontos (já foram debitados).</p>
+      </div>
+
+      <h3>Modelo de dados — Item da Lojinha</h3>
+      <table>
+        <thead><tr><th>Campo</th><th>Tipo</th><th>Descrição</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code></td><td>string</td><td>Identificador</td></tr>
+          <tr><td><code>nome</code></td><td>string</td><td>Nome do item</td></tr>
+          <tr><td><code>custo</code></td><td>number</td><td>Preço de custo (R$) — base do cálculo de pontos</td></tr>
+          <tr><td><code>preco_venda</code></td><td>number | null</td><td>Preço de venda — preenchido se vier do catálogo</td></tr>
+          <tr><td><code>modificador_individual</code></td><td>number</td><td>Ajuste sobre o multiplicador global (negativo = promo)</td></tr>
+          <tr><td><code>estoque</code></td><td>number</td><td>Unidades disponíveis</td></tr>
+          <tr><td><code>descricao</code></td><td>string | null</td><td>Texto descritivo</td></tr>
+          <tr><td><code>foto_url</code></td><td>string | null</td><td>URL da imagem</td></tr>
+          <tr><td><code>visivel</code></td><td>boolean</td><td>Se <code>false</code>, oculto para os pintores</td></tr>
+          <tr><td><code>em_promocao</code></td><td>boolean</td><td>Calculado: <code>true</code> quando <code>modificador_individual &lt; 0</code></td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout crit">
+        <div class="co-title">Cálculo de pontos do item</div>
+        <p><code>pontos = Math.round(custo × (multiplicador_global + modificador_individual))</code></p>
+        <p>Multiplicador global padrão: <strong>10</strong> (configurável). Quando <code>modificador_individual &lt; 0</code>, o item vira <strong>PROMO</strong> automaticamente e exibe o preço original riscado.</p>
+        <p>Ex.: custo R$ 180, global 10, modificador −2 → original <code>1.800 pts</code> (riscado) · promo <code>1.440 pts</code>.</p>
+      </div>
+
+      <h3>Endpoints — Produtos</h3>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/lojinha/itens?visivel=true</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Resposta</div>
+<pre>{
+  <span class="k">"multiplicador_global"</span>: <span class="n">10</span>,
+  <span class="k">"itens"</span>: [
+    {
+      <span class="k">"id"</span>: <span class="s">"rolo"</span>, <span class="k">"nome"</span>: <span class="s">"Rolo profissional anti-gota 23 cm"</span>,
+      <span class="k">"custo"</span>: <span class="n">180.00</span>, <span class="k">"preco_venda"</span>: <span class="n">245.00</span>,
+      <span class="k">"modificador_individual"</span>: <span class="n">-2</span>, <span class="k">"estoque"</span>: <span class="n">32</span>,
+      <span class="k">"descricao"</span>: <span class="s">"Rolo de lã 23 cm..."</span>, <span class="k">"foto_url"</span>: <span class="s">"/uploads/rolo.png"</span>,
+      <span class="k">"visivel"</span>: <span class="s">true</span>, <span class="k">"em_promocao"</span>: <span class="s">true</span>,
+      <span class="k">"pontos"</span>: <span class="n">1440</span>, <span class="k">"pontos_original"</span>: <span class="n">1800</span>
+    }
+  ]
+}</pre>
+          <p class="note"><code>pontos</code>/<code>pontos_original</code> são derivados (não salvos). <code>pontos_original</code> só vem quando <code>em_promocao = true</code>.</p>
+        </div>
+      </div>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method post">POST</span><span class="ep-path">/lojinha/itens</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Body</div>
+<pre>{
+  <span class="k">"nome"</span>: <span class="s">"Camiseta Minas Tintas"</span>, <span class="k">"custo"</span>: <span class="n">150.00</span>,
+  <span class="k">"preco_venda"</span>: <span class="n">180.00</span>, <span class="k">"modificador_individual"</span>: <span class="n">0</span>,
+  <span class="k">"estoque"</span>: <span class="n">56</span>, <span class="k">"descricao"</span>: <span class="s">"string ou null"</span>,
+  <span class="k">"foto_url"</span>: <span class="s">"string ou null"</span>, <span class="k">"visivel"</span>: <span class="s">true</span>
+}</pre>
+          <p class="note">Item do catálogo: <code>preco_venda</code> preenchido. Brinde manual: <code>null</code>. Obrigatórios: <code>nome</code> + <code>custo</code>.</p>
+        </div>
+      </div>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method put">PUT</span><span class="ep-path">/lojinha/itens/[id]</span></div>
+        <div class="ep-body">
+          <p>Editáveis: <code>nome</code>, <code>modificador_individual</code> (passo ±0,25), <code>estoque</code>, <code>descricao</code>, <code>foto_url</code>. <strong>Bloqueados</strong> na edição: <code>custo</code> e <code>preco_venda</code> (vêm do catálogo).</p>
+        </div>
+      </div>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method put">PUT</span><span class="ep-path">/lojinha/itens/[id]/visibilidade</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Body</div>
+<pre>{ <span class="k">"visivel"</span>: <span class="s">false</span> }</pre>
+        </div>
+      </div>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method put">PUT</span><span class="ep-path">/configuracoes/multiplicador</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Body</div>
+<pre>{ <span class="k">"multiplicador_global"</span>: <span class="n">10</span> }</pre>
+          <p class="note">Modal "Multiplicadores" (aba Produtos). Passo ±0,25.</p>
+        </div>
+      </div>
+
+      <div class="callout warn">
+        <div class="co-title">Atenção — busca no catálogo (Hiper Loja)</div>
+        <p>O modal "Adicionar item" tem autocomplete via <code>GET /catalogo?q=texto</code> (integração Hiper Loja). Ao selecionar um produto, <code>nome</code>, <code>custo</code>, <code>preco_venda</code> e <code>estoque</code> são preenchidos e bloqueados.</p>
+      </div>
+      <div class="callout integ">
+        <div class="co-title">Storage de imagens</div>
+        <p>O upload de foto do item precisa de um provider de storage (S3, R2, etc.) — <strong>a definir</strong>. O frontend envia o arquivo e recebe a <code>foto_url</code>.</p>
+      </div>
+
+      <h3>Aba Resgates</h3>
+      <table>
+        <thead><tr><th>Campo</th><th>Tipo</th><th>Descrição</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code></td><td>string</td><td>Identificador</td></tr>
+          <tr><td><code>pintor_id</code> / <code>pintor_nome</code></td><td>string</td><td>Pintor (nome desnormalizado p/ exibição)</td></tr>
+          <tr><td><code>item</code></td><td>obj</td><td>id, nome, foto_url do item</td></tr>
+          <tr><td><code>pts_debitados</code></td><td>number</td><td>Pontos debitados na solicitação</td></tr>
+          <tr><td><code>data_solicitacao</code></td><td>string</td><td>Data ISO</td></tr>
+          <tr><td><code>status</code></td><td>enum</td><td>pendente · entregue · recusado</td></tr>
+        </tbody>
+      </table>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/lojinha/resgates?status=pendente&q=texto</span></div>
+        <div class="ep-body"><p class="note">A aba exibe um badge com a contagem de pendentes. Busca por nome do pintor no filtro ativo.</p></div>
+      </div>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method put">PUT</span><span class="ep-path">/lojinha/resgates/[id]/confirmar-entrega</span></div>
+        <div class="ep-body"><ul class="tight">
+          <li>Sem body. <code>status</code> → <code>entregue</code> + timestamp.</li>
+          <li><strong>Nenhuma alteração de pontos</strong> — já debitados na solicitação.</li>
+          <li>Insere linha em <code>notificacoes</code> para o pintor (<code>tipo: 'resgate_confirmado'</code>).</li>
+        </ul></div>
+      </div>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method put">PUT</span><span class="ep-path">/lojinha/resgates/[id]/recusar</span></div>
+        <div class="ep-body"><p>Sem body. <code>status</code> → <code>recusado</code>, <strong>devolve</strong> <code>pts_debitados</code> ao saldo do pintor e <strong>+1</strong> ao estoque do item.</p></div>
+      </div>
+
+      <div class="callout crit">
+        <div class="co-title">Regras consolidadas da lojinha</div>
+        <ul class="tight" style="margin-top:6px;">
+          <li>Pontos e estoque são debitados <strong>na solicitação</strong>, não na entrega. Se recusado, ambos são devolvidos.</li>
+          <li>Item com <code>estoque = 0</code> não pode ser resgatado — backend rejeita.</li>
+          <li>Item oculto não aparece no app do pintor, mas resgates já feitos continuam válidos.</li>
+          <li>Alterar o multiplicador global recalcula todos os preços imediatamente, <strong>sem retroativo</strong> em resgates já realizados.</li>
+          <li>Pontos <strong>não expiram</strong>.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===== 8. RELATÓRIOS ===== -->
+    <section class="section" id="relatorios">
+      <div class="eyebrow">Tela 8</div>
+      <h2>Relatórios</h2>
+      <div class="badges">
+        <span class="badge route">/relatorios</span>
+        <span class="badge profile">Admin · Desktop</span>
+        <span class="badge method-list">Somente leitura</span>
+      </div>
+      <p class="lead">Página analítica sem mutações. Stat tiles, dois gráficos de área, donut de status, ranking e destaque do pintor do mês/ano.</p>
+
+      <div class="behavior">
+        <div class="bh-label">Comportamento</div>
+        <p>Página analítica, <strong>somente leitura</strong> — nenhuma ação altera dados. O admin escolhe a granularidade (<strong>mês ou ano</strong>) e navega entre períodos; tudo na tela se recalcula para o período escolhido: indicadores, gráficos de volume e bônus, distribuição de status e ranking de pintores.</p>
+        <p>O backend devolve os números <strong>já agregados</strong> pela granularidade pedida (por semana no mês, por mês no ano) — o frontend não soma pedidos individuais. O primeiro do ranking é destacado como <strong>Pintor do Mês/Ano</strong>. Período sem dados retorna arrays vazios e numéricos em zero.</p>
+      </div>
+
+      <h3>Stat tiles</h3>
+      <table>
+        <thead><tr><th>Tile</th><th>Cálculo</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Pedidos Gerados</strong></td><td>Total no período · rodapé: X aprovados · Y pendentes</td></tr>
+          <tr><td><strong>Volume Aprovado</strong></td><td>Soma dos totais aprovados no período</td></tr>
+          <tr><td><strong>Bônus Distribuídos</strong></td><td><code>Σ Math.round(total × 0.10)</code> dos aprovados</td></tr>
+          <tr><td><strong>Ticket Médio</strong></td><td><code>volume_aprovado / qtd_aprovados</code> (— se não houver aprovados)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="endpoint">
+        <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/relatorios?periodo=mes&mes=5&ano=2026</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Query params</div>
+          <ul class="tight">
+            <li><code>periodo</code>: <code>mes</code> | <code>ano</code> — granularidade da agregação</li>
+            <li><code>mes</code>: 1–12 (obrigatório quando <code>periodo=mes</code>)</li>
+            <li><code>ano</code>: ex. 2026 (sempre obrigatório)</li>
+          </ul>
+          <div class="ep-label">Resposta</div>
+<pre>{
+  <span class="k">"stat_tiles"</span>: {
+    <span class="k">"pedidos_total"</span>: <span class="n">12</span>, <span class="k">"pedidos_aprovados"</span>: <span class="n">9</span>, <span class="k">"pedidos_pendentes"</span>: <span class="n">2</span>,
+    <span class="k">"volume_aprovado"</span>: <span class="n">28500.00</span>, <span class="k">"bonus_distribuidos_pts"</span>: <span class="n">2850</span>, <span class="k">"ticket_medio"</span>: <span class="n">3166.67</span>
+  },
+  <span class="k">"donut_status"</span>: { <span class="k">"aprovado"</span>: <span class="n">9</span>, <span class="k">"pendente"</span>: <span class="n">2</span>, <span class="k">"recusado"</span>: <span class="n">1</span>, <span class="k">"estornado"</span>: <span class="n">0</span> },
+  <span class="k">"grafico_volume"</span>: [ { <span class="k">"label"</span>: <span class="s">"Sem 1"</span>, <span class="k">"valor"</span>: <span class="n">8200.00</span> }, ... ],
+  <span class="k">"grafico_bonus"</span>:  [ { <span class="k">"label"</span>: <span class="s">"Sem 1"</span>, <span class="k">"valor"</span>: <span class="n">820</span> }, ... ],
+  <span class="k">"ranking"</span>: [
+    { <span class="k">"pintor_id"</span>: <span class="s">"string"</span>, <span class="k">"nome"</span>: <span class="s">"João Pereira"</span>, <span class="k">"cidade"</span>: <span class="s">"São João del-Rei"</span>, <span class="k">"volume"</span>: <span class="n">12400.00</span>, <span class="k">"bonus_pts"</span>: <span class="n">1240</span> }
+  ]
+}</pre>
+        </div>
+      </div>
+
+      <div class="callout info">
+        <div class="co-title">Agregação por granularidade</div>
+        <p><strong>Mês:</strong> gráficos com 4 entradas (Sem 1 a Sem 4). <strong>Ano:</strong> uma entrada por mês com dados (label = mês abreviado). O backend retorna os pontos <strong>já agregados</strong>, não os pedidos individuais. O <code>ranking</code> vem ordenado por <code>volume</code> decrescente — o 1º é o "Pintor do Mês/Ano". Sem dados: arrays vazios e numéricos em <code>0</code>.</p>
+      </div>
+    </section>
+
+    <!-- ===== 9. CONFIGURAÇÕES ===== -->
+    <section class="section" id="configuracoes">
+      <div class="eyebrow">Tela 9</div>
+      <h2>Configurações</h2>
+      <div class="badges">
+        <span class="badge route">/configuracoes</span>
+        <span class="badge profile">Admin · Desktop</span>
+      </div>
+      <p class="lead">Perfil e credenciais do admin logado. A tela atual cobre exclusivamente dados pessoais e senha.</p>
+
+      <div class="behavior">
+        <div class="bh-label">Comportamento</div>
+        <p>Cobre o perfil e as credenciais do <strong>admin logado</strong>. Em <strong>Perfil</strong>, ele edita nome, e-mail e foto (a foto aparece no menu lateral). Em <strong>Segurança</strong>, troca a senha: exige a senha atual, que o backend confere contra o hash antes de aceitar a nova — sempre hashada antes de salvar.</p>
+        <p>Configurações globais do sistema (percentual de bônus, multiplicador padrão da lojinha, usuários e permissões) estão <strong>previstas no briefing mas ainda não têm tela</strong> — escopo de fase posterior.</p>
+      </div>
+
+      <h3>Seção: Perfil</h3>
+      <table>
+        <thead><tr><th>Campo</th><th>Obrig.</th><th>Regra</th></tr></thead>
+        <tbody>
+          <tr><td>Foto de perfil</td><td class="opt">Não</td><td>Upload — aparece no menu lateral; sem foto, exibe a inicial do nome</td></tr>
+          <tr><td>Nome</td><td class="req">Sim</td><td>Nome de exibição no painel</td></tr>
+          <tr><td>E-mail</td><td class="req">Sim</td><td>Usado para login do admin</td></tr>
+        </tbody>
+      </table>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/admin/perfil</span></div>
+        <div class="ep-body">
+<pre>{ <span class="k">"id"</span>: <span class="s">"string"</span>, <span class="k">"nome"</span>: <span class="s">"Admin Minas Tintas"</span>, <span class="k">"email"</span>: <span class="s">"admin@minastintas.com.br"</span>, <span class="k">"foto_url"</span>: <span class="s">"string ou null"</span> }</pre>
+        </div>
+      </div>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method put">PUT</span><span class="ep-path">/admin/perfil</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Body</div>
+<pre>{ <span class="k">"nome"</span>: <span class="s">"Admin Minas Tintas"</span>, <span class="k">"email"</span>: <span class="s">"admin@minastintas.com.br"</span>, <span class="k">"foto_url"</span>: <span class="s">"string ou null"</span> }</pre>
+          <p class="note">E-mail não pode estar em uso por outro admin. <code>foto_url</code>: upload retorna URL; remoção envia <code>null</code>.</p>
+        </div>
+      </div>
+
+      <h3>Seção: Segurança</h3>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method put">PUT</span><span class="ep-path">/admin/senha</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Body</div>
+<pre>{ <span class="k">"senha_atual"</span>: <span class="s">"string"</span>, <span class="k">"nova_senha"</span>: <span class="s">"string"</span> }</pre>
+          <div class="ep-label">Erro · 400</div>
+<pre>{ <span class="k">"erro"</span>: <span class="s">"Senha atual incorreta."</span> }</pre>
+        </div>
+      </div>
+
+      <div class="callout crit">
+        <div class="co-title">Validação de senha</div>
+        <p>Verificar <code>senha_atual</code> contra o hash do banco (<code>400</code> se não corresponder). Nova senha: mínimo 6 caracteres. Aplicar hash antes de salvar — <strong>nunca</strong> salvar ou logar senha em texto puro.</p>
+      </div>
+      <div class="callout warn">
+        <div class="co-title">Atenção — configurações globais ainda não implementadas</div>
+        <p>O briefing prevê, nesta seção, configurações globais do sistema (percentual de bônus, multiplicador padrão da lojinha, usuários e permissões). <strong>Não foram implementadas</strong> na tela atual — escopo de fase posterior.</p>
+      </div>
+    </section>
+
+
+    <!-- ================================================================ -->
+    <!-- APP PINTOR                                                         -->
+    <!-- ================================================================ -->
+
+    <!-- Transição visual Admin → Pintor -->
+    <div class="app-transition">
+      <div class="at-label">App Pintor · Mobile PWA</div>
+      <h1>App Pintor</h1>
+      <div class="at-sub">Next.js 16.2.6 · Tailwind v4 · Porta dev 3001 · <code>minas-tintas-pintor/</code></div>
+      <table style="margin-top:24px;">
+        <thead><tr><th>Decisão</th><th>Valor</th></tr></thead>
+        <tbody>
+          <tr><td>Framework</td><td>Next.js 16.2.6 (App Router, Turbopack)</td></tr>
+          <tr><td>CSS</td><td>Tailwind v4 + tokens Warm Editorial (<code>globals.css</code>)</td></tr>
+          <tr><td>Ícones</td><td>lucide-react</td></tr>
+          <tr><td>Gráficos</td><td>recharts ^3.8.1</td></tr>
+          <tr><td>Dados (fase atual)</td><td>Mock via <code>src/lib/pintor-store.tsx</code> (PintorProvider)</td></tr>
+          <tr><td>Login</td><td>Telefone + senha (sem OAuth)</td></tr>
+          <tr><td>Tipo</td><td>PWA (Progressive Web App) · Mobile-first</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ===== CONTRATOS DO PINTOR ===== -->
+    <section class="section" id="p-contratos">
+      <div class="eyebrow-p">Contratos Globais — App Pintor</div>
+      <h2>Contratos do App Pintor</h2>
+      <p class="lead">Regras de autenticação, pontos, offline/PWA e integração com o ADM. Complementam as seções globais já documentadas no Admin.</p>
+
+      <h3>Autenticação</h3>
+      <p>Todas as rotas internas devem usar o pintor autenticado como contexto. O app Pintor nunca deve enviar ou receber dados de outro pintor.</p>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/pintores/me</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Retorno mínimo</div>
+<pre>{
+  <span class="k">"id"</span>: <span class="s">"p1"</span>,
+  <span class="k">"nome"</span>: <span class="s">"Carlos H. Almeida"</span>,
+  <span class="k">"primeiro_nome"</span>: <span class="s">"Carlos"</span>,
+  <span class="k">"telefone"</span>: <span class="s">"(31) 98765-4321"</span>,
+  <span class="k">"documento"</span>: <span class="s">"123.456.789-00"</span>,
+  <span class="k">"boas_vindas_visualizada"</span>: <span class="s">true</span>
+}</pre>
+        </div>
+      </div>
+
+      <h3>Estados de pontos</h3>
+      <table>
+        <thead><tr><th>Estado</th><th>Descrição</th></tr></thead>
+        <tbody>
+          <tr><td><code>saldo_atual</code></td><td>Pontos confirmados e disponíveis</td></tr>
+          <tr><td><code>a_liberar</code></td><td>Pontos previstos de pedidos pendentes</td></tr>
+          <tr><td><code>estimado</code></td><td>Cálculo temporário em rascunhos ainda não aprovados</td></tr>
+          <tr><td><code>comprometido</code></td><td>Pontos já descontados em resgates pendentes</td></tr>
+        </tbody>
+      </table>
+      <div class="callout crit">
+        <div class="co-title">Regra de pontos</div>
+        <p>Pontos entram no saldo somente após aprovação/confirmação da loja/ADM. Ao solicitar resgate, os pontos são descontados imediatamente. Se o resgate pendente for cancelado pelo pintor, os pontos são estornados.</p>
+      </div>
+
+      <h3>Offline e PWA</h3>
+      <p>O app Pintor é um PWA e deve funcionar de forma degradada quando offline.</p>
+      <table>
+        <thead><tr><th>Funcionalidade</th><th>Offline?</th></tr></thead>
+        <tbody>
+          <tr><td>Visualizar pedidos já carregados</td><td>✓ Funciona</td></tr>
+          <tr><td>Visualizar clientes já carregados</td><td>✓ Funciona</td></tr>
+          <tr><td>Criar novo orçamento (catálogo cacheado)</td><td>✓ Funciona — salvo em IndexedDB</td></tr>
+          <tr><td>Visualizar lojinha cacheada</td><td>✓ Funciona</td></tr>
+          <tr><td>Login</td><td>✗ Não funciona</td></tr>
+          <tr><td>Resgate de pontos</td><td>✗ Não funciona — exige validação em tempo real</td></tr>
+          <tr><td>Notificações</td><td>✗ Não funciona</td></tr>
+        </tbody>
+      </table>
+
+      <div class="behavior-p">
+        <div class="bh-label">Fluxo de orçamento criado offline</div>
+        <p>1. Pintor cria o orçamento sem conexão — rascunho salvo localmente (IndexedDB).</p>
+        <p>2. Ao reconectar, o app detecta e exibe: <em>"Você tem orçamentos aguardando envio. Revisar antes de enviar."</em></p>
+        <p>3. Pintor revisa e confirma o envio manualmente.</p>
+        <p>4. Backend valida em tempo real: disponibilidade de produtos, estoque e preços.</p>
+        <p>5. Se houver problema: <code>"Produto X esgotado"</code>, <code>"Produto Y indisponível"</code>.</p>
+        <p>6. Se válido, cria o pedido em status <code>pendente</code>.</p>
+        <p><strong>Motivo do envio manual:</strong> evitar que pedidos com produtos esgotados ou preços alterados sejam criados silenciosamente.</p>
+      </div>
+
+      <div class="callout info">
+        <div class="co-title">Cache do catálogo — Stale While Revalidate</div>
+        <p>Usar estratégia SWR para <code>GET /catalogo/produtos</code> e <code>GET /pintores/me/clientes</code>: servir cache imediatamente, atualizar em background quando online. Exibir data da última atualização quando offline.</p>
+      </div>
+      <div class="callout info">
+        <div class="co-title">Indicador visual de offline</div>
+        <p>Faixa fina e fixa no topo quando <code>navigator.onLine === false</code>. Texto: <em>"Sem conexão — alguns dados podem estar desatualizados."</em> Sumir ao reconectar. Botão de resgate indica indisponibilidade offline.</p>
+      </div>
+    </section>
+
+    <!-- ===== P-1. SPLASH ===== -->
+    <section class="section" id="p-splash">
+      <div class="eyebrow-p">Tela 1 — App Pintor</div>
+      <h2>Splash / Boas-vindas</h2>
+      <div class="badges">
+        <span class="badge route">/</span>
+        <span class="badge profile-p">Pintor · Mobile</span>
+      </div>
+      <p class="lead">Tela de boas-vindas exibida somente na primeira vez que o pintor acessa o app.</p>
+
+      <div class="behavior-p">
+        <div class="bh-label">Comportamento</div>
+        <p>Aparece somente uma vez no primeiro acesso. Botão <strong>Continuar</strong> leva para <code>/login</code>. Depois de vista, o app pula esta tela diretamente.</p>
+        <p>Controle local: <code>localStorage["minas_pintor_welcome_seen"] = "true"</code></p>
+      </div>
+
+      <h3>Backend (opcional)</h3>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method put">PUT</span><span class="ep-path">/pintores/me/onboarding</span></div>
+        <div class="ep-body">
+          <p class="note">Opcional — para sincronizar preferência entre dispositivos. Pode ficar em localStorage nesta fase.</p>
+          <div class="ep-label">Body</div>
+<pre>{ <span class="k">"boas_vindas_visualizada"</span>: <span class="s">true</span> }</pre>
+        </div>
+      </div>
+
+      <div class="callout info">
+        <div class="co-title">Regras de navegação</div>
+        <ul class="tight">
+          <li>Pintor autenticado → ir direto para <code>/home</code>.</li>
+          <li>Não autenticado + já viu boas-vindas → ir para <code>/login</code>.</li>
+          <li>Sessão expirada → não voltar para boas-vindas — ir para <code>/login</code>.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===== P-2. LOGIN ===== -->
+    <section class="section" id="p-login">
+      <div class="eyebrow-p">Tela 2 — App Pintor</div>
+      <h2>Login</h2>
+      <div class="badges">
+        <span class="badge route">/login</span>
+        <span class="badge profile-p">Pintor · Mobile</span>
+      </div>
+      <p class="lead">Acesso via número de telefone + senha. Sem e-mail, sem OAuth, sem "Esqueci minha senha".</p>
+
+      <div class="behavior-p">
+        <div class="bh-label">Comportamento</div>
+        <p>Campo de telefone com máscara <code>(00) 00000-0000</code>. Checkbox <strong>Lembrar-me</strong> visível. Sem fluxo público de recuperação de senha — feito operacionalmente com a equipe da loja. Erro de credenciais deve ser genérico — não diferenciar telefone de senha.</p>
+      </div>
+
+      <h3>API</h3>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method post">POST</span><span class="ep-path">supabase.auth.signInWithPassword</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Body</div>
+<pre>{
+  <span class="k">"telefone"</span>: <span class="s">"(31) 98765-4321"</span>,
+  <span class="k">"password"</span>: <span class="s">"string"</span>,
+  <span class="k">"lembrar_me"</span>: <span class="s">true</span>
+}</pre>
+          <div class="ep-label">Resposta · 200 OK</div>
+<pre>{
+  <span class="k">"token"</span>: <span class="s">"string"</span>,
+  <span class="k">"refresh_token"</span>: <span class="s">"string"</span>,
+  <span class="k">"expires_at"</span>: <span class="s">"2026-07-03T12:00:00.000Z"</span>,
+  <span class="k">"pintor"</span>: {
+    <span class="k">"id"</span>: <span class="s">"p1"</span>,
+    <span class="k">"nome"</span>: <span class="s">"Carlos H. Almeida"</span>,
+    <span class="k">"primeiro_nome"</span>: <span class="s">"Carlos"</span>,
+    <span class="k">"boas_vindas_visualizada"</span>: <span class="s">true</span>
+  }
+}</pre>
+        </div>
+      </div>
+
+      <div class="callout crit">
+        <div class="co-title">Telefone como identificador</div>
+        <p>O pintor não usa e-mail. O telefone normalizado (somente dígitos) é usado como identificador em <code>auth.users</code>. Ex: <code>55319876543210@auth.minastintas.app</code>. O pintor nunca vê essa string — ele digita apenas o telefone.</p>
+      </div>
+      <div class="callout info">
+        <div class="co-title">Duração de sessão</div>
+        <ul class="tight">
+          <li><code>lembrar_me = true</code>: sessão/refresh válido por 30 dias.</li>
+          <li><code>lembrar_me = false</code>: sessão curta, duração definida pelo backend.</li>
+          <li>Após autenticar, consultar <code>pintores</code> por <code>auth_user_id</code>.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===== P-3. INÍCIO ===== -->
+    <section class="section" id="p-home">
+      <div class="eyebrow-p">Tela 3 — App Pintor</div>
+      <h2>Início</h2>
+      <div class="badges">
+        <span class="badge route">/home</span>
+        <span class="badge profile-p">Pintor · Mobile</span>
+      </div>
+      <p class="lead">Hub de entrada: saldo de pontos, ações rápidas, pedidos recentes e sugestões de resgate.</p>
+
+      <div class="behavior-p">
+        <div class="bh-label">Comportamento</div>
+        <p>Saudação usa o primeiro nome: <em>"Olá, Carlos"</em>. Saldo Minas Tintas mostra somente pontos do pintor autenticado. Sininho abre <code>/notificacoes</code> — indicador vermelho apenas se houver não lidas. Ações rápidas: <strong>Criar orçamento</strong> → <code>/orcamento</code>; <strong>Ir à lojinha</strong> → <code>/loja</code>. Pedidos recentes: 3 últimos. Não exibir tags técnicas como "POUCOS PTS" ou "MUITOS PTS".</p>
+      </div>
+
+      <h3>API</h3>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/pintores/me/home</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Resposta</div>
+<pre>{
+  <span class="k">"pintor"</span>: { <span class="k">"id"</span>: <span class="s">"p1"</span>, <span class="k">"nome"</span>: <span class="s">"Carlos H. Almeida"</span>, <span class="k">"primeiro_nome"</span>: <span class="s">"Carlos"</span> },
+  <span class="k">"pontos"</span>: {
+    <span class="k">"saldo_atual"</span>: <span class="n">12480</span>,
+    <span class="k">"ganhos_ultimas_24h"</span>: <span class="n">184</span>,
+    <span class="k">"a_liberar"</span>: <span class="n">42</span>
+  },
+  <span class="k">"notificacoes"</span>: { <span class="k">"nao_lidas"</span>: <span class="n">1</span> },
+  <span class="k">"pedidos_recentes"</span>: [
+    {
+      <span class="k">"id"</span>: <span class="s">"0481"</span>, <span class="k">"cliente_nome"</span>: <span class="s">"Carlos Mendonça"</span>,
+      <span class="k">"data"</span>: <span class="s">"2026-03-12"</span>, <span class="k">"status"</span>: <span class="s">"aprovado"</span>,
+      <span class="k">"valor_total"</span>: <span class="n">1840</span>, <span class="k">"pontos"</span>: <span class="n">18</span>
+    }
+  ],
+  <span class="k">"sugestoes_resgate"</span>: {
+    <span class="k">"modo"</span>: <span class="s">"high"</span>,
+    <span class="k">"titulo"</span>: <span class="s">"Disponível para resgatar"</span>,
+    <span class="k">"items"</span>: [
+      { <span class="k">"id"</span>: <span class="s">"bone"</span>, <span class="k">"nome"</span>: <span class="s">"Boné Minas Tintas"</span>, <span class="k">"pontos"</span>: <span class="n">800</span>, <span class="k">"estoque"</span>: <span class="n">3</span> }
+    ]
+  }
+}</pre>
+        </div>
+      </div>
+
+      <h3>Regras</h3>
+      <ul class="tight">
+        <li><code>ganhos_ultimas_24h</code>: somar apenas pontos creditados nas últimas 24h.</li>
+        <li><code>a_liberar</code>: somar pontos previstos de pedidos pendentes.</li>
+        <li>Pedidos recentes: ordenar por data desc, limitar a 3.</li>
+        <li><strong>Poucos pontos:</strong> sugerir produtos próximos do saldo, priorizando menor diferença.</li>
+        <li><strong>Muitos pontos:</strong> sugerir produtos resgatáveis, priorizando destaque/promoção/valor percebido.</li>
+      </ul>
+    </section>
+
+    <!-- ===== P-4. NOVO ORÇAMENTO ===== -->
+    <section class="section" id="p-orcamento">
+      <div class="eyebrow-p">Tela 4 — App Pintor</div>
+      <h2>Novo orçamento</h2>
+      <div class="badges">
+        <span class="badge route">/orcamento</span>
+        <span class="badge profile-p">Pintor · Mobile</span>
+      </div>
+      <p class="lead">Criação de orçamento com seleção de cliente, produtos e forma de pagamento.</p>
+
+      <div class="behavior-p">
+        <div class="bh-label">Comportamento</div>
+        <p>Cliente buscado por nome ou telefone (autocomplete). Pintor pode cadastrar cliente rápido dentro do orçamento. Produto buscado por nome, marca ou código (autocomplete, via catálogo). Forma de pagamento é <strong>obrigatória</strong> — se tentar enviar sem, destaca a seção e impede o envio.</p>
+      </div>
+
+      <h3>Pagamento — opções válidas</h3>
+      <table>
+        <thead><tr><th>Valor</th><th>Label exibido</th></tr></thead>
+        <tbody>
+          <tr><td><code>loja</code></td><td>Vai pagar na loja</td></tr>
+          <tr><td><code>pix_loja</code></td><td>Pix da loja</td></tr>
+          <tr><td><code>cartao</code></td><td>Cartão</td></tr>
+          <tr><td><code>dinheiro</code></td><td>Dinheiro</td></tr>
+          <tr><td><code>notinha</code></td><td>Notinha</td></tr>
+        </tbody>
+      </table>
+
+      <h3>APIs</h3>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/pintores/me/clientes/busca?q=ana</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Resposta</div>
+<pre>[
+  {
+    <span class="k">"id"</span>: <span class="s">"cl3"</span>, <span class="k">"tipo"</span>: <span class="s">"pessoa"</span>,
+    <span class="k">"nome"</span>: <span class="s">"Fernanda Costa"</span>, <span class="k">"telefone"</span>: <span class="s">"(31) 9 7654-3210"</span>,
+    <span class="k">"documento"</span>: <span class="s">"222.333.444-55"</span>, <span class="k">"cidade"</span>: <span class="s">"Contagem"</span>,
+    <span class="k">"vinculado_ao_pintor"</span>: <span class="s">true</span>
+  }
+]</pre>
+        </div>
+      </div>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/catalogo/produtos/busca?q=tinta</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Resposta</div>
+<pre>[
+  {
+    <span class="k">"id"</span>: <span class="s">"p1"</span>, <span class="k">"codigo"</span>: <span class="s">"SUV-18-BN"</span>,
+    <span class="k">"nome"</span>: <span class="s">"Tinta látex acrílica fosca 18L — Branco Neve"</span>,
+    <span class="k">"marca"</span>: <span class="s">"Suvinil"</span>, <span class="k">"preco"</span>: <span class="n">320</span>, <span class="k">"ativo"</span>: <span class="s">true</span>
+  }
+]</pre>
+        </div>
+      </div>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method post">POST</span><span class="ep-path">/pintores/me/orcamentos</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Body</div>
+<pre>{
+  <span class="k">"cliente_id"</span>: <span class="s">"cl3"</span>,
+  <span class="k">"novo_cliente"</span>: <span class="s">null</span>,
+  <span class="k">"itens"</span>: [{ <span class="k">"produto_id"</span>: <span class="s">"p1"</span>, <span class="k">"quantidade"</span>: <span class="n">1</span> }],
+  <span class="k">"pagamento"</span>: { <span class="k">"tipo"</span>: <span class="s">"pix_loja"</span>, <span class="k">"observacao"</span>: <span class="s">"string ou null"</span> }
+}</pre>
+          <div class="ep-label">Resposta · 201 Created</div>
+<pre>{
+  <span class="k">"id"</span>: <span class="s">"0482"</span>, <span class="k">"status"</span>: <span class="s">"pendente"</span>,
+  <span class="k">"cliente"</span>: { <span class="k">"id"</span>: <span class="s">"cl3"</span>, <span class="k">"nome"</span>: <span class="s">"Fernanda Costa"</span> },
+  <span class="k">"valor_total"</span>: <span class="n">320</span>, <span class="k">"pontos_previstos"</span>: <span class="n">3</span>,
+  <span class="k">"pagamento"</span>: { <span class="k">"tipo"</span>: <span class="s">"pix_loja"</span>, <span class="k">"label"</span>: <span class="s">"Pix da loja"</span> }
+}</pre>
+        </div>
+      </div>
+
+      <div class="callout crit">
+        <div class="co-title">Validações obrigatórias</div>
+        <ul class="tight">
+          <li>Orçamento precisa de cliente existente ou novo cliente válido.</li>
+          <li>Ao menos 1 item com quantidade &gt; 0.</li>
+          <li>Pagamento é obrigatório.</li>
+          <li>Backend recalcula preço, total e pontos — não confiar no cálculo do front.</li>
+          <li>Pontos ficam <code>a_liberar</code> até aprovação do ADM.</li>
+          <li>Carrinho só deve ser limpo após criação bem-sucedida do pedido.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===== P-5. PEDIDO ENVIADO ===== -->
+    <section class="section" id="p-pedido-enviado">
+      <div class="eyebrow-p">Tela 5 — App Pintor</div>
+      <h2>Pedido enviado</h2>
+      <div class="badges">
+        <span class="badge route">/pedido-enviado</span>
+        <span class="badge profile-p">Pintor · Mobile</span>
+      </div>
+      <p class="lead">Confirmação visual após envio bem-sucedido do orçamento.</p>
+
+      <div class="behavior-p">
+        <div class="bh-label">Comportamento</div>
+        <p>Mostra pedido criado: cliente, pagamento, itens resumidos, total e status <code>pendente</code>. Informa que o orçamento foi enviado para a loja validar. Botão <strong>Ver pedido</strong> → <code>/pedidos/{id}</code>. Botão <strong>Criar novo orçamento</strong> → limpa carrinho e volta para <code>/orcamento</code>. Se não houver pedido recém-enviado em memória, redirecionar para <code>/orcamento</code>.</p>
+      </div>
+
+      <h3>API</h3>
+      <p class="note">Usa a resposta do <code>POST /pintores/me/orcamentos</code>. Nenhum endpoint adicional.</p>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method get">GET</span><span class="ep-path">— (usa resposta do POST anterior em memória)</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Dados esperados</div>
+<pre>{
+  <span class="k">"id"</span>: <span class="s">"0482"</span>, <span class="k">"status"</span>: <span class="s">"pendente"</span>,
+  <span class="k">"cliente"</span>: { <span class="k">"id"</span>: <span class="s">"cl3"</span>, <span class="k">"nome"</span>: <span class="s">"Fernanda Costa"</span> },
+  <span class="k">"pagamento"</span>: { <span class="k">"tipo"</span>: <span class="s">"pix_loja"</span>, <span class="k">"label"</span>: <span class="s">"Pix da loja"</span> },
+  <span class="k">"itens"</span>: [
+    { <span class="k">"produto_id"</span>: <span class="s">"p1"</span>, <span class="k">"nome"</span>: <span class="s">"Tinta látex acrílica fosca 18L"</span>, <span class="k">"quantidade"</span>: <span class="n">1</span>, <span class="k">"preco_unitario"</span>: <span class="n">320</span> }
+  ],
+  <span class="k">"valor_total"</span>: <span class="n">320</span>, <span class="k">"pontos_previstos"</span>: <span class="n">3</span>
+}</pre>
+        </div>
+      </div>
+
+      <div class="callout crit">
+        <div class="co-title">Todo pedido do Pintor nasce pendente</div>
+        <p>Pontos ficam <code>a_liberar</code> até aprovação do ADM. Carrinho só limpo após criação bem-sucedida.</p>
+      </div>
+    </section>
+
+    <!-- ===== P-6. PEDIDOS ===== -->
+    <section class="section" id="p-pedidos">
+      <div class="eyebrow-p">Tela 6 — App Pintor</div>
+      <h2>Pedidos</h2>
+      <div class="badges">
+        <span class="badge route">/pedidos</span>
+        <span class="badge profile-p">Pintor · Mobile</span>
+      </div>
+      <p class="lead">Lista paginada dos pedidos do pintor, com filtros por status e contador por categoria.</p>
+
+      <div class="behavior-p">
+        <div class="bh-label">Comportamento</div>
+        <p>Lista mostra total e período (ex: <em>"13 pedidos · FEV–MAR 2026"</em>). Filtros: <strong>Todos</strong> · <strong>Aprovados</strong> · <strong>Pendentes</strong> · <strong>Rascunho</strong>. Filtro ativo muda contagem e lista exibida. Clique em qualquer pedido abre <code>/pedidos/[id]</code>.</p>
+      </div>
+
+      <h3>API</h3>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/pintores/me/pedidos?status=todos&amp;page=1&amp;limit=20</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Resposta</div>
+<pre>{
+  <span class="k">"summary"</span>: {
+    <span class="k">"total"</span>: <span class="n">13</span>, <span class="k">"periodo_label"</span>: <span class="s">"FEV–MAR 2026"</span>,
+    <span class="k">"contagens"</span>: { <span class="k">"aprovado"</span>: <span class="n">7</span>, <span class="k">"pendente"</span>: <span class="n">3</span>, <span class="k">"rascunho"</span>: <span class="n">3</span> }
+  },
+  <span class="k">"items"</span>: [
+    {
+      <span class="k">"id"</span>: <span class="s">"0481"</span>, <span class="k">"cliente_nome"</span>: <span class="s">"Carlos Mendonça"</span>,
+      <span class="k">"data"</span>: <span class="s">"2026-03-12"</span>, <span class="k">"status"</span>: <span class="s">"aprovado"</span>,
+      <span class="k">"valor_total"</span>: <span class="n">1840</span>, <span class="k">"pontos"</span>: <span class="n">18</span>, <span class="k">"pontos_estado"</span>: <span class="s">"creditado"</span>
+    }
+  ],
+  <span class="k">"pagination"</span>: { <span class="k">"page"</span>: <span class="n">1</span>, <span class="k">"limit"</span>: <span class="n">20</span>, <span class="k">"has_more"</span>: <span class="s">false</span> }
+}</pre>
+        </div>
+      </div>
+
+      <h3>Regras</h3>
+      <ul class="tight">
+        <li>Retornar somente pedidos do pintor autenticado — ordenar por data desc.</li>
+        <li><code>Todos</code> inclui aprovados, pendentes e rascunhos.</li>
+        <li><code>aprovado</code>: pontos creditados. <code>pendente</code>: aguardando ADM. <code>rascunho</code>: editável, não enviado.</li>
+        <li>Faixa de datas calculada pelo backend para o período retornado.</li>
+      </ul>
+    </section>
+
+    <!-- ===== P-7. DETALHE DO PEDIDO ===== -->
+    <section class="section" id="p-pedido-detalhe">
+      <div class="eyebrow-p">Tela 7 — App Pintor</div>
+      <h2>Detalhe do pedido</h2>
+      <div class="badges">
+        <span class="badge route">/pedidos/[id]</span>
+        <span class="badge profile-p">Pintor · Mobile</span>
+      </div>
+      <p class="lead">Itens, total, pagamento, card de bônus por status e ações de rascunho.</p>
+
+      <div class="behavior-p">
+        <div class="bh-label">Comportamento</div>
+        <p>Mostra id, cliente, status, data, itens, total e pontos. Pagamento aparece quando informado. Card de bônus varia por status. Rascunho pode exibir ações de editar/excluir.</p>
+      </div>
+
+      <h3>Card de bônus — por status</h3>
+      <table>
+        <thead><tr><th>Status</th><th>Label do card</th></tr></thead>
+        <tbody>
+          <tr><td><span class="status-dot dot-aprov"></span>aprovado</td><td><strong>BÔNUS CREDITADO</strong></td></tr>
+          <tr><td><span class="status-dot dot-pend"></span>pendente</td><td><strong>BÔNUS PREVISTO</strong></td></tr>
+          <tr><td><span class="status-dot dot-estorn"></span>rascunho</td><td><strong>BÔNUS ESTIMADO</strong></td></tr>
+        </tbody>
+      </table>
+
+      <h3>APIs</h3>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/pintores/me/pedidos/{id}</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Resposta</div>
+<pre>{
+  <span class="k">"id"</span>: <span class="s">"0481"</span>,
+  <span class="k">"cliente"</span>: { <span class="k">"id"</span>: <span class="s">"cl3"</span>, <span class="k">"nome"</span>: <span class="s">"Carlos Mendonça"</span> },
+  <span class="k">"status"</span>: <span class="s">"aprovado"</span>,
+  <span class="k">"criado_em"</span>: <span class="s">"2026-03-12T10:30:00.000Z"</span>,
+  <span class="k">"itens"</span>: [
+    { <span class="k">"produto_id"</span>: <span class="s">"p1"</span>, <span class="k">"nome"</span>: <span class="s">"Tinta látex 18L"</span>, <span class="k">"quantidade"</span>: <span class="n">4</span>, <span class="k">"preco_unitario"</span>: <span class="n">320</span>, <span class="k">"subtotal"</span>: <span class="n">1280</span> }
+  ],
+  <span class="k">"valor_total"</span>: <span class="n">1840</span>,
+  <span class="k">"pagamento"</span>: { <span class="k">"tipo"</span>: <span class="s">"pix_loja"</span>, <span class="k">"label"</span>: <span class="s">"Pix da loja"</span>, <span class="k">"observacao"</span>: <span class="s">null</span> },
+  <span class="k">"pontos"</span>: { <span class="k">"valor"</span>: <span class="n">18</span>, <span class="k">"estado"</span>: <span class="s">"creditado"</span>, <span class="k">"label"</span>: <span class="s">"BÔNUS CREDITADO"</span> }
+}</pre>
+        </div>
+      </div>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method delete">DELETE</span><span class="ep-path">/pintores/me/pedidos/{id}</span></div>
+        <div class="ep-body">
+          <p class="note">Somente para <code>status = rascunho</code>. Pedido pendente ou aprovado não pode ser excluído pelo pintor.</p>
+        </div>
+      </div>
+
+      <div class="callout crit">
+        <div class="co-title">Isolamento por pintor</div>
+        <p>Backend valida que o pedido pertence ao pintor autenticado. Totais e pontos vêm do backend. <code>DELETE</code> só excluir <code>rascunho</code>.</p>
+      </div>
+    </section>
+
+    <!-- ===== P-8. LOJINHA ===== -->
+    <section class="section" id="p-loja">
+      <div class="eyebrow-p">Tela 8 — App Pintor</div>
+      <h2>Lojinha</h2>
+      <div class="badges">
+        <span class="badge route">/loja</span>
+        <span class="badge profile-p">Pintor · Mobile</span>
+      </div>
+      <p class="lead">Catálogo de produtos para resgate com pontos, filtros por categoria e ordenação.</p>
+
+      <div class="behavior-p">
+        <div class="bh-label">Comportamento</div>
+        <p>Card <em>Resgates pendentes</em> aparece quando houver pendências. Filtros de categoria: <strong>Tudo</strong> · <strong>Ferramentas</strong> · <strong>EPI</strong> · <strong>Brindes</strong> · <strong>Camisetas</strong>. Ordenação: <strong>Disponíveis</strong> · <strong>Promoções</strong> · <strong>Menor pts</strong> · <strong>Maior pts</strong>.</p>
+      </div>
+
+      <h3>APIs</h3>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/pintores/me/loja?categoria=tudo&amp;ordem=disponiveis</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Resposta</div>
+<pre>{
+  <span class="k">"periodo"</span>: { <span class="k">"label"</span>: <span class="s">"MARÇO"</span> },
+  <span class="k">"saldo"</span>: { <span class="k">"disponivel"</span>: <span class="n">12480</span> },
+  <span class="k">"resgates_pendentes"</span>: [
+    {
+      <span class="k">"id"</span>: <span class="s">"res-bone-01"</span>, <span class="k">"produto_id"</span>: <span class="s">"bone"</span>,
+      <span class="k">"produto_nome"</span>: <span class="s">"Boné Minas Tintas"</span>, <span class="k">"pontos"</span>: <span class="n">800</span>,
+      <span class="k">"status"</span>: <span class="s">"pendente"</span>, <span class="k">"status_label"</span>: <span class="s">"Aguardando retirada na loja"</span>
+    }
+  ],
+  <span class="k">"produtos"</span>: [
+    {
+      <span class="k">"id"</span>: <span class="s">"fita"</span>, <span class="k">"categoria"</span>: <span class="s">"ferramentas"</span>,
+      <span class="k">"nome"</span>: <span class="s">"Fita crepe 50 mm × 50 m"</span>, <span class="k">"pontos"</span>: <span class="n">600</span>,
+      <span class="k">"pontos_original"</span>: <span class="s">null</span>, <span class="k">"promocao"</span>: <span class="s">false</span>,
+      <span class="k">"bloqueado"</span>: <span class="s">false</span>, <span class="k">"estoque"</span>: <span class="n">8</span>
+    }
+  ]
+}</pre>
+        </div>
+      </div>
+
+      <h3>Regras</h3>
+      <ul class="tight">
+        <li>Saldo sempre do pintor autenticado.</li>
+        <li>Resgate pendente = solicitação aguardando retirada/confirmação pela loja.</li>
+        <li>Pintor pode cancelar enquanto <code>status = pendente</code>. Após confirmação pelo ADM: cancelamento não permitido.</li>
+        <li>Ao solicitar resgate: backend desconta pontos e estoque em transação. Ao cancelar: devolve ambos em transação.</li>
+        <li>Produto só resgatável se ativo, com estoque e saldo suficiente.</li>
+        <li><code>Disponíveis</code>: prioriza produtos que cabem no saldo atual.</li>
+      </ul>
+    </section>
+
+    <!-- ===== P-9. DETALHE DO PRODUTO ===== -->
+    <section class="section" id="p-produto">
+      <div class="eyebrow-p">Tela 9 — App Pintor</div>
+      <h2>Detalhe do produto</h2>
+      <div class="badges">
+        <span class="badge route">/loja/[id]</span>
+        <span class="badge profile-p">Pintor · Mobile</span>
+      </div>
+      <p class="lead">Detalhes do item para resgate, botão de resgatar e confirmação inline.</p>
+
+      <div class="behavior-p">
+        <div class="bh-label">Comportamento</div>
+        <p>Botão desabilitado se produto estiver bloqueado, sem estoque ou sem saldo suficiente. Ao resgatar, exibe confirmação e volta para Lojinha com resgate pendente visível.</p>
+      </div>
+
+      <h3>APIs</h3>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/loja/produtos/{id}</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Resposta</div>
+<pre>{
+  <span class="k">"id"</span>: <span class="s">"bone"</span>, <span class="k">"categoria"</span>: <span class="s">"brindes"</span>,
+  <span class="k">"nome"</span>: <span class="s">"Boné Minas Tintas"</span>,
+  <span class="k">"descricao"</span>: <span class="s">"Boné aba curva com bordado exclusivo."</span>,
+  <span class="k">"pontos"</span>: <span class="n">800</span>, <span class="k">"pontos_original"</span>: <span class="s">null</span>,
+  <span class="k">"promocao"</span>: <span class="s">false</span>, <span class="k">"bloqueado"</span>: <span class="s">false</span>,
+  <span class="k">"estoque"</span>: <span class="n">3</span>, <span class="k">"imagem_url"</span>: <span class="s">"/assets/bone.png"</span>
+}</pre>
+        </div>
+      </div>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method post">POST</span><span class="ep-path">/pintores/me/resgates</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Body</div>
+<pre>{ <span class="k">"produto_id"</span>: <span class="s">"bone"</span> }</pre>
+          <div class="ep-label">Resposta · 201 Created</div>
+<pre>{
+  <span class="k">"id"</span>: <span class="s">"res-bone-01"</span>, <span class="k">"status"</span>: <span class="s">"pendente"</span>,
+  <span class="k">"produto_id"</span>: <span class="s">"bone"</span>, <span class="k">"produto_nome"</span>: <span class="s">"Boné Minas Tintas"</span>,
+  <span class="k">"pontos"</span>: <span class="n">800</span>, <span class="k">"saldo_atualizado"</span>: <span class="n">11680</span>,
+  <span class="k">"estoque_atualizado"</span>: <span class="n">2</span>, <span class="k">"pontos_movimento_id"</span>: <span class="s">"mov-123"</span>
+}</pre>
+        </div>
+      </div>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method post">POST</span><span class="ep-path">/pintores/me/resgates/{id}/cancelar</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Resposta</div>
+<pre>{
+  <span class="k">"id"</span>: <span class="s">"res-bone-01"</span>, <span class="k">"status"</span>: <span class="s">"cancelado"</span>,
+  <span class="k">"pontos_devolvidos"</span>: <span class="n">800</span>, <span class="k">"saldo_atualizado"</span>: <span class="n">12480</span>,
+  <span class="k">"estoque_atualizado"</span>: <span class="n">3</span>, <span class="k">"pontos_movimento_id"</span>: <span class="s">"mov-124"</span>
+}</pre>
+        </div>
+      </div>
+
+      <div class="callout crit">
+        <div class="co-title">Resgate em transação</div>
+        <p>Criar resgate em status <code>pendente</code>. Backend desconta pontos e estoque em transação atômica. Cancelamento de <code>pendente</code> estorna pontos e devolve estoque, também em transação. Resgate <code>confirmado</code> não pode ser cancelado pelo pintor.</p>
+      </div>
+    </section>
+
+    <!-- ===== P-10. NOTIFICAÇÕES ===== -->
+    <section class="section" id="p-notificacoes">
+      <div class="eyebrow-p">Tela 10 — App Pintor</div>
+      <h2>Notificações</h2>
+      <div class="badges">
+        <span class="badge route">/notificacoes</span>
+        <span class="badge profile-p">Pintor · Mobile</span>
+      </div>
+      <p class="lead">Lista de notificações agrupadas por data, com sininho e indicador de não lidas.</p>
+
+      <div class="behavior-p">
+        <div class="bh-label">Comportamento</div>
+        <p>Lista agrupada por data (<em>Hoje</em>, <em>Ontem</em>). Clique navega para o pedido, lojinha ou tela relacionada. Indicador vermelho no sininho depende de notificações não lidas.</p>
+      </div>
+
+      <h3>APIs</h3>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/pintores/me/notificacoes</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Resposta</div>
+<pre>{
+  <span class="k">"groups"</span>: [
+    {
+      <span class="k">"label"</span>: <span class="s">"HOJE"</span>,
+      <span class="k">"items"</span>: [
+        {
+          <span class="k">"id"</span>: <span class="s">"not-1"</span>, <span class="k">"tipo"</span>: <span class="s">"pedido_aprovado"</span>,
+          <span class="k">"titulo"</span>: <span class="s">"Pedido aprovado"</span>,
+          <span class="k">"texto"</span>: <span class="s">"Pedido #0479 aprovado. 23 pts adicionados."</span>,
+          <span class="k">"lida"</span>: <span class="s">false</span>, <span class="k">"criada_em"</span>: <span class="s">"2026-06-03T12:00:00.000Z"</span>,
+          <span class="k">"href"</span>: <span class="s">"/pedidos/0479"</span>
+        }
+      ]
+    }
+  ]
+}</pre>
+        </div>
+      </div>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method put">PUT</span><span class="ep-path">/pintores/me/notificacoes/{id}/lida</span></div>
+        <div class="ep-body"><p class="note">Marcar notificação individual como lida ao abrir/clicar.</p></div>
+      </div>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method put">PUT</span><span class="ep-path">/pintores/me/notificacoes/lidas</span></div>
+        <div class="ep-body"><p class="note">Marcar todas como lidas de uma vez.</p></div>
+      </div>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/pintores/me/notificacoes/nao-lidas/count</span></div>
+        <div class="ep-body"><p class="note">Retorna <code>{ "count": N }</code> — usado para o badge do sininho.</p></div>
+      </div>
+
+      <h3>Eventos mínimos</h3>
+      <table>
+        <thead><tr><th>Tipo</th><th>Quando</th></tr></thead>
+        <tbody>
+          <tr><td><code>pedido_aprovado</code></td><td>ADM aprova o pedido</td></tr>
+          <tr><td><code>pontos_creditados</code></td><td>Pontos adicionados ao saldo</td></tr>
+          <tr><td><code>resgate_solicitado</code></td><td>Confirmação de solicitação</td></tr>
+          <tr><td><code>resgate_confirmado</code></td><td>ADM confirma entrega/retirada</td></tr>
+          <tr><td><code>promocao_loja</code></td><td>Promoção ativa na lojinha</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout info">
+        <div class="co-title">Push real — fase posterior</div>
+        <p>Front-end já tem tela, toggles e estados mockados. Backend implementará subscriptions, chaves VAPID, service worker e disparos reais quando entrar no escopo. Ver seção 15 (Configurações) para o payload de subscription.</p>
+      </div>
+    </section>
+
+    <!-- ===== P-11. PERFIL ===== -->
+    <section class="section" id="p-perfil">
+      <div class="eyebrow-p">Tela 11 — App Pintor</div>
+      <h2>Perfil</h2>
+      <div class="badges">
+        <span class="badge route">/perfil</span>
+        <span class="badge profile-p">Pintor · Mobile</span>
+      </div>
+      <p class="lead">Hub de perfil: acesso a dados, clientes, atividade, configurações e logout.</p>
+
+      <div class="behavior-p">
+        <div class="bh-label">Comportamento</div>
+        <p>Botão <strong>Sair da conta</strong> deve limpar sessão, token e estado local antes de redirecionar para <code>/login</code>. Dados vêm de <code>GET /pintores/me</code>. Campo <code>parceiro_desde</code> vem do cadastro do pintor.</p>
+      </div>
+
+      <div class="callout crit">
+        <div class="co-title">Logout seguro</div>
+        <p>Limpar sessão, token e estado local do app <strong>antes</strong> de redirecionar. Não basta navegar para <code>/login</code> — credenciais devem ser apagadas do armazenamento local.</p>
+      </div>
+    </section>
+
+    <!-- ===== P-12. MEUS DADOS ===== -->
+    <section class="section" id="p-meus-dados">
+      <div class="eyebrow-p">Tela 12 — App Pintor</div>
+      <h2>Meus dados</h2>
+      <div class="badges">
+        <span class="badge route">/perfil/meus-dados</span>
+        <span class="badge profile-p">Pintor · Mobile</span>
+      </div>
+      <p class="lead">Tela somente leitura dos dados cadastrais. Alterações feitas pela loja/ADM.</p>
+
+      <div class="behavior-p">
+        <div class="bh-label">Comportamento</div>
+        <p>Somente leitura. Mensagem orienta contato com a loja Minas Tintas para alterações de telefone, CPF ou nome. Nenhum campo editável nesta fase.</p>
+      </div>
+
+      <h3>API</h3>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/pintores/me</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Campos necessários</div>
+<pre>{
+  <span class="k">"nome"</span>: <span class="s">"Carlos H. Almeida"</span>,
+  <span class="k">"telefone"</span>: <span class="s">"(31) 9 8765-4321"</span>,
+  <span class="k">"cpf"</span>: <span class="s">"123.456.789-00"</span>,
+  <span class="k">"parceiro_desde"</span>: <span class="s">"2024"</span>
+}</pre>
+        </div>
+      </div>
+
+      <div class="callout info">
+        <div class="co-title">Sem edição de dados pessoais</div>
+        <p>Não criar edição de dados pessoais no app Pintor nesta fase. Alteração de telefone, CPF ou nome feita pela loja/ADM via Painel Admin.</p>
+      </div>
+    </section>
+
+    <!-- ===== P-13. CLIENTES ===== -->
+    <section class="section" id="p-clientes">
+      <div class="eyebrow-p">Tela 13 — App Pintor</div>
+      <h2>Clientes</h2>
+      <div class="badges">
+        <span class="badge route">/perfil/clientes</span>
+        <span class="badge profile-p">Pintor · Mobile</span>
+      </div>
+      <p class="lead">Lista e gestão de clientes vinculados ao pintor. Suporte a pessoa física e empresa.</p>
+
+      <div class="behavior-p">
+        <div class="bh-label">Comportamento</div>
+        <p>Cliente pode ser pessoa física ou empresa. Campos: nome/razão social, telefone, CPF/CNPJ, rua, CEP, número, bairro, cidade e anotação opcional. Lista permite buscar por nome, cidade, telefone ou documento. Pintor edita clientes vinculados a ele. Edição salva direto — sem aprovação do ADM.</p>
+      </div>
+
+      <h3>APIs</h3>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/pintores/me/clientes?q=fernanda</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Resposta</div>
+<pre>[
+  {
+    <span class="k">"id"</span>: <span class="s">"cl3"</span>, <span class="k">"tipo"</span>: <span class="s">"pessoa"</span>,
+    <span class="k">"nome"</span>: <span class="s">"Fernanda Costa"</span>, <span class="k">"telefone"</span>: <span class="s">"(31) 9 7654-3210"</span>,
+    <span class="k">"documento"</span>: <span class="s">"222.333.444-55"</span>, <span class="k">"cidade"</span>: <span class="s">"Contagem"</span>
+  }
+]</pre>
+        </div>
+      </div>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method post">POST</span><span class="ep-path">/pintores/me/clientes</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Body</div>
+<pre>{
+  <span class="k">"tipo"</span>: <span class="s">"pessoa"</span>,
+  <span class="k">"nome"</span>: <span class="s">"Fernanda Costa"</span>, <span class="k">"telefone"</span>: <span class="s">"(31) 9 7654-3210"</span>,
+  <span class="k">"documento"</span>: <span class="s">"222.333.444-55"</span>, <span class="k">"cep"</span>: <span class="s">"00000-000"</span>,
+  <span class="k">"endereco"</span>: <span class="s">"Rua Exemplo"</span>, <span class="k">"numero"</span>: <span class="s">"123"</span>,
+  <span class="k">"bairro"</span>: <span class="s">"Centro"</span>, <span class="k">"cidade"</span>: <span class="s">"Contagem"</span>,
+  <span class="k">"anotacao"</span>: <span class="s">"string ou null"</span>
+}</pre>
+        </div>
+      </div>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method put">PUT</span><span class="ep-path">/pintores/me/clientes/{id}</span></div>
+        <div class="ep-body">
+          <p>Mesma estrutura do <code>POST</code>. Pintor só edita clientes vinculados a ele.</p>
+        </div>
+      </div>
+
+      <div class="callout crit">
+        <div class="co-title">Validações</div>
+        <ul class="tight">
+          <li>CPF/CNPJ e telefone normalizados no backend (somente dígitos).</li>
+          <li>Pessoa física: CPF válido (dígitos verificadores). Empresa: CNPJ válido.</li>
+          <li>Cliente criado pelo pintor vincula-se automaticamente a ele.</li>
+          <li>Pintor só lista/edita clientes vinculados a ele.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===== P-14. MINHA ATIVIDADE ===== -->
+    <section class="section" id="p-atividade">
+      <div class="eyebrow-p">Tela 14 — App Pintor</div>
+      <h2>Minha atividade</h2>
+      <div class="badges">
+        <span class="badge route">/perfil/atividade</span>
+        <span class="badge profile-p">Pintor · Mobile</span>
+      </div>
+      <p class="lead">Dashboard pessoal: pedidos, pontos ganhos e gráficos de atividade por semana, mês ou ano.</p>
+
+      <div class="behavior-p">
+        <div class="bh-label">Comportamento</div>
+        <p>Períodos: <strong>Semana</strong> · <strong>Mês</strong> · <strong>Ano</strong>. No modo Ano, exibe seletor de ano. Cards de resumo: pedidos, pontos ganhos, clientes vinculados. Dois gráficos de barras (recharts): pedidos gerados e pontos ganhos. Mostra pontos resgatados no período.</p>
+      </div>
+
+      <h3>API</h3>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/pintores/me/atividade?periodo=semana</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Query params</div>
+          <ul class="tight">
+            <li><code>periodo</code>: <code>semana</code> | <code>mes</code> | <code>ano</code></li>
+            <li><code>ano</code>: ex. <code>2026</code> (obrigatório quando <code>periodo=ano</code>)</li>
+          </ul>
+          <div class="ep-label">Resposta</div>
+<pre>{
+  <span class="k">"periodo"</span>: <span class="s">"semana"</span>, <span class="k">"label"</span>: <span class="s">"ESTA SEMANA"</span>,
+  <span class="k">"delta"</span>: { <span class="k">"text"</span>: <span class="s">"+2 vs semana ant."</span>, <span class="k">"up"</span>: <span class="s">true</span> },
+  <span class="k">"stats"</span>: {
+    <span class="k">"pedidos"</span>: <span class="n">5</span>, <span class="k">"pontos_ganhos"</span>: <span class="n">850</span>,
+    <span class="k">"pontos_resgatados"</span>: <span class="n">0</span>, <span class="k">"clientes_vinculados"</span>: <span class="n">23</span>
+  },
+  <span class="k">"series"</span>: {
+    <span class="k">"labels"</span>: [<span class="s">"Seg"</span>, <span class="s">"Ter"</span>, <span class="s">"Qua"</span>, <span class="s">"Qui"</span>, <span class="s">"Sex"</span>, <span class="s">"Sáb"</span>, <span class="s">"Dom"</span>],
+    <span class="k">"pedidos"</span>: [<span class="n">1</span>, <span class="n">0</span>, <span class="n">2</span>, <span class="n">1</span>, <span class="n">0</span>, <span class="n">1</span>, <span class="n">0</span>],
+    <span class="k">"pontos"</span>:  [<span class="n">180</span>, <span class="n">0</span>, <span class="n">320</span>, <span class="n">150</span>, <span class="n">0</span>, <span class="n">200</span>, <span class="n">0</span>]
+  }
+}</pre>
+        </div>
+      </div>
+
+      <h3>Regras</h3>
+      <ul class="tight">
+        <li>Dados agregados somente do pintor autenticado.</li>
+        <li><code>pontos_ganhos</code>: somar pontos creditados no período.</li>
+        <li><code>pontos_resgatados</code>: somar pontos descontados em resgates confirmados, estornando cancelamentos.</li>
+        <li><code>clientes_vinculados</code>: total atual de clientes vinculados — não histórico.</li>
+        <li>Semanal → dias. Mensal → semanas. Anual → meses.</li>
+      </ul>
+    </section>
+
+    <!-- ===== P-15. CONFIGURAÇÕES ===== -->
+    <section class="section" id="p-configuracoes">
+      <div class="eyebrow-p">Tela 15 — App Pintor</div>
+      <h2>Configurações</h2>
+      <div class="badges">
+        <span class="badge route">/perfil/configuracoes</span>
+        <span class="badge profile-p">Pintor · Mobile</span>
+      </div>
+      <p class="lead">Notificações, programa de pontos, suporte e sobre o app. Sem dados de conta.</p>
+
+      <div class="behavior-p">
+        <div class="bh-label">Comportamento</div>
+        <p>Tela enxuta. <strong>Inclui:</strong> Notificações · Programa de pontos · Suporte · Sobre o app. <strong>Não inclui:</strong> dados de conta, troca de telefone/senha, preferências de loja ou configurações administrativas.</p>
+      </div>
+
+      <h3>Notificações — preferências</h3>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/pintores/me/notificacoes/preferencias</span></div>
+        <div class="ep-body">
+          <div class="ep-label">Resposta</div>
+<pre>{ <span class="k">"pedidos"</span>: <span class="s">true</span>, <span class="k">"pontos"</span>: <span class="s">true</span>, <span class="k">"resgates"</span>: <span class="s">true</span>, <span class="k">"promocoes"</span>: <span class="s">false</span> }</pre>
+        </div>
+      </div>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method put">PUT</span><span class="ep-path">/pintores/me/notificacoes/preferencias</span></div>
+        <div class="ep-body">
+<pre>{ <span class="k">"pedidos"</span>: <span class="s">true</span>, <span class="k">"pontos"</span>: <span class="s">true</span>, <span class="k">"resgates"</span>: <span class="s">true</span>, <span class="k">"promocoes"</span>: <span class="s">false</span> }</pre>
+        </div>
+      </div>
+
+      <h3>Push real — fase posterior</h3>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method post">POST</span><span class="ep-path">/push/subscriptions</span></div>
+        <div class="ep-body">
+<pre>{
+  <span class="k">"endpoint"</span>: <span class="s">"string"</span>,
+  <span class="k">"keys"</span>: { <span class="k">"p256dh"</span>: <span class="s">"string"</span>, <span class="k">"auth"</span>: <span class="s">"string"</span> },
+  <span class="k">"platform"</span>: <span class="s">"ios | android | desktop | unknown"</span>
+}</pre>
+        </div>
+      </div>
+      <p class="note">Requisitos do push real: <code>manifest.webmanifest</code> · service worker · Notification API · Push API · chaves VAPID · subscriptions por pintor · disparos a partir de ações do ADM/sistema.</p>
+
+      <h3>Programa de pontos</h3>
+      <div class="endpoint">
+        <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/programa-pontos/regras</span></div>
+        <div class="ep-body">
+          <p class="note">Pode ser estático no front ou vir de configuração/CMS. Descreve as regras do programa para exibição ao pintor.</p>
+        </div>
+      </div>
+
+      <h3>Suporte</h3>
+      <ul class="tight">
+        <li>Link para WhatsApp (opção preferencial).</li>
+        <li>Formulário simples (opcional).</li>
+        <li>Integração com ferramenta externa se necessário.</li>
+      </ul>
+    </section>
+
+    <!-- ===== ORDEM DE IMPLEMENTAÇÃO — PINTOR ===== -->
+    <section class="section" id="p-implementacao">
+      <div class="eyebrow-p">App Pintor</div>
+      <h2>Ordem Sugerida de Implementação — Pintor</h2>
+
+      <ol style="padding-left:22px; margin:14px 0; line-height:2.2;">
+        <li>Autenticação e sessão do pintor (telefone + senha, via Supabase Auth).</li>
+        <li><code>GET /pintores/me</code> e dados de perfil.</li>
+        <li>Pontos e movimentos de pontos (<code>pontos_movimentos</code>).</li>
+        <li>Clientes do pintor (lista, cadastro, edição).</li>
+        <li>Catálogo de produtos para orçamento.</li>
+        <li>Criação de orçamento/pedido (<code>POST /pintores/me/orcamentos</code>).</li>
+        <li>Lista e detalhe de pedidos.</li>
+        <li>Lojinha — produtos de resgate e estoque.</li>
+        <li>Solicitação/cancelamento de resgate.</li>
+        <li>Notificações internas (leitura e contagem).</li>
+        <li>Atividade/gráficos agregados.</li>
+        <li>Push PWA real — fase posterior (VAPID, service worker, subscriptions).</li>
+      </ol>
+    </section>
+
+
+    <!-- ================================================================ -->
+    <!-- BANCO DE DADOS — SUPABASE SCHEMA                                   -->
+    <!-- ================================================================ -->
+
+    <div class="app-transition db-transition">
+      <div class="at-label">Banco de Dados · Supabase PostgreSQL</div>
+      <h1>Schema — Supabase</h1>
+      <div class="at-sub">Inventário completo de tabelas, enums, RLS, campos calculados e relacionamentos. Derivado do código validado dos dois apps e dos dois handoffs. <strong>Não é migration</strong> — é orientação para o dev modelar o banco.</div>
+    </div>
+
+    <!-- ===== DB: DECISÕES FECHADAS ===== -->
+    <section class="section" id="db-decisoes">
+      <div class="eyebrow-db">Banco de Dados</div>
+      <h2>Decisões fechadas</h2>
+      <p class="lead">O que foi decidido e molda o schema. Não reabrir sem motivo.</p>
+      <ul class="tight">
+        <li><strong>Auth:</strong> Supabase Auth com <strong>e-mail + senha</strong> para os dois perfis. Telefone é dado cadastral — não credencial.</li>
+        <li><strong>Idioma:</strong> tabelas e colunas em <strong>português</strong>.</li>
+        <li><strong>Pintor → auth:</strong> <code>pintores.auth_user_id</code> referencia <code>auth.users(id)</code>.</li>
+        <li><strong>Imagens:</strong> Supabase Storage (bucket). Banco guarda o caminho/URL — nunca o binário.</li>
+        <li><strong>Pintor inativo:</strong> pode logar e visualizar, mas não executa ações importantes → regra de RLS/policy de escrita.</li>
+        <li><strong>Cliente editado pelo pintor:</strong> salva direto, sem moderação.</li>
+        <li><strong>Resgate:</strong> ao solicitar → debita pontos + estoque na hora; fica pendente até admin confirmar; cancelar → devolve tudo em transação.</li>
+        <li><strong>Auditoria:</strong> <code>logs_auditoria</code> registra ações sensíveis (pontos, estoque, pedidos, resgates, status, permissões).</li>
+        <li><strong>Push:</strong> não entra agora — documentado para o backend na seção "Futuro".</li>
+      </ul>
+    </section>
+
+    <!-- ===== DB: ENUMS ===== -->
+    <section class="section" id="db-enums">
+      <div class="eyebrow-db">Banco de Dados</div>
+      <h2>Enums</h2>
+      <pre>CREATE TYPE tipo_cliente          AS ENUM ('pessoa', 'empresa');
+CREATE TYPE status_pedido         AS ENUM ('rascunho', 'pendente', 'aprovado', 'recusado', 'cancelado', 'estornado');
+CREATE TYPE tipo_evento_pedido    AS ENUM ('criado', 'em_analise', 'aprovado', 'recusado', 'estornado', 'cancelado');
+CREATE TYPE forma_pagamento       AS ENUM ('na_loja', 'pix_loja', 'cartao', 'dinheiro', 'notinha');
+CREATE TYPE status_resgate        AS ENUM ('pendente', 'entregue', 'recusado', 'cancelado');
+CREATE TYPE categoria_lojinha     AS ENUM ('ferramentas', 'epi', 'brindes', 'camisetas');
+CREATE TYPE tipo_transacao_pontos AS ENUM ('credito_bonus', 'estorno_bonus', 'ajuste_manual', 'debito_resgate', 'devolucao_resgate');
+CREATE TYPE origem_pedido         AS ENUM ('pintor', 'admin');</pre>
+      <div class="callout info">
+        <div class="co-title">Notas</div>
+        <p><code>forma_pagamento</code>: valores conferidos no app Pintor ("na_loja", "pix_loja", "cartao", "dinheiro", "notinha"). A categoria <code>tudo</code> da lojinha é filtro de UI — fora do enum. <code>logs_auditoria.acao</code> é text livre (variedade alta), não enum.</p>
+      </div>
+    </section>
+
+    <!-- ===== DB: TABELA 1 — configuracoes ===== -->
+    <section class="section" id="db-configuracoes">
+      <div class="eyebrow-db">Tabela 1 — Banco de Dados</div>
+      <h2><code>configuracoes</code></h2>
+      <div class="badges"><span class="badge profile-db">Singleton</span></div>
+      <p class="lead">Config global do sistema. Linha única — guarda multiplicador e regras de bônus.</p>
+      <table>
+        <thead><tr><th>Coluna</th><th>Tipo</th><th>Regras</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code> 🔑</td><td>smallint</td><td>default 1 · <code>CHECK (id = 1)</code></td></tr>
+          <tr><td><code>multiplicador_global</code></td><td>numeric(6,2)</td><td>default <strong>10</strong> · passo ±0.25 na UI · mín. 0.25</td></tr>
+          <tr><td><code>bonus_percent</code></td><td>numeric(5,2)</td><td>default <strong>1.00</strong></td></tr>
+          <tr><td><code>pontos_por_real</code></td><td>numeric(6,2)</td><td>default <strong>10</strong></td></tr>
+          <tr><td><code>atualizado_em</code></td><td>timestamptz</td><td>trigger <code>moddatetime</code></td></tr>
+        </tbody>
+      </table>
+      <div class="callout integ">
+        <div class="co-title">Fórmula de bônus</div>
+        <p><code>bonus_pts = round(valor_bruto × bonus_percent/100 × pontos_por_real)</code> = <code>round(valor_bruto × 0.10)</code>. O multiplicador da lojinha tem UI; o bônus não tem UI de edição nesta fase — configurável direto no banco para quando precisar. Pontos não expiram.</p>
+      </div>
+    </section>
+
+    <!-- ===== DB: TABELA 2 — usuarios_admin ===== -->
+    <section class="section" id="db-usuarios-admin">
+      <div class="eyebrow-db">Tabela 2 — Banco de Dados</div>
+      <h2><code>usuarios_admin</code></h2>
+      <p class="lead">Usuários do painel Admin.</p>
+      <table>
+        <thead><tr><th>Coluna</th><th>Tipo</th><th>Regras</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code> 🔑🔗</td><td>uuid</td><td><code>REFERENCES auth.users(id)</code></td></tr>
+          <tr><td><code>nome</code></td><td>text</td><td>not null</td></tr>
+          <tr><td><code>email</code></td><td>text</td><td><code>UNIQUE NOT NULL</code> (login)</td></tr>
+          <tr><td><code>foto_url</code></td><td>text</td><td>nullable · Supabase Storage</td></tr>
+          <tr><td><code>ativo</code></td><td>boolean</td><td>default true</td></tr>
+          <tr><td><code>criado_em</code></td><td>timestamptz</td><td>default now()</td></tr>
+        </tbody>
+      </table>
+      <p class="note"><code>papel</code>/<code>loja</code> existiam no mock mas não aparecem na tela — deixados de fora. Adicionar como nullable se o cliente quiser níveis de permissão (ver Dúvida 4).</p>
+    </section>
+
+    <!-- ===== DB: TABELA 3 — pintores ===== -->
+    <section class="section" id="db-pintores">
+      <div class="eyebrow-db">Tabela 3 — Banco de Dados</div>
+      <h2><code>pintores</code></h2>
+      <p class="lead">Pintores parceiros — usuários do app Pintor.</p>
+      <table>
+        <thead><tr><th>Coluna</th><th>Tipo</th><th>Regras</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code> 🔑</td><td>uuid</td><td>default gen_random_uuid()</td></tr>
+          <tr><td><code>auth_user_id</code> 🔗</td><td>uuid</td><td><code>REFERENCES auth.users(id)</code> nullable</td></tr>
+          <tr><td><code>slug</code></td><td>text</td><td><code>UNIQUE NOT NULL</code> ★ (rota <code>/pintores/[slug]</code>)</td></tr>
+          <tr><td><code>nome</code></td><td>text</td><td>not null</td></tr>
+          <tr><td><code>email</code></td><td>text</td><td>espelho do <code>auth.users</code> (exibição)</td></tr>
+          <tr><td><code>telefone</code></td><td>text</td><td><code>UNIQUE</code> — cadastral + dedup; <strong>não é login</strong></td></tr>
+          <tr><td><code>documento</code></td><td>text</td><td>CPF · <code>UNIQUE NOT NULL</code></td></tr>
+          <tr><td><code>cep</code> / <code>rua</code> / <code>numero</code> / <code>complemento</code> / <code>bairro</code> / <code>cidade</code></td><td>text</td><td>endereço</td></tr>
+          <tr><td><code>parceiro_desde</code></td><td>date</td><td></td></tr>
+          <tr><td><code>ativo</code></td><td>boolean</td><td>default true ★</td></tr>
+          <tr><td><code>saldo_pontos</code></td><td>integer</td><td>cache opcional (recalculável via <code>transacoes_pontos</code>)</td></tr>
+          <tr><td><code>criado_em</code></td><td>timestamptz</td><td>default now()</td></tr>
+        </tbody>
+      </table>
+      <p class="note"><code>slug</code> é só roteamento do admin — não é credencial. Campos derivados (<code>pedidos</code>, <code>aprovados</code>, <code>volume</code>) não viram colunas — são agregações.</p>
+    </section>
+
+    <!-- ===== DB: TABELA 4 — clientes ===== -->
+    <section class="section" id="db-clientes">
+      <div class="eyebrow-db">Tabela 4 — Banco de Dados</div>
+      <h2><code>clientes</code></h2>
+      <p class="lead">Clientes finais dos pintores — pessoa física ou empresa.</p>
+      <table>
+        <thead><tr><th>Coluna</th><th>Tipo</th><th>Regras</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code> 🔑</td><td>uuid</td><td>default gen_random_uuid()</td></tr>
+          <tr><td><code>nome</code></td><td>text</td><td>not null ★</td></tr>
+          <tr><td><code>tipo</code></td><td>tipo_cliente</td><td>not null · default 'pessoa'</td></tr>
+          <tr><td><code>telefone</code></td><td>text</td><td><strong>not null</strong> · <code>UNIQUE</code> (dedup → 409) ★</td></tr>
+          <tr><td><code>documento</code></td><td>text</td><td>CPF/CNPJ · <code>UNIQUE</code> nullable ★</td></tr>
+          <tr><td><code>cep</code> / <code>rua</code> / <code>numero</code> / <code>complemento</code> / <code>bairro</code> / <code>cidade</code></td><td>text</td><td>endereço · ViaCEP preenche rua/bairro/cidade</td></tr>
+          <tr><td><code>observacoes</code></td><td>text</td><td>nullable</td></tr>
+          <tr><td><code>criado_por_pintor_id</code> 🔗</td><td>uuid</td><td><code>REFERENCES pintores(id)</code> nullable</td></tr>
+          <tr><td><code>criado_em</code></td><td>timestamptz</td><td>default now()</td></tr>
+        </tbody>
+      </table>
+      <p class="note">Obrigatórios no cadastro validado: <code>nome</code> + <code>telefone</code>. CPF é opcional mesmo para pessoa física. O <strong>vínculo com pintor</strong> fica em <code>vinculo_cliente_pintor</code> (tabela 7) — um cliente pode ter vários pintores.</p>
+    </section>
+
+    <!-- ===== DB: TABELA 5 — produtos_catalogo ===== -->
+    <section class="section" id="db-produtos-catalogo">
+      <div class="eyebrow-db">Tabela 5 — Banco de Dados</div>
+      <h2><code>produtos_catalogo</code></h2>
+      <div class="badges"><span class="badge method-list">Origem: Hiper Loja (ERP)</span></div>
+      <p class="lead">Catálogo/estoque — espelho do ERP. Não cadastrado à mão. Usado nos orçamentos e como origem opcional de item da lojinha.</p>
+      <table>
+        <thead><tr><th>Coluna</th><th>Tipo</th><th>Regras</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code> 🔑</td><td>uuid</td><td>default gen_random_uuid()</td></tr>
+          <tr><td><code>codigo</code></td><td>text</td><td><code>UNIQUE</code> ★</td></tr>
+          <tr><td><code>nome</code></td><td>text</td><td>not null</td></tr>
+          <tr><td><code>marca</code></td><td>text</td><td>nullable</td></tr>
+          <tr><td><code>preco_venda</code></td><td>numeric(12,2)</td><td>nullable</td></tr>
+          <tr><td><code>custo</code></td><td>numeric(12,2)</td><td>nullable</td></tr>
+          <tr><td><code>estoque</code></td><td>integer</td><td>nullable</td></tr>
+          <tr><td><code>ativo</code></td><td>boolean</td><td>default true</td></tr>
+          <tr><td><code>sincronizado_em</code></td><td>timestamptz</td><td>nullable</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ===== DB: TABELA 6 — itens_lojinha ===== -->
+    <section class="section" id="db-itens-lojinha">
+      <div class="eyebrow-db">Tabela 6 — Banco de Dados</div>
+      <h2><code>itens_lojinha</code></h2>
+      <p class="lead">Itens da lojinha de pontos. Pode ser criado do zero (brinde) ou a partir de um produto do catálogo. <strong>Pontos são derivados — nunca persistidos.</strong></p>
+      <table>
+        <thead><tr><th>Coluna</th><th>Tipo</th><th>Regras</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code> 🔑</td><td>uuid</td><td>default gen_random_uuid()</td></tr>
+          <tr><td><code>produto_catalogo_id</code> 🔗</td><td>uuid</td><td><code>REFERENCES produtos_catalogo(id)</code> nullable</td></tr>
+          <tr><td><code>nome</code></td><td>text</td><td>not null</td></tr>
+          <tr><td><code>descricao</code></td><td>text</td><td>nullable</td></tr>
+          <tr><td><code>categoria</code></td><td>categoria_lojinha</td><td>nullable</td></tr>
+          <tr><td><code>icone</code></td><td>text</td><td>nome do ícone lucide (fallback sem foto)</td></tr>
+          <tr><td><code>custo</code></td><td>numeric(12,2)</td><td>not null — <strong>base do cálculo de pontos (R$)</strong></td></tr>
+          <tr><td><code>preco_venda</code></td><td>numeric(12,2)</td><td>nullable · referência, vem do catálogo</td></tr>
+          <tr><td><code>modificador_individual</code></td><td>numeric(5,2)</td><td>default 0 · passo ±0.25 · <strong>negativo = PROMO</strong></td></tr>
+          <tr><td><code>estoque</code></td><td>integer</td><td>not null default 0</td></tr>
+          <tr><td><code>visivel</code></td><td>boolean</td><td>not null default true</td></tr>
+          <tr><td><code>imagem_path</code></td><td>text</td><td>nullable · Supabase Storage</td></tr>
+          <tr><td><code>imagem_pos</code></td><td>jsonb</td><td>nullable · <code>{x,y}</code> reposicionamento da foto</td></tr>
+          <tr><td><code>criado_em</code></td><td>timestamptz</td><td>default now()</td></tr>
+        </tbody>
+      </table>
+      <div class="callout crit">
+        <div class="co-title">Pontos — calculados, nunca persistidos</div>
+        <p><code>pontos = round(custo × (configuracoes.multiplicador_global + modificador_individual))</code><br>
+        <code>pontos_original = round(custo × multiplicador_global)</code> (preço cheio, para "de/por")<br>
+        <code>em_promocao = modificador_individual &lt; 0</code><br>
+        Guardar pontos quebraria o reprice global automático. <code>estoque = 0</code> <strong>ou</strong> <code>visivel = false</code> → não resgatável.</p>
+      </div>
+    </section>
+
+    <!-- ===== DB: TABELA 7 — vinculo_cliente_pintor ===== -->
+    <section class="section" id="db-vinculo">
+      <div class="eyebrow-db">Tabela 7 — Banco de Dados</div>
+      <h2><code>vinculo_cliente_pintor</code></h2>
+      <p class="lead">Tabela de junção N:N entre clientes e pintores.</p>
+      <table>
+        <thead><tr><th>Coluna</th><th>Tipo</th><th>Regras</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code> 🔑</td><td>uuid</td><td>default gen_random_uuid()</td></tr>
+          <tr><td><code>cliente_id</code> 🔗</td><td>uuid</td><td><code>REFERENCES clientes(id)</code></td></tr>
+          <tr><td><code>pintor_id</code> 🔗</td><td>uuid</td><td><code>REFERENCES pintores(id)</code></td></tr>
+          <tr><td><code>ultimo_servico_em</code></td><td>timestamptz</td><td>nullable ★ (ordenar por mais recente)</td></tr>
+          <tr><td><code>criado_em</code></td><td>timestamptz</td><td>default now()</td></tr>
+          <tr><td colspan="3"><code>UNIQUE (cliente_id, pintor_id)</code></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ===== DB: TABELA 8 — pedidos ===== -->
+    <section class="section" id="db-pedidos">
+      <div class="eyebrow-db">Tabela 8 — Banco de Dados</div>
+      <h2><code>pedidos</code></h2>
+      <p class="lead">Orçamentos e pedidos. Todo pedido tem pintor responsável (obrigatório).</p>
+      <table>
+        <thead><tr><th>Coluna</th><th>Tipo</th><th>Regras</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code> 🔑</td><td>uuid</td><td>default gen_random_uuid()</td></tr>
+          <tr><td><code>numero</code></td><td>bigint</td><td><code>GENERATED ... AS IDENTITY</code> · <code>UNIQUE</code> ★ (nº humano: "0494")</td></tr>
+          <tr><td><code>cliente_id</code> 🔗</td><td>uuid</td><td><code>REFERENCES clientes(id)</code> not null ★</td></tr>
+          <tr><td><code>pintor_id</code> 🔗</td><td>uuid</td><td><code>REFERENCES pintores(id)</code> <strong>not null</strong> ★</td></tr>
+          <tr><td><code>titulo</code></td><td>text</td><td>nullable (obra/cliente)</td></tr>
+          <tr><td><code>status</code></td><td>status_pedido</td><td>not null default 'rascunho' ★</td></tr>
+          <tr><td><code>valor_bruto</code></td><td>numeric(12,2)</td><td>not null — <strong>base do bônus</strong></td></tr>
+          <tr><td><code>desconto</code></td><td>numeric(12,2)</td><td>default 0 — <strong>não reduz a base do bônus</strong></td></tr>
+          <tr><td><code>forma_pagamento</code></td><td>forma_pagamento</td><td>nullable</td></tr>
+          <tr><td><code>observacao</code></td><td>text</td><td>nullable</td></tr>
+          <tr><td><code>estorno_motivo</code></td><td>text</td><td>nullable</td></tr>
+          <tr><td><code>bonus_pts</code></td><td>integer</td><td>nullable — snapshot creditado na aprovação</td></tr>
+          <tr><td><code>origem</code></td><td>origem_pedido</td><td>not null</td></tr>
+          <tr><td><code>aprovado_por</code> 🔗</td><td>uuid</td><td><code>REFERENCES usuarios_admin(id)</code> nullable</td></tr>
+          <tr><td><code>aprovado_em</code></td><td>timestamptz</td><td>nullable</td></tr>
+          <tr><td><code>offline_uuid</code></td><td>uuid</td><td><code>UNIQUE</code> nullable — idempotência de sync offline</td></tr>
+          <tr><td><code>criado_em</code></td><td>timestamptz</td><td>default now() ★</td></tr>
+        </tbody>
+      </table>
+      <div class="callout crit">
+        <div class="co-title">Bônus credita só na aprovação</div>
+        <p>Ao <code>status → aprovado</code>: grava <code>bonus_pts</code> (snapshot) + insere em <code>transacoes_pontos</code>. Backend <strong>recalcula</strong> totais/pontos — nunca confia no front.</p>
+      </div>
+    </section>
+
+    <!-- ===== DB: TABELA 9 — itens_pedido ===== -->
+    <section class="section" id="db-itens-pedido">
+      <div class="eyebrow-db">Tabela 9 — Banco de Dados</div>
+      <h2><code>itens_pedido</code></h2>
+      <p class="lead">Itens do pedido — snapshot do preço no momento do orçamento.</p>
+      <table>
+        <thead><tr><th>Coluna</th><th>Tipo</th><th>Regras</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code> 🔑</td><td>uuid</td><td>default gen_random_uuid()</td></tr>
+          <tr><td><code>pedido_id</code> 🔗</td><td>uuid</td><td><code>REFERENCES pedidos(id) ON DELETE CASCADE</code> ★</td></tr>
+          <tr><td><code>produto_catalogo_id</code> 🔗</td><td>uuid</td><td><code>REFERENCES produtos_catalogo(id)</code> nullable</td></tr>
+          <tr><td><code>nome</code></td><td>text</td><td>not null — <strong>snapshot</strong></td></tr>
+          <tr><td><code>quantidade</code></td><td>integer</td><td>not null</td></tr>
+          <tr><td><code>preco_unitario</code></td><td>numeric(12,2)</td><td>not null — <strong>snapshot</strong></td></tr>
+          <tr><td><code>subtotal</code></td><td>numeric(12,2)</td><td><code>GENERATED ALWAYS AS (quantidade * preco_unitario) STORED</code></td></tr>
+        </tbody>
+      </table>
+      <p class="note">Snapshot porque preço do catálogo muda e o app funciona offline — o item congela o que foi orçado.</p>
+    </section>
+
+    <!-- ===== DB: TABELA 10 — eventos_pedido ===== -->
+    <section class="section" id="db-eventos-pedido">
+      <div class="eyebrow-db">Tabela 10 — Banco de Dados</div>
+      <h2><code>eventos_pedido</code></h2>
+      <div class="badges"><span class="badge method-list">Append-only · imutável</span></div>
+      <p class="lead">Linha do tempo cumulativa do pedido. Nunca deletar ou alterar.</p>
+      <table>
+        <thead><tr><th>Coluna</th><th>Tipo</th><th>Regras</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code> 🔑</td><td>uuid</td><td>default gen_random_uuid()</td></tr>
+          <tr><td><code>pedido_id</code> 🔗</td><td>uuid</td><td><code>REFERENCES pedidos(id) ON DELETE CASCADE</code> ★</td></tr>
+          <tr><td><code>evento</code></td><td>tipo_evento_pedido</td><td>not null</td></tr>
+          <tr><td><code>descricao</code></td><td>text</td><td>nullable — ex.: motivo de recusa/estorno</td></tr>
+          <tr><td><code>criado_por</code> 🔗</td><td>uuid</td><td><code>REFERENCES usuarios_admin(id)</code> nullable (null = pintor/sistema)</td></tr>
+          <tr><td><code>criado_em</code></td><td>timestamptz</td><td>default now() ★</td></tr>
+        </tbody>
+      </table>
+      <p class="note"><code>pedidos.status</code> = estado atual. <code>eventos_pedido</code> = histórico completo e imutável.</p>
+    </section>
+
+    <!-- ===== DB: TABELA 11 — resgates ===== -->
+    <section class="section" id="db-resgates">
+      <div class="eyebrow-db">Tabela 11 — Banco de Dados</div>
+      <h2><code>resgates</code></h2>
+      <p class="lead">Resgates da lojinha — solicitações de troca de pontos por item.</p>
+      <table>
+        <thead><tr><th>Coluna</th><th>Tipo</th><th>Regras</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code> 🔑</td><td>uuid</td><td>default gen_random_uuid()</td></tr>
+          <tr><td><code>pintor_id</code> 🔗</td><td>uuid</td><td><code>REFERENCES pintores(id)</code> not null ★</td></tr>
+          <tr><td><code>item_lojinha_id</code> 🔗</td><td>uuid</td><td><code>REFERENCES itens_lojinha(id)</code> not null</td></tr>
+          <tr><td><code>pts_debitados</code></td><td>integer</td><td>not null — snapshot do custo em pts no resgate</td></tr>
+          <tr><td><code>status</code></td><td>status_resgate</td><td>not null default 'pendente' ★</td></tr>
+          <tr><td><code>solicitado_em</code></td><td>timestamptz</td><td>default now()</td></tr>
+          <tr><td><code>entregue_em</code></td><td>timestamptz</td><td>nullable</td></tr>
+          <tr><td><code>confirmado_por</code> 🔗</td><td>uuid</td><td><code>REFERENCES usuarios_admin(id)</code> nullable</td></tr>
+          <tr><td><code>motivo_recusa</code></td><td>text</td><td>nullable</td></tr>
+        </tbody>
+      </table>
+      <div class="callout crit">
+        <div class="co-title">Fluxo em transação atômica</div>
+        <p>Solicitar → cria resgate <code>pendente</code> + <code>debito_resgate</code> em <code>transacoes_pontos</code> + decrementa <code>itens_lojinha.estoque</code>. Cancelar (pintor, só enquanto <code>pendente</code>) ou recusar (admin) → <code>devolucao_resgate</code> + incrementa estoque. Tudo em uma transação.</p>
+      </div>
+    </section>
+
+    <!-- ===== DB: TABELA 12 — transacoes_pontos ===== -->
+    <section class="section" id="db-transacoes-pontos">
+      <div class="eyebrow-db">Tabela 12 — Banco de Dados</div>
+      <h2><code>transacoes_pontos</code></h2>
+      <div class="badges"><span class="badge method-list">Ledger — append-only</span></div>
+      <p class="lead">Extrato de pontos. <strong>Saldo confirmado = <code>SUM(pontos)</code></strong> — cobre auditoria completa de saldo.</p>
+      <table>
+        <thead><tr><th>Coluna</th><th>Tipo</th><th>Regras</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code> 🔑</td><td>uuid</td><td>default gen_random_uuid()</td></tr>
+          <tr><td><code>pintor_id</code> 🔗</td><td>uuid</td><td><code>REFERENCES pintores(id)</code> not null ★</td></tr>
+          <tr><td><code>tipo</code></td><td>tipo_transacao_pontos</td><td>not null</td></tr>
+          <tr><td><code>pontos</code></td><td>integer</td><td>not null — + crédito / − débito</td></tr>
+          <tr><td><code>pedido_id</code> 🔗</td><td>uuid</td><td><code>REFERENCES pedidos(id)</code> nullable</td></tr>
+          <tr><td><code>resgate_id</code> 🔗</td><td>uuid</td><td><code>REFERENCES resgates(id)</code> nullable</td></tr>
+          <tr><td><code>motivo</code></td><td>text</td><td>obrigatório em <code>ajuste_manual</code> e <code>estorno_bonus</code></td></tr>
+          <tr><td><code>criado_por</code> 🔗</td><td>uuid</td><td><code>REFERENCES usuarios_admin(id)</code> nullable (null = sistema)</td></tr>
+          <tr><td><code>criado_em</code></td><td>timestamptz</td><td>default now() ★</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ===== DB: TABELA 13 — logs_auditoria ===== -->
+    <section class="section" id="db-logs-auditoria">
+      <div class="eyebrow-db">Tabela 13 — Banco de Dados</div>
+      <h2><code>logs_auditoria</code></h2>
+      <p class="lead">Auditoria geral de ações sensíveis: pontos, estoque, pedidos, resgates, status, permissões.</p>
+      <table>
+        <thead><tr><th>Coluna</th><th>Tipo</th><th>Regras</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code> 🔑</td><td>uuid</td><td>default gen_random_uuid()</td></tr>
+          <tr><td><code>usuario_admin_id</code> 🔗</td><td>uuid</td><td><code>REFERENCES usuarios_admin(id)</code> nullable</td></tr>
+          <tr><td><code>pintor_id</code> 🔗</td><td>uuid</td><td><code>REFERENCES pintores(id)</code> nullable (quando o ator é pintor)</td></tr>
+          <tr><td><code>acao</code></td><td>text</td><td>ex.: 'aprovou_pedido', 'ajustou_pontos', 'confirmou_resgate'</td></tr>
+          <tr><td><code>entidade</code></td><td>text</td><td>tabela afetada</td></tr>
+          <tr><td><code>entidade_id</code></td><td>uuid</td><td>id do registro</td></tr>
+          <tr><td><code>detalhes</code></td><td>jsonb</td><td>antes/depois</td></tr>
+          <tr><td><code>criado_em</code></td><td>timestamptz</td><td>default now() ★</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ===== DB: RELACIONAMENTOS ===== -->
+    <section class="section" id="db-relacionamentos">
+      <div class="eyebrow-db">Banco de Dados</div>
+      <h2>Relacionamentos</h2>
+      <pre>auth.users        1—1  usuarios_admin
+auth.users        1—1  pintores           (auth_user_id)
+clientes          N—N  pintores           (via vinculo_cliente_pintor)
+clientes          1—N  pedidos
+pintores          1—N  pedidos            (responsável, obrigatório)
+pedidos           1—N  itens_pedido
+pedidos           1—N  eventos_pedido
+produtos_catalogo 1—N  itens_pedido       (nullable)
+produtos_catalogo 1—N  itens_lojinha      (nullable)
+pintores          1—N  resgates
+itens_lojinha     1—N  resgates
+pintores          1—N  transacoes_pontos
+pedidos/resgates  1—N  transacoes_pontos  (origem, nullable)
+usuarios_admin    1—N  logs_auditoria</pre>
+
+      <div class="callout info">
+        <div class="co-title">Ordem de criação</div>
+        <p>enums → configuracoes, usuarios_admin, pintores, clientes, produtos_catalogo, itens_lojinha → vinculo_cliente_pintor → pedidos → itens_pedido, eventos_pedido → resgates → transacoes_pontos → logs_auditoria</p>
+      </div>
+    </section>
+
+    <!-- ===== DB: RLS / POLICIES ===== -->
+    <section class="section" id="db-rls">
+      <div class="eyebrow-db">Banco de Dados</div>
+      <h2>RLS / Policies sugeridas</h2>
+      <p class="lead">RLS em <strong>todas</strong> as tabelas. Helpers: <code>is_admin()</code> = existe linha em <code>usuarios_admin</code> para <code>auth.uid()</code>; <code>meu_pintor_id()</code> = <code>pintores.id</code> do <code>auth.uid()</code>.</p>
+      <table>
+        <thead><tr><th>Tabela</th><th>Pintor</th><th>Admin</th></tr></thead>
+        <tbody>
+          <tr><td><code>configuracoes</code></td><td>leitura</td><td>leitura + escrita</td></tr>
+          <tr><td><code>usuarios_admin</code></td><td>—</td><td>leitura; escrita só service role</td></tr>
+          <tr><td><code>pintores</code></td><td>lê/edita <strong>o próprio</strong> registro</td><td>tudo</td></tr>
+          <tr><td><code>clientes</code></td><td>lê/edita clientes <strong>vinculados a ele</strong>; cria direto</td><td>tudo</td></tr>
+          <tr><td><code>produtos_catalogo</code></td><td>leitura</td><td>leitura (escrita = service role/sync)</td></tr>
+          <tr><td><code>itens_lojinha</code></td><td>leitura <strong>só <code>visivel = true</code></strong></td><td>tudo</td></tr>
+          <tr><td><code>vinculo_cliente_pintor</code></td><td>lê os próprios vínculos</td><td>tudo</td></tr>
+          <tr><td><code>pedidos</code></td><td>lê/cria <strong>os próprios</strong>; edita só <code>rascunho</code></td><td>tudo (aprovar/recusar/estornar)</td></tr>
+          <tr><td><code>itens_pedido</code></td><td>via pedido próprio</td><td>tudo</td></tr>
+          <tr><td><code>eventos_pedido</code></td><td>leitura via pedido próprio</td><td>insere eventos</td></tr>
+          <tr><td><code>resgates</code></td><td>lê/cria os próprios; cancela só <code>pendente</code></td><td>tudo (confirmar/recusar)</td></tr>
+          <tr><td><code>transacoes_pontos</code></td><td><strong>leitura</strong> dos próprios (nunca escreve)</td><td>escrita (ajuste manual)</td></tr>
+          <tr><td><code>logs_auditoria</code></td><td>—</td><td>leitura; escrita via trigger/service</td></tr>
+        </tbody>
+      </table>
+      <div class="callout crit">
+        <div class="co-title">Pintor inativo — policies de escrita</div>
+        <p>Policies de <strong>escrita</strong> (criar pedido, resgatar, editar cliente) exigem <code>pintores.ativo = true</code>. Policies de <strong>leitura</strong> não checam <code>ativo</code> — ele loga e visualiza normalmente.</p>
+      </div>
+      <div class="callout info">
+        <div class="co-title">Crédito/débito de pontos</div>
+        <p>Roda como service role / função <code>SECURITY DEFINER</code> numa transação. O pintor nunca insere em <code>transacoes_pontos</code> diretamente.</p>
+      </div>
+    </section>
+
+    <!-- ===== DB: CAMPOS CALCULADOS ===== -->
+    <section class="section" id="db-calculados">
+      <div class="eyebrow-db">Banco de Dados</div>
+      <h2>Campos calculados vs persistidos</h2>
+
+      <h3>Calculados on-the-fly (NÃO persistir)</h3>
+      <table>
+        <thead><tr><th>Campo</th><th>Como calcular</th></tr></thead>
+        <tbody>
+          <tr><td><code>saldo_atual</code> do pintor</td><td><code>SUM(transacoes_pontos.pontos)</code></td></tr>
+          <tr><td><code>a_liberar</code></td><td>soma do bônus previsto de pedidos <code>pendentes</code></td></tr>
+          <tr><td><code>estimado</code></td><td>bônus de rascunhos (nem persiste o pedido às vezes)</td></tr>
+          <tr><td><code>comprometido</code></td><td>soma de <code>resgates</code> pendentes</td></tr>
+          <tr><td><code>pontos</code> / <code>pontos_original</code> / <code>em_promocao</code> do item</td><td><code>custo × (global + modificador)</code></td></tr>
+          <tr><td><code>pedidos</code>, <code>aprovados</code>, <code>volume</code> do pintor</td><td>agregações de <code>pedidos</code></td></tr>
+        </tbody>
+      </table>
+
+      <h3>Persistidos como snapshot</h3>
+      <table>
+        <thead><tr><th>Campo</th><th>Por quê persistir</th></tr></thead>
+        <tbody>
+          <tr><td><code>pedidos.bonus_pts</code></td><td>Congela o bônus creditado na aprovação</td></tr>
+          <tr><td><code>itens_pedido.nome</code> / <code>preco_unitario</code></td><td>Preço de catálogo muda + app funciona offline</td></tr>
+          <tr><td><code>resgates.pts_debitados</code></td><td>Congela o custo em pts no momento do resgate</td></tr>
+          <tr><td><code>pintores.saldo_pontos</code> (opcional)</td><td>Cache de performance — recalculável</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ===== DB: STORAGE ===== -->
+    <section class="section" id="db-storage">
+      <div class="eyebrow-db">Banco de Dados</div>
+      <h2>Storage de imagens</h2>
+      <ul class="tight">
+        <li><strong>Buckets sugeridos:</strong> <code>itens-lojinha/</code> e <code>avatares-admin/</code> (futuramente: fotos de pedido, se houver).</li>
+        <li>Banco guarda só <code>imagem_path</code> (ou URL pública) — nunca o binário.</li>
+        <li>Otimização/conversão para web (WebP, redimensionamento) na ingestão — via Edge Function ou no upload do front. Pipeline a definir (ver Dúvida 5).</li>
+        <li>O mock usa <code>FileReader</code>/<code>data:</code>URL como placeholder — em produção vira upload para o bucket.</li>
+      </ul>
+      <div class="callout warn">
+        <div class="co-title">Pipeline de imagem — a definir</div>
+        <p>Converter no upload do front, ou via Edge Function no Storage? Formato alvo (WebP)? Tamanho máximo? Decidir antes de implementar o upload (Dúvida 5).</p>
+      </div>
+    </section>
+
+    <!-- ===== DB: FUTURO ===== -->
+    <section class="section" id="db-futuro">
+      <div class="eyebrow-db">Banco de Dados</div>
+      <h2>Futuro / Push — não criar agora</h2>
+      <div class="behavior-db">
+        <div class="bh-label">inscricoes_push</div>
+        <p>Web Push / VAPID — criar quando push entrar no escopo. Campos mínimos:</p>
+        <p><code>pintor_id</code> · <code>endpoint UNIQUE</code> · <code>p256dh</code> · <code>auth</code> · <code>user_agent</code> · <code>criado_em</code></p>
+        <p>Decisão de implementação fica com o dev (service worker, chaves VAPID, disparos a partir de ações do ADM).</p>
+      </div>
+    </section>
+
+    <!-- ===== DB: DÚVIDAS ===== -->
+    <section class="section" id="db-duvidas">
+      <div class="eyebrow-db">Banco de Dados</div>
+      <h2>Dúvidas em aberto</h2>
+      <p class="lead">Decidir antes de gerar o SQL final.</p>
+      <ol style="padding-left:22px; line-height:2.4; margin:14px 0;">
+        <li><strong>Telefone do pintor é único?</strong> Decidido como cadastral (não login). Manter <code>UNIQUE</code> para evitar duplicata, ou pode repetir?</li>
+        <li><strong>Pintor inativo com pedido/resgate pendente:</strong> ao inativar, o que acontece com pendências? (bloquear inativação? manter? estornar?)</li>
+        <li><strong>Estorno de pedido aprovado:</strong> reverte o bônus sempre, mesmo se o pintor já gastou os pontos? Saldo pode ficar negativo?</li>
+        <li><strong>Níveis de permissão de admin:</strong> todos os admins podem tudo, ou precisa de <code>papel</code> (ex.: gerente vs operador)?</li>
+        <li><strong>Pipeline de otimização de imagem:</strong> converter no upload do front, ou via Edge Function? Formato alvo (WebP)? Tamanho máximo?</li>
+        <li><strong><code>forma_pagamento</code>:</strong> os 5 valores cobrem tudo? ("na_loja", "pix_loja", "cartao", "dinheiro", "notinha")</li>
+        <li><strong>Categorias da lojinha</strong> são fixas (ferramentas/epi/brindes/camisetas) ou o admin cria novas? Se cria → vira tabela, não enum.</li>
+        <li><strong>Número do pedido (<code>numero</code>):</strong> sequência global única, ou reinicia por loja/ano?</li>
+      </ol>
+      <div class="callout warn">
+        <div class="co-title">Este documento não é migration</div>
+        <p>É orientação e regra para o dev modelar o banco. Todas as dúvidas acima precisam de resposta antes de gerar e executar o SQL de criação das tabelas.</p>
+      </div>
+    </section>
+
+    <hr>
+    <p class="note">Minas Tintas — Handoff Completo · Admin + Pintor + Banco de Dados · Fontes: <code>Handoff ADM/integracao-e-regras.md</code> · <code>Handoff Pintor/integracao-e-regras.md</code> · <code>inventario-schema-supabase.md</code></p>
+
+  </div></main>
+</div>
+
+<script>
+  // Sidebar colapsável — toggle com persistência em localStorage
+  (function(){
+    var toggles = Array.prototype.slice.call(document.querySelectorAll('.nav-toggle'));
+    toggles.forEach(function(btn){
+      var targetId = btn.getAttribute('data-target');
+      var panel = document.getElementById(targetId);
+      var key = 'ht_nav_' + targetId;
+      // Restaurar estado salvo (padrão: fechado)
+      if(localStorage.getItem(key) === 'open'){
+        panel.classList.add('open');
+        btn.setAttribute('aria-expanded','true');
+      }
+      btn.addEventListener('click', function(){
+        var isOpen = panel.classList.contains('open');
+        panel.classList.toggle('open');
+        btn.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+        localStorage.setItem(key, isOpen ? 'closed' : 'open');
+      });
+    });
+
+    // Auto-abrir o grupo correto ao clicar num link externo (ex.: scroll-spy activa)
+    function ensureGroupOpen(linkEl){
+      var panel = linkEl.closest('.nav-collapse');
+      if(panel && !panel.classList.contains('open')){
+        panel.classList.add('open');
+        var btn = document.querySelector('[data-target="' + panel.id + '"]');
+        if(btn){
+          btn.setAttribute('aria-expanded','true');
+          localStorage.setItem('ht_nav_' + panel.id, 'open');
+        }
+      }
+    }
+    document.querySelectorAll('.nav-collapse a').forEach(function(a){
+      a.addEventListener('click', function(){ ensureGroupOpen(a); });
+    });
+  })();
+
+  // Scroll-spy: realça o item ativo na sidebar
+  (function(){
+    var links = Array.prototype.slice.call(document.querySelectorAll('.nav a'));
+    var map = {};
+    links.forEach(function(a){
+      var id = a.getAttribute('href').slice(1);
+      var el = document.getElementById(id);
+      if(el) map[id] = a;
+    });
+    var obs = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){
+          links.forEach(function(a){a.classList.remove('active');});
+          var a = map[e.target.id];
+          if(a){
+            a.classList.add('active');
+            // Auto-abrir o grupo se estiver fechado
+            var panel = a.closest('.nav-collapse');
+            if(panel && !panel.classList.contains('open')){
+              panel.classList.add('open');
+              var btn = document.querySelector('[data-target="' + panel.id + '"]');
+              if(btn){
+                btn.setAttribute('aria-expanded','true');
+                localStorage.setItem('ht_nav_' + panel.id, 'open');
+              }
+            }
+          }
+        }
+      });
+    }, { rootMargin: '-10% 0px -80% 0px', threshold: 0 });
+    Object.keys(map).forEach(function(id){
+      obs.observe(document.getElementById(id));
+    });
+  })();
+</script>
+</body>
+</html>

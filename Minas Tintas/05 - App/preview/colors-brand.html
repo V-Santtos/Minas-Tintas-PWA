@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Colors — Brand red</title>
+<link rel="stylesheet" href="_card.css">
+<style>
+  .layout { display: grid; grid-template-columns: 1.1fr 1fr; gap: 20px; align-items: stretch; }
+  .left { display: grid; grid-template-rows: 1fr 1fr 1fr; gap: 12px; }
+  .sw {
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    align-items: center;
+    overflow: hidden;
+  }
+  .sw .chip { height: 100%; min-height: 56px; }
+  .sw .meta { padding: 10px 14px; }
+  .sw .name { font-size: 13px; font-weight: 600; color: var(--ink); }
+  .sw .hex  { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .right {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    justify-content: center;
+  }
+  .right .eyebrow { color: var(--brand); }
+  .right .num { font-family: var(--font-display); font-weight: 700; font-size: 56px; line-height: 1; letter-spacing: -0.02em; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .right .num em { color: var(--brand); font-style: normal; }
+  .rule { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .rule b { color: var(--ink); font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="layout">
+    <div class="left">
+      <div class="sw">
+        <div class="chip" style="background:#CC0000;"></div>
+        <div class="meta"><div class="name">brand</div><div class="hex">#CC0000</div></div>
+      </div>
+      <div class="sw">
+        <div class="chip" style="background:#A30000;"></div>
+        <div class="meta"><div class="name">brand-ink — press</div><div class="hex">#A30000</div></div>
+      </div>
+      <div class="sw">
+        <div class="chip" style="background:#FBE9E9;"></div>
+        <div class="meta"><div class="name">brand-tint — pill bg</div><div class="hex">#FBE9E9</div></div>
+      </div>
+    </div>
+    <div class="right">
+      <div class="eyebrow">PONTOS ACUMULADOS</div>
+      <div class="num">12.<em>480</em></div>
+      <div class="rule"><b>One-red rule.</b> Inside any section only <b>one</b> element may carry brand red. Pick CTA, mark, or figure — never two.</div>
+    </div>
+  </div>
+</body>
+</html>

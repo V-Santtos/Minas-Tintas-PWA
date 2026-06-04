@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Inputs</title>
+<link rel="stylesheet" href="_card.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<style>
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 24px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 12px; color: var(--ink-2); font-weight: 500; }
+  .inp {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 0 14px;
+    height: 46px;
+    font-size: 14px;
+    color: var(--ink);
+  }
+  .inp i { width: 18px; height: 18px; color: var(--muted); }
+  .inp.focused { border-color: var(--ink); }
+  .inp.error { border-color: var(--brand); }
+  .inp.disabled { background: var(--paper-deep); color: var(--muted); }
+  .inp .ph { color: var(--muted); }
+  .inp .caret { width: 1px; height: 18px; background: var(--ink); margin-left: 1px; }
+  .hint { font-size: 12px; color: var(--muted); }
+  .hint.error { color: var(--brand); }
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div class="field">
+      <label>CPF — rest</label>
+      <div class="inp"><i data-lucide="user"></i><span class="ph">000.000.000-00</span></div>
+      <div class="hint">Usamos para identificar você na loja.</div>
+    </div>
+    <div class="field">
+      <label>Buscar produto — focused</label>
+      <div class="inp focused"><i data-lucide="search"></i><span>Tinta látex</span><span class="caret"></span></div>
+      <div class="hint">3 resultados.</div>
+    </div>
+    <div class="field">
+      <label>CPF — error</label>
+      <div class="inp error"><i data-lucide="user"></i><span>123.456.789-0</span></div>
+      <div class="hint error">CPF incompleto.</div>
+    </div>
+    <div class="field">
+      <label>E-mail — disabled</label>
+      <div class="inp disabled"><i data-lucide="mail"></i><span>carlos@email.com</span></div>
+      <div class="hint">Bloqueado pela loja.</div>
+    </div>
+  </div>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

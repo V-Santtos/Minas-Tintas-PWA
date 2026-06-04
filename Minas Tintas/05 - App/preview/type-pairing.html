@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Type — Pairing</title>
+<link rel="stylesheet" href="_card.css">
+<style>
+  .pair {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 28px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .eyebrow { color: var(--muted); }
+  .title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 36px;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    text-wrap: balance;
+  }
+  .sub {
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--ink-2);
+    max-width: 52ch;
+  }
+  .author {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .author b { color: var(--ink); font-weight: 600; }
+  .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--muted); }
+</style>
+</head>
+<body>
+  <div class="pair">
+    <div class="eyebrow">EDIÇÃO 03 · MARÇO 2026</div>
+    <div class="title">O melhor pintor não é o mais rápido — é o que volta na obra seguinte.</div>
+    <div class="sub">Como a Minas Tintas constrói parceria de longo prazo com painters de carteira, paga bônus por trabalho aprovado e devolve em produto na lojinha.</div>
+    <div class="author"><span><b>Carlos H. Almeida</b></span><span class="dot"></span><span>São João del-Rei, MG</span></div>
+  </div>
+</body>
+</html>

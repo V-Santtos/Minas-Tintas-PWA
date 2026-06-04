@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Colors — Semantic</title>
+<link rel="stylesheet" href="_card.css">
+<style>
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .sw {
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    overflow: hidden;
+    background: var(--card);
+  }
+  .swatchrow { display: grid; grid-template-columns: 1fr 1fr; height: 64px; }
+  .meta { padding: 10px 12px 12px; }
+  .name { font-size: 13px; font-weight: 600; color: var(--ink); }
+  .hex  { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: 10px;
+  }
+  .dot { width: 6px; height: 6px; border-radius: 50%; }
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div class="sw">
+      <div class="swatchrow"><div style="background:#4F7A4A"></div><div style="background:#E8EFE3"></div></div>
+      <div class="meta">
+        <div class="name">success</div>
+        <div class="hex">#4F7A4A · #E8EFE3</div>
+        <span class="pill" style="background:#E8EFE3; color:#4F7A4A;"><span class="dot" style="background:#4F7A4A"></span>aprovado</span>
+      </div>
+    </div>
+    <div class="sw">
+      <div class="swatchrow"><div style="background:#B5751F"></div><div style="background:#F6ECDB"></div></div>
+      <div class="meta">
+        <div class="name">warning</div>
+        <div class="hex">#B5751F · #F6ECDB</div>
+        <span class="pill" style="background:#F6ECDB; color:#B5751F;"><span class="dot" style="background:#B5751F"></span>aguardando</span>
+      </div>
+    </div>
+    <div class="sw">
+      <div class="swatchrow"><div style="background:#CC0000"></div><div style="background:#FBE9E9"></div></div>
+      <div class="meta">
+        <div class="name">danger</div>
+        <div class="hex">#CC0000 · #FBE9E9</div>
+        <span class="pill" style="background:#FBE9E9; color:#CC0000;"><span class="dot" style="background:#CC0000"></span>estornado</span>
+      </div>
+    </div>
+    <div class="sw">
+      <div class="swatchrow"><div style="background:#4A5A7A"></div><div style="background:#E5E8EE"></div></div>
+      <div class="meta">
+        <div class="name">info</div>
+        <div class="hex">#4A5A7A · #E5E8EE</div>
+        <span class="pill" style="background:#E5E8EE; color:#4A5A7A;"><span class="dot" style="background:#4A5A7A"></span>rascunho</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

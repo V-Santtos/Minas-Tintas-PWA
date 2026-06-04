@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Type — Body & UI</title>
+<link rel="stylesheet" href="_card.css">
+<style>
+  .stack { display: flex; flex-direction: column; gap: 12px; }
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 180px;
+    align-items: baseline;
+    gap: 24px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .row:last-child { border-bottom: 0; }
+  .meta { font-family: var(--font-mono); font-size: 11px; color: var(--muted); text-align: right; line-height: 1.6; }
+  .meta b { color: var(--ink-2); font-weight: 500; }
+  .eyebrow-sample { font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-2); font-weight: 400; }
+  .body { font-size: 15px; line-height: 1.5; color: var(--ink-2); }
+  .strong { font-weight: 600; color: var(--ink); }
+  .caption { font-size: 13px; line-height: 1.25; color: var(--muted); }
+</style>
+</head>
+<body>
+  <div class="stack">
+    <div class="row">
+      <div class="eyebrow-sample">CATEGORIA · TINTAS LÁTEX</div>
+      <div class="meta"><b>eyebrow</b><br>Inter 600 / 11 / +0.16em</div>
+    </div>
+    <div class="row">
+      <div class="lead">Crie um orçamento direto na obra e acompanhe o pagamento em tempo real.</div>
+      <div class="meta"><b>lead</b><br>Inter 400 / 17 / 1.5</div>
+    </div>
+    <div class="row">
+      <div class="body">Pontos creditados em até 24 h após o pagamento confirmado pela loja.</div>
+      <div class="meta"><b>body</b><br>Inter 400 / 15 / 1.5</div>
+    </div>
+    <div class="row">
+      <div class="body"><span class="strong">Carlos H. Almeida</span> · 12 mar 2026 · R$ 1.840,00</div>
+      <div class="meta"><b>body strong</b><br>Inter 600 / 15</div>
+    </div>
+    <div class="row">
+      <div class="caption">Saldo atualizado às 14:32</div>
+      <div class="meta"><b>caption</b><br>Inter 400 / 13 / muted</div>
+    </div>
+  </div>
+</body>
+</html>

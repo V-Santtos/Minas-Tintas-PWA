@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Minas Tintas — Admin (desktop)</title>
+<link rel="stylesheet" href="../../colors_and_type.css">
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+
+<style>
+  html, body { background: #EAE3D6; margin: 0; padding: 0; font-family: var(--font-body); color: var(--ink); }
+  .stage {
+    padding: 36px 48px 56px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+  .stage-head {
+    max-width: 880px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .stage-head .brand img { height: 28px; display: block; }
+  .stage-head .eyebrow {
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 10px;
+  }
+  .stage-head h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 42px;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin: 4px 0 0;
+  }
+  .stage-head p {
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--ink-2);
+    max-width: 62ch;
+    margin: 10px 0 0;
+  }
+  .app-shell {
+    display: grid;
+    grid-template-columns: 232px 1fr;
+    background: var(--paper);
+    border: 1px solid var(--line-strong);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(28,26,23,0.12);
+    height: 820px;
+    width: 100%;
+    max-width: 1320px;
+  }
+  .app-shell > main {
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-strong) transparent;
+  }
+  .chrome-bar {
+    height: 38px;
+    background: var(--paper-deep);
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 10px;
+  }
+  .light { width: 11px; height: 11px; border-radius: 999px; }
+  .chrome-bar .url {
+    margin-left: 18px;
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 5px 12px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    max-width: 480px;
+  }
+</style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" src="components.jsx"></script>
+  <script type="text/babel" src="screens.jsx"></script>
+  <script type="text/babel" data-presets="react">
+    const DATA = {
+      orders: [
+        { id: '0481', painter: 'Carlos H. Almeida', location: 'São João del-Rei', title: 'Obra Vila Esperança',     date: '12 mar', total: 1840.00, status: 'aguardando pagamento' },
+        { id: '0482', painter: 'José Mariano',      location: 'Tiradentes',        title: 'Pousada Recanto',          date: '12 mar', total: 3284.40, status: 'aguardando pagamento' },
+        { id: '0483', painter: 'Ricardo Lopes',     location: 'São João del-Rei', title: 'Casa nova — Sra. Beatriz',  date: '12 mar', total: 642.00,  status: 'aguardando pagamento' },
+        { id: '0484', painter: 'Helena Mota',       location: 'Prados',           title: 'Salão Bela Vista',          date: '11 mar', total: 2310.50, status: 'aguardando pagamento' },
+        { id: '0480', painter: 'João Pereira',      location: 'São João del-Rei', title: 'Reforma Edifício Glória',   date: '11 mar', total: 4862.00, status: 'pago' },
+        { id: '0479', painter: 'Carlos H. Almeida', location: 'São João del-Rei', title: 'Casa Sr. Antônio',          date: '10 mar', total: 642.00,  status: 'bônus liberado' },
+        { id: '0478', painter: 'Ricardo Lopes',     location: 'São João del-Rei', title: 'Apto 304 — Ed. Glória',     date: '08 mar', total: 458.00,  status: 'bônus liberado' },
+        { id: '0477', painter: 'Helena Mota',       location: 'Prados',           title: 'Galpão Bairro Industrial',  date: '06 mar', total: 8420.00, status: 'pago' },
+      ],
+      painters: [
+        { name: 'Carlos H. Almeida', cpf: '127.***.***-04', city: 'São João del-Rei', since: 'jan 2024', orders: 28, points: 12480, active: true },
+        { name: 'José Mariano',      cpf: '208.***.***-71', city: 'Tiradentes',       since: 'mar 2024', orders: 19, points:  9840, active: true },
+        { name: 'Ricardo Lopes',     cpf: '094.***.***-32', city: 'São João del-Rei', since: 'mai 2024', orders: 14, points:  4220, active: true },
+        { name: 'Helena Mota',       cpf: '311.***.***-18', city: 'Prados',           since: 'jul 2024', orders: 11, points:  6180, active: true },
+        { name: 'João Pereira',      cpf: '048.***.***-99', city: 'São João del-Rei', since: 'set 2024', orders: 22, points: 14210, active: true },
+        { name: 'Adílson Borges',    cpf: '162.***.***-44', city: 'Barbacena',        since: 'nov 2024', orders:  3, points:   480, active: false },
+      ],
+      rewards: [
+        { id: 'r1', name: 'Rolo profissional anti-gota 23 cm', points: 1200, stock: 32, icon: 'paint-roller' },
+        { id: 'r2', name: 'Kit pincéis Atlas (3 peças)',        points: 1800, stock: 18, icon: 'paintbrush' },
+        { id: 'r3', name: 'Camiseta Minas Tintas algodão',      points: 2400, stock: 56, icon: 'shirt' },
+        { id: 'r4', name: 'Caixa de ferramentas 16"',           points: 4200, stock:  9, icon: 'briefcase' },
+        { id: 'r5', name: 'Macacão de pintor — tamanho G',      points: 3600, stock: 22, icon: 'shirt' },
+        { id: 'r6', name: 'Lixadeira orbital 5" Bosch',         points:18000, stock:  2, icon: 'wrench' },
+        { id: 'r7', name: 'Boné Minas Tintas brim',             points:  900, stock: 80, icon: 'hard-hat' },
+        { id: 'r8', name: 'Kit EPI — máscara + óculos + luvas', points: 1600, stock: 24, icon: 'shield' },
+      ],
+    };
+
+    function AdminApp() {
+      const [page, setPage] = React.useState('pedidos');
+      const [orderId, setOrderId] = React.useState(null);
+      const go = (p, arg) => {
+        if (p === 'pedido' && arg) { setOrderId(arg); setPage('pedido'); }
+        else setPage(p);
+      };
+      let body;
+      if (page === 'pedidos') body = <AdmScreenPedidos data={DATA} go={go} />;
+      else if (page === 'pedido') body = <AdmScreenPedido data={DATA} orderId={orderId} go={go} />;
+      else if (page === 'pintores') body = <AdmScreenPintores data={DATA} go={go} />;
+      else if (page === 'lojinha') body = <AdmScreenLojinha data={DATA} go={go} />;
+      else body = <div style={{ padding: 40, color: 'var(--muted)' }}>Em construção.</div>;
+
+      const sidebarActive = page === 'pedido' ? 'pedidos' : page;
+
+      return (
+        <div className="app-shell">
+          <Sidebar active={sidebarActive} onChange={p => { setOrderId(null); setPage(p); }} />
+          <main>
+            <div className="chrome-bar">
+              <span className="light" style={{ background: '#E48576' }}></span>
+              <span className="light" style={{ background: '#E5BC59' }}></span>
+              <span className="light" style={{ background: '#7BB97A' }}></span>
+              <div className="url">app.minastintas.com.br/admin/{sidebarActive}{page === 'pedido' ? `/${orderId}` : ''}</div>
+              <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>v0.3.0 · centro</span>
+            </div>
+            {body}
+          </main>
+        </div>
+      );
+    }
+
+    function App() {
+      return (
+        <div className="stage">
+          <div className="stage-head">
+            <div className="brand"><img src="../../assets/minas-tintas-logo.png" alt="Minas Tintas"/></div>
+            <div className="eyebrow">UI KIT · ADMIN (DESKTOP)</div>
+            <h1>O caixa do gerente, em editorial.</h1>
+            <p>O lado loja do programa Minas Tintas — aprovar pagamentos, liberar bônus, cadastrar pintores e curar a lojinha de resgates. Clique nas abas da barra lateral, abra um pedido na fila, edite um item da lojinha.</p>
+          </div>
+          <AdminApp />
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

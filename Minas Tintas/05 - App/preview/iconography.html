@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Iconography — Lucide</title>
+<link rel="stylesheet" href="_card.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<style>
+  body { padding: 22px 28px; }
+  .head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; }
+  .ttl { font-family: var(--font-display); font-weight: 700; font-size: 18px; color: var(--ink); }
+  .meta { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+  .grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 14px; }
+  .item { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .ico {
+    width: 44px; height: 44px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink);
+  }
+  .ico i { width: 22px; height: 22px; }
+  .name { font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
+</style>
+</head>
+<body>
+  <div class="head">
+    <div class="ttl">Lucide · stroke 1.75 · ink color</div>
+    <div class="meta">unpkg/lucide@0.460</div>
+  </div>
+  <div class="grid">
+    <div class="item"><div class="ico"><i data-lucide="home"></i></div><div class="name">home</div></div>
+    <div class="item"><div class="ico"><i data-lucide="file-plus-2"></i></div><div class="name">file+</div></div>
+    <div class="item"><div class="ico"><i data-lucide="receipt"></i></div><div class="name">receipt</div></div>
+    <div class="item"><div class="ico"><i data-lucide="store"></i></div><div class="name">store</div></div>
+    <div class="item"><div class="ico"><i data-lucide="user"></i></div><div class="name">user</div></div>
+    <div class="item"><div class="ico"><i data-lucide="paint-roller"></i></div><div class="name">roller</div></div>
+    <div class="item"><div class="ico"><i data-lucide="paintbrush"></i></div><div class="name">brush</div></div>
+    <div class="item"><div class="ico"><i data-lucide="package"></i></div><div class="name">package</div></div>
+    <div class="item"><div class="ico"><i data-lucide="gift"></i></div><div class="name">gift</div></div>
+    <div class="item"><div class="ico"><i data-lucide="search"></i></div><div class="name">search</div></div>
+    <div class="item"><div class="ico"><i data-lucide="plus"></i></div><div class="name">plus</div></div>
+    <div class="item"><div class="ico"><i data-lucide="check"></i></div><div class="name">check</div></div>
+    <div class="item"><div class="ico"><i data-lucide="x"></i></div><div class="name">x</div></div>
+    <div class="item"><div class="ico"><i data-lucide="chevron-right"></i></div><div class="name">chev-r</div></div>
+    <div class="item"><div class="ico"><i data-lucide="arrow-up-right"></i></div><div class="name">arr-ur</div></div>
+    <div class="item"><div class="ico"><i data-lucide="settings"></i></div><div class="name">settings</div></div>
+    <div class="item"><div class="ico"><i data-lucide="bell"></i></div><div class="name">bell</div></div>
+    <div class="item"><div class="ico"><i data-lucide="qr-code"></i></div><div class="name">qr</div></div>
+    <div class="item"><div class="ico"><i data-lucide="banknote"></i></div><div class="name">banknote</div></div>
+    <div class="item"><div class="ico"><i data-lucide="trending-up"></i></div><div class="name">trend</div></div>
+  </div>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Points figure</title>
+<link rel="stylesheet" href="_card.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<style>
+  body { padding: 0; }
+  .hero {
+    margin: 22px 28px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    padding: 24px 28px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    box-shadow: 0 2px 6px rgba(28,26,23,0.05);
+  }
+  .head { display: flex; justify-content: space-between; align-items: flex-start; }
+  .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+  .ico { width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; color: var(--ink); }
+  .num {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 84px;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    margin-top: 4px;
+  }
+  .num small { font-family: var(--font-body); font-weight: 500; font-size: 18px; color: var(--muted); margin-left: 6px; letter-spacing: 0; }
+  .delta { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: #4F7A4A; font-weight: 600; margin-top: 6px; }
+  .delta i { width: 14px; height: 14px; }
+  .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 14px; border-top: 1px dashed var(--line-strong); }
+  .foot .lbl { font-size: 12px; color: var(--muted); }
+  .foot .v { font-size: 13px; color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+  <div class="hero">
+    <div class="head">
+      <div class="eyebrow">SALDO MINAS TINTAS</div>
+      <span class="ico"><i data-lucide="circle-dot" style="width:18px;height:18px;color:#CC0000"></i></span>
+    </div>
+    <div class="num">12.480<small>pts</small></div>
+    <div class="delta"><i data-lucide="arrow-up-right"></i>+184 pts nas últimas 24 h</div>
+    <div class="foot">
+      <span class="lbl">A liberar</span>
+      <span class="v">R$ 4.200,00 em pedidos</span>
+    </div>
+  </div>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

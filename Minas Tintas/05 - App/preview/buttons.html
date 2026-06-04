@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Buttons</title>
+<link rel="stylesheet" href="_card.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<style>
+  .grid { display: grid; grid-template-columns: auto auto auto auto; gap: 16px 20px; align-items: center; justify-content: start; }
+  .col-head { font-family: var(--font-mono); font-size: 10px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+  .row-head { font-size: 12px; color: var(--ink-2); font-weight: 500; }
+  .btn {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 1;
+    padding: 12px 18px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+  .btn i { width: 16px; height: 16px; display: inline-flex; }
+  .btn--primary { background: var(--brand); color: #fff; }
+  .btn--primary.is-hover { background: var(--brand-ink); }
+  .btn--primary.is-press { background: var(--brand-ink); transform: translateY(1px); }
+  .btn--ghost { background: transparent; color: var(--ink); border-color: var(--line-strong); }
+  .btn--ghost.is-hover { background: var(--paper-deep); }
+  .btn--ghost.is-press { background: var(--paper-deep); transform: translateY(1px); }
+  .btn--quiet { background: transparent; color: var(--ink-2); }
+  .btn--quiet.is-hover { background: var(--paper-deep); color: var(--ink); }
+  .btn--quiet.is-press { background: var(--paper-deep); color: var(--ink); transform: translateY(1px); }
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div></div>
+    <div class="col-head">REST</div>
+    <div class="col-head">HOVER</div>
+    <div class="col-head">PRESS</div>
+
+    <div class="row-head">primary</div>
+    <button class="btn btn--primary"><i data-lucide="plus"></i>Criar orçamento</button>
+    <button class="btn btn--primary is-hover"><i data-lucide="plus"></i>Criar orçamento</button>
+    <button class="btn btn--primary is-press"><i data-lucide="plus"></i>Criar orçamento</button>
+
+    <div class="row-head">ghost</div>
+    <button class="btn btn--ghost">Cancelar</button>
+    <button class="btn btn--ghost is-hover">Cancelar</button>
+    <button class="btn btn--ghost is-press">Cancelar</button>
+
+    <div class="row-head">quiet</div>
+    <button class="btn btn--quiet"><i data-lucide="arrow-left"></i>Voltar</button>
+    <button class="btn btn--quiet is-hover"><i data-lucide="arrow-left"></i>Voltar</button>
+    <button class="btn btn--quiet is-press"><i data-lucide="arrow-left"></i>Voltar</button>
+  </div>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

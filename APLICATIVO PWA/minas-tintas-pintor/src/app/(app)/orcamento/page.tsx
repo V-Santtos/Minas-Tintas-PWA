@@ -1,0 +1,398 @@
+﻿"use client";
+
+import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import {
+  ChevronLeft, User, Phone, Search, CheckCircle, Info, UserPlus, UserCheck, UserX, Building2,
+  ChevronRight, PlusCircle, Minus, Plus, X, PackageOpen, MessageSquarePlus, ArrowRight,
+  Store, QrCode, CreditCard, Banknote, Receipt,
+} from "lucide-react";
+import { usePintor } from "@/lib/pintor-store";
+import { CATALOG, CLIENTS, CURRENT_PAINTER, ADDRESS_TYPES, brl } from "@/lib/pintor-data";
+
+let orderSeq = 482;
+
+const PAYMENT_OPTS = [
+  { value: "Vai pagar na loja", icon: Store },
+  { value: "Pix da loja", icon: QrCode },
+  { value: "Cartão", icon: CreditCard },
+  { value: "Dinheiro", icon: Banknote },
+  { value: "Notinha", icon: Receipt },
+];
+
+function fmtPhone(raw: string): string {
+  const v = raw.replace(/\D/g, "").slice(0, 11);
+  if (v.length === 0) return "";
+  if (v.length <= 2) return "(" + v;
+  if (v.length <= 6) return "(" + v.slice(0, 2) + ") " + v.slice(2);
+  if (v.length <= 10) return "(" + v.slice(0, 2) + ") " + v.slice(2, 6) + "-" + v.slice(6);
+  return "(" + v.slice(0, 2) + ") " + v.slice(2, 3) + " " + v.slice(3, 7) + "-" + v.slice(7);
+}
+function fmtCpf(raw: string): string {
+  const v = raw.replace(/\D/g, "").slice(0, 11);
+  if (v.length <= 3) return v;
+  if (v.length <= 6) return v.slice(0, 3) + "." + v.slice(3);
+  if (v.length <= 9) return v.slice(0, 3) + "." + v.slice(3, 6) + "." + v.slice(6);
+  return v.slice(0, 3) + "." + v.slice(3, 6) + "." + v.slice(6, 9) + "-" + v.slice(9);
+}
+
+function fmtCnpj(raw: string): string {
+  const v = raw.replace(/\D/g, "").slice(0, 14);
+  if (v.length <= 2) return v;
+  if (v.length <= 5) return v.slice(0, 2) + "." + v.slice(2);
+  if (v.length <= 8) return v.slice(0, 2) + "." + v.slice(2, 5) + "." + v.slice(5);
+  if (v.length <= 12) return v.slice(0, 2) + "." + v.slice(2, 5) + "." + v.slice(5, 8) + "/" + v.slice(8);
+  return v.slice(0, 2) + "." + v.slice(2, 5) + "." + v.slice(5, 8) + "/" + v.slice(8, 12) + "-" + v.slice(12);
+}
+
+function fmtCep(raw: string): string {
+  const v = raw.replace(/\D/g, "").slice(0, 8);
+  if (v.length <= 5) return v;
+  return v.slice(0, 5) + "-" + v.slice(5);
+}
+
+const inputStyle: React.CSSProperties = {
+  border: "1px solid var(--line)", borderRadius: 10, padding: "10px 12px", fontSize: 14,
+  fontFamily: "var(--font-body)", color: "var(--ink)", background: "var(--paper)", outline: "none", width: "100%", minWidth: 0,
+};
+const searchBox: React.CSSProperties = {
+  display: "flex", alignItems: "center", gap: 10, background: "var(--card)", border: "1px solid var(--line)",
+  borderRadius: 12, padding: "0 14px", height: 44,
+};
+const bareInput: React.CSSProperties = {
+  border: 0, outline: "none", fontSize: 14, color: "var(--ink)", background: "transparent", width: "100%", fontFamily: "var(--font-body)",
+};
+
+type Selected = { name: string; phone: string; linked: boolean };
+type ClientKind = "pessoa" | "empresa";
+
+export default function OrcamentoPage() {
+  const router = useRouter();
+  const { cart, addCart, cartQty, cartTotal, cartBonus, selectedPayment, setSelectedPayment, setSelectedClient, setLastSubmitted } = usePintor();
+
+  const [selected, setSelected] = useState<Selected | null>(null);
+  const [mode, setMode] = useState<"search" | "newclient">("search");
+  const [nameQ, setNameQ] = useState("");
+  const [phoneQ, setPhoneQ] = useState("");
+
+  // novo cliente
+  const [nc, setNc] = useState({ type: "pessoa" as ClientKind, name: "", phone: "", cpf: "", cep: "", address: "", number: "", neighborhood: "", city: "", note: "" });
+  const [ncErr, setNcErr] = useState<string[]>([]);
+  const [ncMsg, setNcMsg] = useState("");
+
+  // produto
+  const [prodQ, setProdQ] = useState("");
+
+  // pagamento
+  const [showNote, setShowNote] = useState(false);
+  const [note, setNote] = useState("");
+  const [needsAttention, setNeedsAttention] = useState(false);
+
+  const eyebrow = selected ? selected.name.toUpperCase() : "NOVO ORÇAMENTO";
+
+  const clientResults = useMemo(() => {
+    const n = nameQ.trim().toLowerCase();
+    const p = phoneQ.trim();
+    if (n.length < 2 && p.length < 3) return null;
+    return CLIENTS.filter((c) =>
+      (n.length >= 2 && c.name.toLowerCase().includes(n)) ||
+      (p.length >= 3 && c.phone.includes(p)),
+    );
+  }, [nameQ, phoneQ]);
+
+  const prodResults = useMemo(() => {
+    const q = prodQ.trim().toLowerCase();
+    if (!q) return null;
+    return CATALOG.filter((p) => p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q) || p.code.toLowerCase().includes(q));
+  }, [prodQ]);
+
+  function pickClient(c: typeof CLIENTS[number]) {
+    const linked = c.pintores.some((p) => p.id === CURRENT_PAINTER.id);
+    setSelected({ name: c.name, phone: c.phone, linked });
+    setSelectedClient({ name: c.name, phone: c.phone });
+    setNameQ(""); setPhoneQ(""); setMode("search");
+  }
+
+  function clearClient() {
+    setSelected(null);
+    setSelectedClient(null);
+    setNameQ(""); setPhoneQ("");
+    setNc({ type: "pessoa", name: "", phone: "", cpf: "", cep: "", address: "", number: "", neighborhood: "", city: "", note: "" });
+    setNcErr([]); setNcMsg(""); setMode("search");
+  }
+
+  function registerNewClient() {
+    const missing: string[] = [];
+    if (!nc.name.trim()) missing.push("name");
+    if (!nc.phone.trim()) missing.push("phone");
+    if (nc.cpf.replace(/\D/g, "").length !== (nc.type === "empresa" ? 14 : 11)) missing.push("cpf");
+    if (nc.cep.replace(/\D/g, "").length !== 8) missing.push("cep");
+    if (!nc.address.trim()) missing.push("address");
+    if (!nc.neighborhood.trim()) missing.push("neighborhood");
+    if (!nc.city.trim()) missing.push("city");
+    if (missing.length) { setNcErr(missing); setNcMsg("Preencha os campos obrigatórios para cadastrar o cliente."); return; }
+    setNcErr([]); setNcMsg("");
+    setSelected({ name: nc.name.trim(), phone: nc.phone.trim(), linked: true });
+    setSelectedClient({ name: nc.name.trim(), phone: nc.phone.trim() });
+    setMode("search");
+  }
+
+  function openNewClientForm() {
+    setNc((s) => ({ ...s, name: nameQ.trim() || s.name, phone: phoneQ.trim() || s.phone }));
+    setNcErr([]); setNcMsg("");
+    setMode("newclient");
+  }
+
+  function ncBorder(f: string) { return ncErr.includes(f) ? "var(--brand)" : "var(--line)"; }
+
+  function selectPayment(v: string) {
+    setSelectedPayment(v);
+    setNeedsAttention(false);
+  }
+
+  function submitOrder() {
+    if (!selectedPayment) {
+      setNeedsAttention(true);
+      document.getElementById("payment-section")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    const items = Object.keys(cart).map((id) => {
+      const p = CATALOG.find((x) => x.id === id)!;
+      return { name: p.name, qty: cart[id], price: p.price };
+    });
+    const id = String(orderSeq++).padStart(4, "0");
+    setLastSubmitted({
+      id,
+      clientName: selected?.name ?? "Cliente sem nome",
+      payment: selectedPayment,
+      items,
+      total: cartTotal,
+    });
+    router.push("/pedido-enviado");
+  }
+
+  const cartIds = Object.keys(cart);
+
+  return (
+    <>
+      <div className="topbar">
+        <button className="back-btn" onClick={() => router.back()}>
+          <ChevronLeft size={22} strokeWidth={2} /> Voltar
+        </button>
+        <div className="eyebrow-label">{eyebrow}</div>
+        <div className="page-title">Novo orçamento</div>
+      </div>
+
+      {/* ── CLIENTE ── */}
+      <div style={{ padding: "0 16px 20px" }}>
+        <div className="eyebrow-label" style={{ marginBottom: 10 }}>CLIENTE</div>
+
+        {!selected && mode === "search" && (
+          <>
+            <div style={{ position: "relative" }}>
+              <div style={searchBox}>
+                <User size={18} strokeWidth={1.75} color="var(--muted)" style={{ flexShrink: 0 }} />
+                <input type="text" placeholder="Nome do cliente…" value={nameQ} onChange={(e) => { setNameQ(e.target.value); setPhoneQ(""); }} style={bareInput} />
+              </div>
+              <div style={{ textAlign: "center", padding: "6px 0", fontSize: 11, color: "var(--muted)", letterSpacing: ".04em" }}>ou</div>
+              <div style={searchBox}>
+                <Phone size={18} strokeWidth={1.75} color="var(--muted)" style={{ flexShrink: 0 }} />
+                <input type="tel" placeholder="(31) 9 XXXX-XXXX" value={phoneQ} onChange={(e) => { setPhoneQ(fmtPhone(e.target.value)); setNameQ(""); }} style={bareInput} />
+              </div>
+            </div>
+
+            {clientResults && (
+              <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "0 8px 24px rgba(28,26,23,.14)", overflow: "hidden", marginTop: 6 }}>
+                {clientResults.length === 0 && (
+                  <div style={{ padding: "12px 14px", fontSize: 13, color: "var(--muted)" }}>Nenhum cliente encontrado.</div>
+                )}
+                {clientResults.map((c, i) => {
+                  const isLinked = c.pintores.some((p) => p.id === CURRENT_PAINTER.id);
+                  const others = c.pintores.filter((p) => p.id !== CURRENT_PAINTER.id);
+                  return (
+                    <div key={c.id} onClick={() => pickClient(c)} style={{ padding: "12px 14px", cursor: "pointer", borderBottom: i < clientResults.length - 1 ? "1px solid var(--line)" : undefined, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: 14, color: "var(--ink)" }}>{c.name}</div>
+                        <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 1 }}>{c.phone}</div>
+                        {isLinked ? (
+                          <div style={{ marginTop: 4, fontSize: 11, color: "var(--success)", fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}><UserCheck size={11} strokeWidth={2.5} /> Você já está vinculado</div>
+                        ) : others.length > 0 ? (
+                          <div style={{ marginTop: 4, fontSize: 11, color: "var(--warning)", fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}><UserX size={11} strokeWidth={2.5} /> Você não está vinculado a este cliente</div>
+                        ) : null}
+                      </div>
+                      <ChevronRight size={16} color="var(--muted)" style={{ flexShrink: 0 }} />
+                    </div>
+                  );
+                })}
+                <div onClick={openNewClientForm} style={{ padding: "12px 14px", fontSize: 13, fontWeight: 600, color: "var(--brand)", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, borderTop: "1px solid var(--line)" }}>
+                  <UserPlus size={15} strokeWidth={1.75} /> Cadastrar novo cliente
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {selected && (
+          <>
+            <div style={{ marginTop: 0, background: "var(--success-tint)", border: "1px solid #C6DCC0", borderRadius: 12, padding: "12px 14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <CheckCircle size={18} strokeWidth={1.75} color="var(--success)" style={{ flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: 14, color: "var(--ink)" }}>{selected.name}</div>
+                  <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 1 }}>{selected.phone}</div>
+                </div>
+              </div>
+              <button onClick={clearClient} style={{ background: "transparent", border: 0, fontSize: 12, fontWeight: 600, color: "var(--muted)", cursor: "pointer", fontFamily: "var(--font-body)", padding: "4px 8px" }}>trocar</button>
+            </div>
+            {!selected.linked && (
+              <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 6 }}>
+                <Info size={13} strokeWidth={2} color="var(--muted)" style={{ flexShrink: 0 }} />
+                <span style={{ fontSize: 11.5, color: "var(--muted)", lineHeight: 1.4 }}>Vínculo pendente — será criado automaticamente após a aprovação do primeiro pedido.</span>
+              </div>
+            )}
+          </>
+        )}
+
+        {!selected && mode === "newclient" && (
+          <div style={{ marginTop: 10, background: "var(--card)", border: "1px solid var(--line)", borderRadius: 12, padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 2 }}>
+              <div className="eyebrow-label" style={{ marginBottom: 0 }}>NOVO CLIENTE</div>
+              <button onClick={() => setMode("search")} style={{ background: "transparent", border: 0, fontFamily: "var(--font-body)", fontSize: 12, fontWeight: 600, color: "var(--muted)", cursor: "pointer", padding: "2px 0" }}>voltar à busca</button>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <button type="button" onClick={() => setNc({ ...nc, type: "pessoa", cpf: "" })} style={{ height: 40, borderRadius: 10, border: `1px solid ${nc.type === "pessoa" ? "var(--ink)" : "var(--line)"}`, background: nc.type === "pessoa" ? "var(--ink)" : "var(--card)", color: nc.type === "pessoa" ? "var(--paper)" : "var(--ink)", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, fontFamily: "var(--font-body)", fontSize: 13, fontWeight: 700, cursor: "pointer" }}><User size={14} strokeWidth={1.75} /> Pessoa física</button>
+              <button type="button" onClick={() => setNc({ ...nc, type: "empresa", cpf: "" })} style={{ height: 40, borderRadius: 10, border: `1px solid ${nc.type === "empresa" ? "var(--ink)" : "var(--line)"}`, background: nc.type === "empresa" ? "var(--ink)" : "var(--card)", color: nc.type === "empresa" ? "var(--paper)" : "var(--ink)", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, fontFamily: "var(--font-body)", fontSize: 13, fontWeight: 700, cursor: "pointer" }}><Building2 size={14} strokeWidth={1.75} /> Empresa</button>
+            </div>
+            <input type="text" placeholder={nc.type === "empresa" ? "Razão social ou nome fantasia" : "Nome completo"} value={nc.name} onChange={(e) => setNc({ ...nc, name: e.target.value })} style={{ ...inputStyle, borderColor: ncBorder("name") }} />
+            <input type="tel" placeholder="Telefone" value={nc.phone} onChange={(e) => setNc({ ...nc, phone: fmtPhone(e.target.value) })} style={{ ...inputStyle, borderColor: ncBorder("phone") }} />
+            <input type="text" inputMode="numeric" placeholder={nc.type === "empresa" ? "CNPJ 00.000.000/0000-00 (obrigatório)" : "CPF 000.000.000-00 (obrigatório)"} value={nc.cpf} onChange={(e) => setNc({ ...nc, cpf: nc.type === "empresa" ? fmtCnpj(e.target.value) : fmtCpf(e.target.value) })} style={{ ...inputStyle, borderColor: ncBorder("cpf") }} />
+            <input type="text" placeholder="Rua, avenida, córrego..." list="address-type-suggestions" value={nc.address} onChange={(e) => setNc({ ...nc, address: e.target.value })} style={{ ...inputStyle, borderColor: ncBorder("address") }} />
+            <input type="text" inputMode="numeric" placeholder="CEP 00000-000" value={nc.cep} onChange={(e) => setNc({ ...nc, cep: fmtCep(e.target.value) })} style={{ ...inputStyle, borderColor: ncBorder("cep") }} />
+            <datalist id="address-type-suggestions">
+              {ADDRESS_TYPES.map((t) => <option key={t} value={t} />)}
+            </datalist>
+            <div style={{ display: "grid", gridTemplateColumns: ".85fr 1.15fr", gap: 8 }}>
+              <input type="text" inputMode="numeric" placeholder="Número" value={nc.number} onChange={(e) => setNc({ ...nc, number: e.target.value })} style={inputStyle} />
+              <input type="text" placeholder="Bairro" value={nc.neighborhood} onChange={(e) => setNc({ ...nc, neighborhood: e.target.value })} style={{ ...inputStyle, borderColor: ncBorder("neighborhood") }} />
+            </div>
+            <input type="text" placeholder="Cidade" value={nc.city} onChange={(e) => setNc({ ...nc, city: e.target.value })} style={{ ...inputStyle, borderColor: ncBorder("city") }} />
+            {ncMsg && <div style={{ fontSize: 12, fontWeight: 600, color: "var(--brand)", lineHeight: 1.35 }}>{ncMsg}</div>}
+            <textarea placeholder="Anotação interna (opcional)" value={nc.note} onChange={(e) => setNc({ ...nc, note: e.target.value })} style={{ ...inputStyle, minHeight: 70, resize: "none", lineHeight: 1.4 }} />
+            <button onClick={registerNewClient} className="btn btn-full" style={{ background: "var(--ink)", color: "var(--paper)", marginTop: 2 }}>Cadastrar cliente</button>
+          </div>
+        )}
+      </div>
+
+      {/* Divisor */}
+      <div style={{ height: 1, background: "var(--line)", margin: "0 16px 20px" }} />
+
+      {/* ── PRODUTOS ── */}
+      <div style={{ padding: "0 16px 190px" }}>
+        <div className="eyebrow-label" style={{ marginBottom: 10 }}>PRODUTOS</div>
+        <div style={{ position: "relative" }}>
+          <div style={searchBox}>
+            <Search size={18} strokeWidth={1.75} color="var(--muted)" style={{ flexShrink: 0 }} />
+            <input type="text" placeholder="Buscar produto, marca ou código…" value={prodQ} onChange={(e) => setProdQ(e.target.value)} style={bareInput} />
+          </div>
+          {prodResults && (
+            <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, background: "var(--card)", border: "1px solid var(--line)", borderRadius: 12, zIndex: 100, boxShadow: "0 8px 24px rgba(28,26,23,.14)", overflow: "hidden", maxHeight: 220, overflowY: "auto" }}>
+              {prodResults.length === 0 && (
+                <div style={{ padding: "12px 14px", fontSize: 13, color: "var(--muted)" }}>Nenhum produto encontrado.</div>
+              )}
+              {prodResults.map((p, i) => (
+                <div key={p.id} onClick={() => { addCart(p.id, 1); setProdQ(""); }} style={{ padding: "12px 14px", cursor: "pointer", borderBottom: i < prodResults.length - 1 ? "1px solid var(--line)" : undefined, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ flex: 1, minWidth: 0, paddingRight: 10 }}>
+                    <div style={{ fontWeight: 600, fontSize: 13.5, color: "var(--ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name}</div>
+                    <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 1 }}>{p.code} · {p.brand} · R$ {brl(p.price)}</div>
+                  </div>
+                  <PlusCircle size={20} strokeWidth={1.75} color="var(--ink)" style={{ flexShrink: 0 }} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Itens adicionados */}
+        {cartIds.length > 0 ? (
+          <div style={{ marginTop: 14 }}>
+            <div className="card" style={{ overflow: "hidden" }}>
+              {cartIds.map((id, i) => {
+                const p = CATALOG.find((x) => x.id === id)!;
+                const qty = cart[id];
+                return (
+                  <div key={id} style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, padding: "12px 14px", borderBottom: i < cartIds.length - 1 ? "1px dashed var(--line-strong)" : undefined }}>
+                    <div>
+                      <div style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink)", lineHeight: 1.3 }}>{p.name}</div>
+                      <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 3 }}>{p.brand} · R$ {brl(p.price)}</div>
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "var(--paper-deep)", borderRadius: 8, padding: "3px 6px", marginTop: 7 }}>
+                        <button className="qty-btn" onClick={() => addCart(id, -1)}><Minus size={12} strokeWidth={2.5} /></button>
+                        <span style={{ minWidth: 18, textAlign: "center", fontVariantNumeric: "tabular-nums", fontWeight: 600, fontSize: 13 }}>{qty}</span>
+                        <button className="qty-btn" onClick={() => addCart(id, 1)}><Plus size={12} strokeWidth={2.5} /></button>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", justifyContent: "space-between" }}>
+                      <span style={{ fontWeight: 600, fontSize: 13.5, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>R$ {brl(p.price * qty)}</span>
+                      <button onClick={() => addCart(id, -qty)} style={{ background: "transparent", border: 0, padding: 4, cursor: "pointer", color: "var(--muted)" }}>
+                        <X size={14} strokeWidth={2.5} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div style={{ marginTop: 32, textAlign: "center" }}>
+            <PackageOpen size={36} strokeWidth={1.2} color="var(--line-strong)" style={{ display: "block", margin: "0 auto 10px" }} />
+            <div style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.6 }}>Pesquise um produto acima<br />para adicioná-lo ao orçamento.</div>
+          </div>
+        )}
+
+        {/* Pagamento */}
+        {cartIds.length > 0 && (
+          <div id="payment-section" className={`payment-section card${needsAttention ? " needs-attention" : ""}`} style={{ marginTop: 14, padding: 14 }}>
+            <div className="eyebrow-label" style={{ marginBottom: 4 }}>PAGAMENTO</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>Informe a situação do pagamento</div>
+            <div className="payment-options">
+              {PAYMENT_OPTS.map((opt) => {
+                const Ico = opt.icon;
+                return (
+                  <button key={opt.value} type="button" className={`payment-option${selectedPayment === opt.value ? " active" : ""}`} onClick={() => selectPayment(opt.value)}>
+                    <Ico size={16} strokeWidth={1.85} />
+                    {opt.value}
+                  </button>
+                );
+              })}
+            </div>
+            <button className="payment-note-toggle" type="button" onClick={() => setShowNote((s) => !s)} style={{ marginTop: 12 }}>
+              <MessageSquarePlus size={14} strokeWidth={2} /> adicionar observação
+            </button>
+            {showNote && (
+              <textarea
+                value={note} onChange={(e) => setNote(e.target.value)}
+                placeholder="Ex: comprovante enviado para a loja, cliente retira amanhã."
+                style={{ marginTop: 10, width: "100%", minHeight: 74, resize: "none", border: "1px solid var(--line)", borderRadius: 10, padding: "10px 12px", fontSize: 13, fontFamily: "var(--font-body)", color: "var(--ink)", background: "var(--paper)", outline: "none", lineHeight: 1.45 }}
+              />
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Cart bar */}
+      {cartQty > 0 && (
+        <div className="cart-bar">
+          <div>
+            <div className="cart-meta">{cartQty} {cartQty === 1 ? "ITEM" : "ITENS"} · BÔNUS {cartBonus.toLocaleString("pt-BR")} pts</div>
+            <div className="cart-total">R$ {brl(cartTotal)}</div>
+          </div>
+          <button className={`cart-send${!selectedPayment ? " needs-payment" : ""}`} onClick={submitOrder}>
+            <span>{selectedPayment ? "Enviar à loja" : "Escolha pagamento"}</span>
+            <ArrowRight size={15} strokeWidth={2} />
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
+
