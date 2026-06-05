@@ -3,6 +3,8 @@
 // Espelha o protótipo validado pintor-app.html
 // ============================================================
 
+import { bonusPoints } from "./rules";
+
 export const CURRENT_PAINTER = { id: "p1", name: "Carlos" };
 
 export const PAINTER_PROFILE = {
