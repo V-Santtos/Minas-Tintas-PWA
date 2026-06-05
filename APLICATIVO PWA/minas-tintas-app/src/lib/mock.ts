@@ -1,3 +1,5 @@
+import { bonusPoints } from './rules'
+
 export type Order = {
   id: string
   painter: string
@@ -45,7 +47,7 @@ export const ORDERS: Order[] = [
 ]
 
 export function brl(v: number) { return v.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) }
-export function bonus(total: number) { return Math.round(total * 0.10) }
+export const bonus = bonusPoints
 
 export type Reward = {
   id: string

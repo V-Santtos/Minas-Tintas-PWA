@@ -6,7 +6,7 @@ import {
   PieChart, Pie, Cell,
 } from 'recharts'
 import { ChevronLeft, ChevronRight, Printer, Trophy, Award, Star, ClipboardList, TrendingUp, Gift, BarChart2 } from 'lucide-react'
-import { ORDERS, PAINTERS } from '@/lib/mock'
+import { ORDERS, PAINTERS, bonus } from '@/lib/mock'
 
 /* ── constants ── */
 const MONTH_SHORT = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez']
@@ -109,7 +109,7 @@ export default function RelatoriosPage() {
 
   const approved = periodOrders.filter(o => o.status === 'aprovado')
   const totalVol = approved.reduce((s, o) => s + o.total, 0)
-  const totBonus = approved.reduce((s, o) => s + Math.round(o.total * 0.10), 0)
+  const totBonus = approved.reduce((s, o) => s + bonus(o.total), 0)
   const ticket   = approved.length > 0 ? totalVol / approved.length : 0
 
   const sc = {
@@ -135,7 +135,7 @@ export default function RelatoriosPage() {
       const { day } = parseDate(o.date)
       const wi = day <= 7 ? 0 : day <= 14 ? 1 : day <= 21 ? 2 : 3
       wv[wi] += o.total
-      wb[wi] += Math.round(o.total * 0.10)
+      wb[wi] += bonus(o.total)
     })
     const vp: ChartPoint[] = []
     const bp: ChartPoint[] = []
@@ -158,7 +158,7 @@ export default function RelatoriosPage() {
     ALL_MONTH_IDXS.forEach((m, mi) => {
       const mApproved = approved.filter(o => parseDate(o.date).monthIdx === m)
       const mVol   = mApproved.reduce((s, o) => s + o.total, 0)
-      const mBonus = mApproved.reduce((s, o) => s + Math.round(o.total * 0.10), 0)
+      const mBonus = mApproved.reduce((s, o) => s + bonus(o.total), 0)
       distributeAcrossN(mVol,   4, m * 100).forEach((v, w) =>
         vp.push({ idx: mi * 4 + w, value: v }))
       distributeAcrossN(mBonus, 4, m * 100 + 500).forEach((v, w) =>
@@ -178,7 +178,7 @@ export default function RelatoriosPage() {
     return {
       name: p.name, city: p.city,
       volume: pOrds.reduce((s, o) => s + o.total, 0),
-      bonus:  pOrds.reduce((s, o) => s + Math.round(o.total * 0.10), 0),
+      bonus:  pOrds.reduce((s, o) => s + bonus(o.total), 0),
     }
   }).sort((a, b) => b.volume - a.volume)
 
