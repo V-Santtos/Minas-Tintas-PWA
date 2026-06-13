@@ -35,7 +35,8 @@ export async function POST(request: Request) {
   }
 
   const tel = normalizarTelefone(telefone);
-  const emailLogin = email?.trim() || `${tel}@pintor.local`;
+  const emailLogin = `${tel}@pintor.local`;
+  const emailContato = email?.trim() || null;
   const adminClient = createAdminClient();
 
   // 3. Cria o usuário de auth
@@ -59,6 +60,7 @@ export async function POST(request: Request) {
       nome,
       telefone: tel,
       documento: documento ?? null,
+      email: emailContato,
       auth_user_id: created.user.id,
     })
     .select()
