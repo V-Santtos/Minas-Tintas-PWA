@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 
+function normalizarTelefone(valor: string): string {
+  return valor.replace(/\D/g, "");
+}
+
 export async function POST(request: Request) {
   // 1. Quem está chamando é admin?
   const supabase = await createClient();
@@ -23,19 +27,21 @@ export async function POST(request: Request) {
   // 2. Lê e valida a entrada
   const body = await request.json();
   const { nome, email, senha, telefone, documento } = body ?? {};
-  if (!nome || !email || !senha) {
+  if (!nome || !telefone || !senha) {
     return NextResponse.json(
-      { error: "Nome, e-mail e senha são obrigatórios." },
+      { error: "Nome, telefone e senha são obrigatórios." },
       { status: 400 },
     );
   }
 
+  const tel = normalizarTelefone(telefone);
+  const emailLogin = email?.trim() || `${tel}@pintor.local`;
   const adminClient = createAdminClient();
 
   // 3. Cria o usuário de auth
   const { data: created, error: authError } =
     await adminClient.auth.admin.createUser({
-      email,
+      email: emailLogin,
       password: senha,
       email_confirm: true,
     });
@@ -51,7 +57,7 @@ export async function POST(request: Request) {
     .from("painters")
     .insert({
       nome,
-      telefone: telefone ?? null,
+      telefone: tel,
       documento: documento ?? null,
       auth_user_id: created.user.id,
     })
