@@ -31,16 +31,23 @@ Antes de responder ou executar qualquer tarefa, leia:
 
 ## Como trabalhar comigo (Agostinho)
 
-- Estou **aprendendo a programar**. O objetivo é entender o raciocínio de cada passo, não só
-  receber solução pronta.
-- **Eu mesmo faço as mudanças no código**, localmente, e depois commito/faço push. Não me mande
-  patches prontos pra aplicar. Em vez disso: explique **o quê** fazer, **onde** e **por quê**;
-  depois espere eu executar e reportar antes de seguir.
-- Trabalhe **passo a passo**, uma etapa de cada vez. Razão e contexto antes da ação.
+- Tenho **noção de programação**; o que me falta costuma ser **conhecimento técnico específico**,
+  não a lógica. Seja **conciso** e foque no técnico que falta — corte a explicação de conceitos que
+  eu já domino. **Mantenha o porquê** de decisões técnicas reais (ex.: "set null vs cascade aqui
+  porque X"), que é o que me impede de copiar sem entender o trade-off. Quando eu quiser aprofundar,
+  eu peço.
+- **Eu mesmo faço as mudanças no código**, localmente, e commito/faço push. Explique **o quê**,
+  **onde** e **por quê**, e espere eu executar e reportar antes de seguir. (Documentação e arquivos
+  de referência você pode gerar prontos pra eu revisar e colocar.)
+- **Passo a passo**, uma etapa por vez. Razão e contexto antes da ação.
 - Antes de instruir sobre um arquivo, **confira o código/config real** (clonando o repo) em vez de
   assumir — já fomos mordidos por suposições.
-- **Verifique o resultado no remoto** (clone fresco) quando eu disser que fiz push.
-- Prefira **commits separados** por mudança lógica, com histórico legível.
+- **Verifique no remoto** (clone fresco) quando eu disser que fiz push — pega descompasso entre o
+  que apliquei e o que subiu.
+- **Commits: gere você a mensagem pronta** ao fim de cada mudança lógica, em _conventional commits_
+  (`tipo(escopo): resumo`) — uma linha pras simples, com corpo quando houver várias peças. Prefira
+  commits separados por mudança lógica.
+- **Pendências e decisões adiadas:** mantenha registradas nos docs, pra nada virar buraco esquecido.
 
 ---
 
