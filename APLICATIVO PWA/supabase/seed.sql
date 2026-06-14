@@ -16,8 +16,8 @@
 -- (a lista do admin deve mostrar 0/0/0, não quebrar).
 --
 -- Alvos de conferência (bater à mão depois de aplicar):
---   Pintor Teste:      pedidos=5  aprovados=2  volume=5000  saldo=350
---   Pintor Sintetico:  pedidos=2  aprovados=1  volume=1000  saldo=10
+--   Pintor Teste:      pedidos=5  aprovados=2  volume=4519.80  saldo=345
+--   Pintor Sintetico:  pedidos=2  aprovados=1  volume=509.40  saldo=5
 --   Pintor ComEmail:   pedidos=0  aprovados=0  volume=0     saldo=0
 --
 -- Para remover tudo: ver bloco "ROLLBACK DO SEED" no final (comentado).
@@ -64,20 +64,20 @@ insert into orders (id, client_id, painter_id, status, valor_bruto, desconto, pa
                     confirmed_at, confirmed_by, valor_confirmado) values
   -- Pintor Teste
   ('00000000-0000-0000-0000-00000000aa01', '00000000-0000-0000-0000-0000000000c1', '94f21de4-f8dd-4c91-9014-92f5946f483e',
-     'aprovado',  3000.00, 0,   'Pix da loja', now() - interval '20 days', (select auth_user_id from admins limit 1), 3000.00),
+     'aprovado',  2938.80, 0,   'Pix da loja', now() - interval '20 days', (select auth_user_id from admins limit 1), 2938.80),
   ('00000000-0000-0000-0000-00000000aa02', '00000000-0000-0000-0000-0000000000c2', '94f21de4-f8dd-4c91-9014-92f5946f483e',
-     'aprovado',  2000.00, 100, 'Maquininha',  now() - interval '15 days', (select auth_user_id from admins limit 1), 1900.00),
+     'aprovado',  1581.00, 100, 'Maquininha',  now() - interval '15 days', (select auth_user_id from admins limit 1), 1481.00),
   ('00000000-0000-0000-0000-00000000aa03', '00000000-0000-0000-0000-0000000000c3', '94f21de4-f8dd-4c91-9014-92f5946f483e',
-     'pendente',  1500.00, 0,   'Vai pagar na loja', null, null, null),
+     'pendente',  1508.00, 0,   'Vai pagar na loja', null, null, null),
   ('00000000-0000-0000-0000-00000000aa04', '00000000-0000-0000-0000-0000000000c1', '94f21de4-f8dd-4c91-9014-92f5946f483e',
-     'estornado', 2500.00, 0,   'Maquininha',  now() - interval '25 days', (select auth_user_id from admins limit 1), 2500.00),
+     'estornado', 1600.00, 0,   'Maquininha',  now() - interval '25 days', (select auth_user_id from admins limit 1), 1600.00),
   ('00000000-0000-0000-0000-00000000aa05', '00000000-0000-0000-0000-0000000000c4', '94f21de4-f8dd-4c91-9014-92f5946f483e',
-     'rascunho',   800.00, 0,   null, null, null, null),
+     'rascunho',   509.40, 0,   null, null, null, null),
   -- Pintor Sintetico
   ('00000000-0000-0000-0000-00000000aa06', '00000000-0000-0000-0000-0000000000c2', '85b0f493-d414-43fd-ad7c-e6c9452695e7',
-     'aprovado',  1000.00, 0,   'Dinheiro',    now() - interval '10 days', (select auth_user_id from admins limit 1), 1000.00),
+     'aprovado',   509.40, 0,   'Dinheiro',    now() - interval '10 days', (select auth_user_id from admins limit 1), 509.40),
   ('00000000-0000-0000-0000-00000000aa07', '00000000-0000-0000-0000-0000000000c3', '85b0f493-d414-43fd-ad7c-e6c9452695e7',
-     'pendente',  1200.00, 0,   'Pix da loja', null, null, null);
+     'pendente',  1149.60, 0,   'Pix da loja', null, null, null);
 
 -- ── Itens dos pedidos (snapshot) ───────────────────────────
 -- name/unit_price congelados; product_id é referência fraca (set null).
@@ -87,7 +87,15 @@ insert into order_items (order_id, product_id, name, unit_price, qty) values
   ('00000000-0000-0000-0000-00000000aa02', '00000000-0000-0000-0000-0000000000d3', 'Selador acrílico 18L',                         162.00,  8),
   ('00000000-0000-0000-0000-00000000aa02', '00000000-0000-0000-0000-0000000000d4', 'Rolo de lã 23 cm — anti-gota',                  28.50, 10),
   ('00000000-0000-0000-0000-00000000aa04', '00000000-0000-0000-0000-0000000000d1', 'Tinta látex acrílica fosca 18L — Branco Neve', 320.00,  5),
-  ('00000000-0000-0000-0000-00000000aa06', '00000000-0000-0000-0000-0000000000d2', 'Massa corrida 25kg',                            84.90,  6);
+  ('00000000-0000-0000-0000-00000000aa06', '00000000-0000-0000-0000-0000000000d2', 'Massa corrida 25kg',                            84.90,  6),
+  -- #3 pendente
+  ('00000000-0000-0000-0000-00000000aa03', '00000000-0000-0000-0000-0000000000d1', 'Tinta látex acrílica fosca 18L — Branco Neve', 320.00,  4),
+  ('00000000-0000-0000-0000-00000000aa03', '00000000-0000-0000-0000-0000000000d4', 'Rolo de lã 23 cm — anti-gota',                  28.50,  8),
+  -- #5 rascunho
+  ('00000000-0000-0000-0000-00000000aa05', '00000000-0000-0000-0000-0000000000d2', 'Massa corrida 25kg',                            84.90,  6),
+  -- #7 pendente
+  ('00000000-0000-0000-0000-00000000aa07', '00000000-0000-0000-0000-0000000000d3', 'Selador acrílico 18L',                         162.00,  5),
+  ('00000000-0000-0000-0000-00000000aa07', '00000000-0000-0000-0000-0000000000d2', 'Massa corrida 25kg',                            84.90,  4);
 
 -- ── Resgate ────────────────────────────────────────────────
 -- Pintor Teste resgatou o Boné (600 pts congelados), já entregue.
@@ -102,16 +110,16 @@ insert into resgates (id, painter_id, loja_item_id, pontos_congelados, status, i
 -- ajuste e estorno EXIGEM motivo. created_by null = sistema.
 insert into point_transactions (painter_id, valor, tipo, order_id, resgate_id, motivo, created_by) values
   -- Pintor Teste
-  ('94f21de4-f8dd-4c91-9014-92f5946f483e',  30, 'bonus',   '00000000-0000-0000-0000-00000000aa01', null, null, null),
-  ('94f21de4-f8dd-4c91-9014-92f5946f483e',  20, 'bonus',   '00000000-0000-0000-0000-00000000aa02', null, null, null),
-  ('94f21de4-f8dd-4c91-9014-92f5946f483e',  25, 'bonus',   '00000000-0000-0000-0000-00000000aa04', null, null, null),
-  ('94f21de4-f8dd-4c91-9014-92f5946f483e', -25, 'estorno', '00000000-0000-0000-0000-00000000aa04', null,
+  ('94f21de4-f8dd-4c91-9014-92f5946f483e',  29, 'bonus',   '00000000-0000-0000-0000-00000000aa01', null, null, null),
+  ('94f21de4-f8dd-4c91-9014-92f5946f483e',  16, 'bonus',   '00000000-0000-0000-0000-00000000aa02', null, null, null),
+  ('94f21de4-f8dd-4c91-9014-92f5946f483e',  16, 'bonus',   '00000000-0000-0000-0000-00000000aa04', null, null, null),
+  ('94f21de4-f8dd-4c91-9014-92f5946f483e', -16, 'estorno', '00000000-0000-0000-0000-00000000aa04', null,
      'Pagamento recusado pelo banco; compra cancelada.', (select auth_user_id from admins limit 1)),
   ('94f21de4-f8dd-4c91-9014-92f5946f483e', 900, 'ajuste',  null, null,
      'Saldo inicial migrado do controle manual.', (select auth_user_id from admins limit 1)),
   ('94f21de4-f8dd-4c91-9014-92f5946f483e',-600, 'resgate', null, '00000000-0000-0000-0000-00000000ee01', null, null),
   -- Pintor Sintetico
-  ('85b0f493-d414-43fd-ad7c-e6c9452695e7',  10, 'bonus',   '00000000-0000-0000-0000-00000000aa06', null, null, null);
+  ('85b0f493-d414-43fd-ad7c-e6c9452695e7',   5, 'bonus',   '00000000-0000-0000-0000-00000000aa06', null, null, null);
 
 commit;
 
