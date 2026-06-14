@@ -177,6 +177,11 @@ _agora_; não versiona, porque o passado fica congelado no ledger e nos snapshot
 
 - `auth_user_id` → `auth.users`, **nulável**, `unique`, `on delete set null`. Vazio = pintor
   de balcão (sem login; a loja age por ele). Se o login some, o pintor **não** some — vira balcão.
+- `telefone` — **obrigatório e único** (`not null unique`). É a **credencial de login** do pintor:
+  o login do app Pintor é por telefone (normalizado para só dígitos com DDD, ex. `33999990000`).
+  Por baixo, o auth usa um e-mail sintético derivado: `{telefone}@pintor.local`.
+- `email` — **opcional**, é **contato**, não login (reservado para recuperação por e-mail futura).
+  O e-mail do `auth.users` é sempre o sintético; este é o e-mail real, quando informado.
 - `active` — ativo/inativo (admin liga/desliga; pintor não é apagado, é inativado).
 - `documento` opcional (assimetria proposital com o cliente).
 
@@ -261,27 +266,61 @@ A escolha não é regra fixa — é "o que deve acontecer com esta linha quando 
 
 ---
 
-## Endurecimento pendente (etapa de Auth)
+## Acesso (RLS) — implementado
 
-Itens deliberadamente adiados, a resolver na etapa de autenticação (todos são "endurecer o banco"):
+Todas as tabelas têm **Row Level Security** ligado (nenhuma fica `UNRESTRICTED`). O acesso é
+negado por padrão; as policies abaixo liberam **leitura**. **Escrita** (insert/update/delete)
+ainda **não tem policy** — fica para a camada de dados (item 3), via policy ou endpoint `service_role`.
 
-1. **RLS (Row Level Security)** em todas as tabelas — hoje as tabelas estão `UNRESTRICTED`.
-   Regras-alvo: pintor só vê o que é dele; admin vê tudo; `settings`/`cost` só admin; etc.
-2. **Trigger de imutabilidade** em `point_transactions` — bloquear UPDATE/DELETE no banco
-   (hoje a imutabilidade é só disciplina da aplicação).
-3. **Taxa lida do `settings`** — `rules.ts` (`BONUS_PERCENT`) passa a ler de `settings.bonus_percent`
-   em vez de constante no código (trabalho da camada de dados).
+Funções auxiliares (`SECURITY DEFINER`, evitam recursão nas policies):
+
+- `is_admin()` — o `auth.uid()` atual está em `admins`?
+- `current_painter_id()` — o `painters.id` do usuário logado.
+
+| Tabela                                     | Quem lê                                                                                  |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| `admins`                                   | a própria linha (auto-leitura)                                                           |
+| `painters`                                 | a própria linha; admin lê todas                                                          |
+| `clients`                                  | admin lê todos; pintor lê os clientes com quem tem pedido (vínculo derivado de `orders`) |
+| `orders`, `point_transactions`, `resgates` | pintor lê os seus (`painter_id = current_painter_id()`); admin lê tudo                   |
+| `order_items`                              | herda do pedido pai (vê o item se vê o pedido)                                           |
+| `loja_items`, `settings`                   | qualquer autenticado                                                                     |
+| `products`                                 | só admin (contém `cost` sensível; pintor ainda não consome catálogo)                     |
+
+**Imutabilidade do ledger:** `point_transactions` tem um trigger (`trg_ledger_imutavel`) que
+**aborta qualquer UPDATE ou DELETE** — inclusive via `service_role`. Só INSERT é permitido.
+Correções são feitas por linha compensatória (estorno/ajuste/devolução), nunca editando o passado.
+
+## Pendente para a camada de dados (item 3)
+
+1. **Policies de escrita** em todas as tabelas (hoje só leitura).
+2. **UI de cadastro/reset de pintor** ligando aos endpoints `POST`/`PATCH /api/pintores`
+   (hoje acionados só via console).
+3. **`products`/`cost`**: decidir exposição do catálogo ao pintor (view sem `cost` ou endpoint)
+   quando o orçamento do pintor existir.
+4. **`rules.ts` consumir `settings.bonus_percent`** — a função `bonusPoints(total, percent?)` já
+   aceita a taxa por parâmetro (com fallback no `BONUS_PERCENT`); falta a camada de dados ler do
+   `settings` e repassar.
+
+**Futuro (sem fase):** troca de telefone do pintor pelo admin (é troca de credencial, não só
+campo); recuperação por e-mail (requer SMTP próprio); lib compartilhada do `rules.ts`.
 
 ---
 
 ## Migrations (ordem de aplicação)
 
-| Arquivo                         | Conteúdo                                       |
-| ------------------------------- | ---------------------------------------------- |
-| `…_fundacao_enums_settings.sql` | 5 enums + tabela `settings` (linha única)      |
-| `…_entidades_base.sql`          | `painters`, `admins`, `clients`, `products`    |
-| `…_pedidos.sql`                 | `orders`, `order_items`                        |
-| `…_lojinha_e_ledger.sql`        | `loja_items`, `resgates`, `point_transactions` |
+| Arquivo                         | Conteúdo                                                                              |
+| ------------------------------- | ------------------------------------------------------------------------------------- |
+| `…_fundacao_enums_settings.sql` | 5 enums + tabela `settings` (linha única)                                             |
+| `…_entidades_base.sql`          | `painters`, `admins`, `clients`, `products`                                           |
+| `…_pedidos.sql`                 | `orders`, `order_items`                                                               |
+| `…_lojinha_e_ledger.sql`        | `loja_items`, `resgates`, `point_transactions`                                        |
+| `…_painter_telefone_unico.sql`  | `painters.telefone` obrigatório + único (credencial)                                  |
+| `…_painter_email_contato.sql`   | `painters.email` (contato, opcional)                                                  |
+| `…_rls_identidade.sql`          | RLS em `admins`/`painters` + função `is_admin()`                                      |
+| `…_rls_dominio.sql`             | RLS de leitura no comercial/pontos/lojinha/settings/products + `current_painter_id()` |
+| `…_ledger_imutavel.sql`         | trigger de imutabilidade em `point_transactions`                                      |
+| `…_rls_clients.sql`             | RLS faltante em `clients`                                                             |
 
 Banco hospedado (Supabase free tier). Migrations aplicadas via `supabase db push`
 (projeto linkado por `supabase link`). Para recriar o schema do zero: clonar o repo,

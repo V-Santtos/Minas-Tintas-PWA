@@ -96,8 +96,13 @@ admin; assets renomeados sem espaços; `sw.js` no `.gitignore`.
 
 1. **Schema** ✅ — definido e versionado em `APLICATIVO PWA/supabase/migrations/` (9 tabelas, 5 enums).
    Documentado em `inventario-schema-supabase.md`.
-2. **Auth** — e-mail/senha, sessão, proteção de rotas, perfis pintor/admin. _(próximo)_
-3. **Camada de dados** real substituindo os mocks, mantendo a UI intacta.
+2. **Auth** ✅ — `@supabase/ssr` nos dois apps (clients browser/server, middleware de sessão).
+   Admin loga por **e-mail**; pintor loga por **telefone** (credencial única; e-mail sintético
+   `{telefone}@pintor.local` por baixo; e-mail real é só contato). Proteção de rota por Server
+   Component com `getUser()` + papel via lookup (`admins`/`painters`). Criação de pintor e reset
+   de senha pelo admin via `POST`/`PATCH /api/pintores` (admin client `service_role`, server-only).
+   RLS ligado em todas as tabelas; ledger imutável por trigger. `rules.ts` aceita a taxa por parâmetro.
+3. **Camada de dados** real substituindo os mocks, mantendo a UI intacta. _(próximo)_
 4. **Integração com sistema de gestão** da loja (catálogo) — adiada; por ora o catálogo
    (`products`) é cadastrado manualmente pelo admin.
 
@@ -106,19 +111,22 @@ admin; assets renomeados sem espaços; `sw.js` no `.gitignore`.
 
 ---
 
-## Endurecimento pendente (resolver na etapa de Auth)
+## Pendente para a camada de dados (item 3)
 
-- **RLS** em todas as tabelas (hoje `UNRESTRICTED`): pintor só vê o que é dele, admin vê tudo,
-  `settings`/`cost` só admin.
-- **Trigger de imutabilidade** em `point_transactions` (hoje a imutabilidade é só disciplina).
-- **`rules.ts` ler a taxa do `settings`** em vez de constante no código.
+- **Policies de escrita** (insert/update/delete) em todas as tabelas — hoje só leitura.
+  Telas que gravam precisarão delas ou de endpoints `service_role`.
+- **UI de cadastro/reset de pintor** ligando aos endpoints `/api/pintores` (hoje só via console).
+- **`products`/`cost`**: definir exposição do catálogo ao pintor (view sem `cost` ou endpoint).
+- **`rules.ts` consumir `settings.bonus_percent`** — a função já aceita; falta a camada ler e repassar.
+
+**Futuro (sem fase):** troca de telefone do pintor pelo admin (troca de credencial); recuperação
+por e-mail (requer SMTP); lib compartilhada do `rules.ts`; limpar pintores de teste do banco.
 
 ---
 
 ## Em aberto / observações
 
-- Login ainda **cosmético** (`router.push` sem validar; sem sessão nem proteção de rota) — alvo da Fase 1.2.
-- Mocks **não persistem** entre reloads (sem backend ligado à UI ainda).
+- Mocks **não persistem** entre reloads (sem backend ligado à UI ainda) — alvo do item 3.
 - `rules.ts` duplicado idêntico nos dois apps (candidato a lib compartilhada).
 - O `.gitignore` raiz exclui: `.claude/` (config local), `sessao-atual.md` (notas de sessão),
   `**/node_modules/`, `**/.next/`, `**/.env*`.
