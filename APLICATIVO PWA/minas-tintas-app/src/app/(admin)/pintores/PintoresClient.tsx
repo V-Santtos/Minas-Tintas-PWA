@@ -211,7 +211,7 @@ export default function PintoresClient({
             Pintores parceiros
           </h1>
           <p style={{ fontSize: 13.5, color: "var(--ink-2)", marginTop: 6 }}>
-            {activeCount} pintores ativos · 18 cadastros no último mês.
+            {activeCount} pintores ativos.
           </p>
         </div>
         <div

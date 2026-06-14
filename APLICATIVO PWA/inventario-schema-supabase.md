@@ -255,6 +255,35 @@ de "compra confirmada").
 
 ---
 
+## Views (derivações)
+
+### `painter_stats`
+
+View de leitura que calcula em tempo de consulta os números derivados do pintor — fiel ao princípio
+"guardar o fato, derivar o rótulo": nada aqui é coluna guardada.
+
+| Campo                                                                  | Origem                                                           |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `id`, `nome`, `telefone`, `documento`, `email`, `active`, `created_at` | passados direto de `painters`                                    |
+| `pedidos`                                                              | `count` dos `orders` do pintor                                   |
+| `aprovados`                                                            | `count` dos `orders` com `status = 'aprovado'`                   |
+| `volume`                                                               | `sum(orders.valor_bruto)` dos aprovados (base do bônus)          |
+| `saldo`                                                                | `sum(point_transactions.valor)` do pintor (o ledger é a verdade) |
+
+Dois pontos técnicos travados:
+
+- **`security_invoker = on`** — a view aplica a RLS das tabelas-base **como o usuário que consulta**,
+  não como o dono da view. Assim o admin vê todas as linhas e o pintor vê só a própria — o que
+  permite reusar a mesma view no app do pintor (saldo na home) sem vazar dados de terceiros. Sem
+  isso, rodaria com os privilégios do dono e furaria a RLS.
+- **`saldo` por subconsulta correlacionada, não por segundo `left join`** — juntar `orders` **e**
+  `point_transactions` na mesma query faz o fan-out de uma inflar o agregado da outra. `pedidos`/
+  `volume` saem do join com `orders`; `saldo` sai de subconsulta isolada.
+
+Consumida hoje pela tela **Pintores (lista)** do admin (`painter_stats` → mapper → `PintoresClient`).
+
+---
+
 ## Comportamento de `on delete` (resumo)
 
 A escolha não é regra fixa — é "o que deve acontecer com esta linha quando o outro lado some":
@@ -321,6 +350,7 @@ campo); recuperação por e-mail (requer SMTP próprio); lib compartilhada do `r
 | `…_rls_dominio.sql`             | RLS de leitura no comercial/pontos/lojinha/settings/products + `current_painter_id()` |
 | `…_ledger_imutavel.sql`         | trigger de imutabilidade em `point_transactions`                                      |
 | `…_rls_clients.sql`             | RLS faltante em `clients`                                                             |
+| `…_painter_stats_view.sql`      | view `painter_stats` (derivações do pintor, `security_invoker`)                       |
 
 Banco hospedado (Supabase free tier). Migrations aplicadas via `supabase db push`
 (projeto linkado por `supabase link`). Para recriar o schema do zero: clonar o repo,

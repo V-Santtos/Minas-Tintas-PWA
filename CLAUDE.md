@@ -118,16 +118,38 @@ admin; assets renomeados sem espaços; `sw.js` no `.gitignore`.
 
 ---
 
-## Pendente para a camada de dados (item 3)
+## Camada de dados (item 3)
 
-- **Policies de escrita** (insert/update/delete) em todas as tabelas — hoje só leitura.
-  Telas que gravam precisarão delas ou de endpoints `service_role`.
+**Feito:** `seed.sql` de desenvolvimento (dados representativos p/ validar leituras, fora das
+migrations — não sobe no `db push`); view `painter_stats` (`security_invoker=on`; `saldo`/`pedidos`/
+`aprovados`/`volume` derivados, nada disso é coluna); tela **Pintores (lista)** lendo dela pelo padrão
+**server-wrapper + client-view** — `page.tsx` (Server Component) busca e mapeia → `PintoresClient.tsx`
+recebe por prop. Esse padrão é o molde das próximas telas.
+
+**Pendente:**
+
+- **Policies de escrita** (insert/update/delete) — hoje só leitura. Princípio de roteamento:
+  atômico / autoria do sistema / que fure a RLS de leitura (ledger, status+bônus, resgate+estoque)
+  → endpoint/RPC `service_role`; escrita simples de uma tabela escopada ao dono → policy de RLS.
+- **Endereço do pintor:** `painters` não tem cidade/CEP/endereço, mas o modal de cadastro os coleta.
+  As colunas entram **junto com a escrita de cadastro (3b)**, onde os campos ganham destino. Até lá
+  a coluna "Cidade" da lista exibe `—`.
+- **Rota do detalhe do pintor:** a lista linka por slug-de-nome e `/pintores/[slug]` ainda lê mock.
+  Trocar para rota por **`id`** quando o detalhe virar dado real (mesma fatia) — nome não é único,
+  `id` é a chave correta.
 - **UI de cadastro/reset de pintor** ligando aos endpoints `/api/pintores` (hoje só via console).
-- **`products`/`cost`**: definir exposição do catálogo ao pintor (view sem `cost` ou endpoint).
-- **`rules.ts` consumir `settings.bonus_percent`** — a função já aceita; falta a camada ler e repassar.
+- **`products`/`cost`:** definir exposição do catálogo ao pintor (view sem `cost` ou endpoint) —
+  pré-requisito da tela de orçamento do pintor.
+- **`rules.ts` consumir `settings.bonus_percent`** — a função já aceita a taxa por parâmetro; falta
+  a camada ler e repassar. Entra na fatia de **Pedidos**, onde o bônus é exibido/creditado.
 
 **Futuro (sem fase):** troca de telefone do pintor pelo admin (troca de credencial); recuperação
-por e-mail (requer SMTP); lib compartilhada do `rules.ts`; limpar pintores de teste do banco.
+por e-mail (requer SMTP); lib compartilhada do `rules.ts`.
+
+**Limpeza do seed:** ao encerrar o item 3, rodar o bloco "ROLLBACK DO SEED" em `supabase/seed.sql`.
+Cuidado: ele apaga `point_transactions` por `painter_id` e levaria junto lançamentos avulsos de teste
+(ex.: o `+10` manual no Pintor Teste) — remover esses antes, ou mirar o `delete` só nos tipos do seed.
+Apagar do ledger exige desabilitar a trigger de imutabilidade (já incluso no bloco).
 
 ---
 
