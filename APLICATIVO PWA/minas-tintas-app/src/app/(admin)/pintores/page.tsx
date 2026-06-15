@@ -11,10 +11,11 @@ export default async function PintoresPage() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("painter_stats")
-    .select("nome, documento, active, created_at, pedidos, saldo")
+    .select("id, nome, documento, active, created_at, pedidos, saldo")
     .order("nome");
 
   const painters: PainterRow[] = (data ?? []).map((p) => ({
+    id: p.id,
     name: p.nome,
     cpf: p.documento ?? "", // documento pode ser null → string vazia
     city: "—", // sem origem no schema (ver pendência)

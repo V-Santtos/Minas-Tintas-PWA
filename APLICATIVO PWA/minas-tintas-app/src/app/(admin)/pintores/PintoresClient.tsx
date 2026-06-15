@@ -46,6 +46,7 @@ function maskCep(v: string) {
 }
 
 export type PainterRow = {
+  id: string;
   name: string;
   cpf: string;
   city: string;
@@ -325,7 +326,7 @@ export default function PintoresClient({
             filtered.map((p) => (
               <div
                 key={p.name}
-                onClick={() => router.push(`/pintores/${slugify(p.name)}`)}
+                onClick={() => router.push(`/pintores/${p.id}`)}
                 style={{
                   display: "grid",
                   gridTemplateColumns: "1fr 160px 110px 90px 150px 120px",
