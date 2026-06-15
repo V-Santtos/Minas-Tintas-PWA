@@ -16,7 +16,7 @@
 -- (a lista do admin deve mostrar 0/0/0, não quebrar).
 --
 -- Alvos de conferência (bater à mão depois de aplicar):
---   Pintor Teste:      pedidos=5  aprovados=2  volume=4519.80  saldo=345
+--   Pintor Teste:      pedidos=5  aprovados=2  volume=4519.80  saldo=695
 --   Pintor Sintetico:  pedidos=2  aprovados=1  volume=509.40  saldo=5
 --   Pintor ComEmail:   pedidos=0  aprovados=0  volume=0     saldo=0
 --
@@ -50,10 +50,10 @@ insert into products (id, code, name, brand, price, cost, stock) values
 --   L4 herda            → 750
 --   L5 acima do padrão  → 4000 (mais caro, SEM selo)
 insert into loja_items (id, name, valor_base, multiplicador, stock, categoria) values
-  ('00000000-0000-0000-0000-0000000000b1', 'Boné Minas Tintas',              200.00, null, 10, 'brindes'),
+  ('00000000-0000-0000-0000-0000000000b1', 'Boné Minas Tintas',              200.00, null,  9, 'brindes'),
   ('00000000-0000-0000-0000-0000000000b2', 'Rolo profissional anti-gota 23cm',300.00, 2.00,  5, 'ferramentas'),
   ('00000000-0000-0000-0000-0000000000b3', 'Kit pincéis Atlas (3 peças)',     400.00, null,  2, 'ferramentas'),
-  ('00000000-0000-0000-0000-0000000000b4', 'Camiseta Minas Tintas',           250.00, null,  8, 'camisetas'),
+  ('00000000-0000-0000-0000-0000000000b4', 'Camiseta Minas Tintas',           250.00, null,  7, 'camisetas'),
   ('00000000-0000-0000-0000-0000000000b5', 'Lixadeira orbital 5"',           1000.00, 4.00,  1, 'ferramentas');
 
 -- ── Pedidos ────────────────────────────────────────────────
@@ -100,10 +100,19 @@ insert into order_items (order_id, product_id, name, unit_price, qty) values
 -- ── Resgate ────────────────────────────────────────────────
 -- Pintor Teste resgatou o Boné (600 pts congelados), já entregue.
 insert into resgates (id, painter_id, loja_item_id, pontos_congelados, status, iniciado_por,
-                       entregue_em, entregue_por) values
+                       entregue_em, entregue_por, cancelado_em) values
+  -- R1 entregue: Boné (600 pts) — estoque já consumido
   ('00000000-0000-0000-0000-00000000ee01', '94f21de4-f8dd-4c91-9014-92f5946f483e',
      '00000000-0000-0000-0000-0000000000b1', 600, 'entregue', 'pintor',
-     now() - interval '5 days', (select auth_user_id from admins limit 1));
+     now() - interval '5 days', (select auth_user_id from admins limit 1), null),
+  -- R2 pendente de retirada: Camiseta (750 pts) — estoque segurado, aguarda retirada
+  ('00000000-0000-0000-0000-00000000ee02', '94f21de4-f8dd-4c91-9014-92f5946f483e',
+     '00000000-0000-0000-0000-0000000000b4', 750, 'pendente_retirada', 'pintor',
+     null, null, null),
+  -- R3 cancelado: Kit pincéis (1200 pts) — pontos e estoque devolvidos
+  ('00000000-0000-0000-0000-00000000ee03', '94f21de4-f8dd-4c91-9014-92f5946f483e',
+     '00000000-0000-0000-0000-0000000000b3', 1200, 'cancelado', 'pintor',
+     null, null, now() - interval '7 days');
 
 -- ── Ledger de pontos (por último: depende de orders e resgates) ──
 -- Coerência: bonus/estorno→order_id; resgate→resgate_id; ajuste→nenhum.
@@ -115,9 +124,12 @@ insert into point_transactions (painter_id, valor, tipo, order_id, resgate_id, m
   ('94f21de4-f8dd-4c91-9014-92f5946f483e',  16, 'bonus',   '00000000-0000-0000-0000-00000000aa04', null, null, null),
   ('94f21de4-f8dd-4c91-9014-92f5946f483e', -16, 'estorno', '00000000-0000-0000-0000-00000000aa04', null,
      'Pagamento recusado pelo banco; compra cancelada.', (select auth_user_id from admins limit 1)),
-  ('94f21de4-f8dd-4c91-9014-92f5946f483e', 900, 'ajuste',  null, null,
+  ('94f21de4-f8dd-4c91-9014-92f5946f483e', 2000, 'ajuste', null, null,
      'Saldo inicial migrado do controle manual.', (select auth_user_id from admins limit 1)),
   ('94f21de4-f8dd-4c91-9014-92f5946f483e',-600, 'resgate', null, '00000000-0000-0000-0000-00000000ee01', null, null),
+  ('94f21de4-f8dd-4c91-9014-92f5946f483e',-750, 'resgate', null, '00000000-0000-0000-0000-00000000ee02', null, null),
+  ('94f21de4-f8dd-4c91-9014-92f5946f483e',-1200,'resgate', null, '00000000-0000-0000-0000-00000000ee03', null, null),
+  ('94f21de4-f8dd-4c91-9014-92f5946f483e', 1200,'devolucao',null,'00000000-0000-0000-0000-00000000ee03', null, (select auth_user_id from admins limit 1)),
   -- Pintor Sintetico
   ('85b0f493-d414-43fd-ad7c-e6c9452695e7',   5, 'bonus',   '00000000-0000-0000-0000-00000000aa06', null, null, null);
 
@@ -134,11 +146,11 @@ commit;
 --   delete from point_transactions where painter_id in
 --     ('94f21de4-f8dd-4c91-9014-92f5946f483e','85b0f493-d414-43fd-ad7c-e6c9452695e7');
 --   alter table point_transactions enable trigger trg_ledger_imutavel;
---   delete from resgates    where id = '00000000-0000-0000-0000-00000000ee01';
---   delete from order_items where order_id like '00000000-0000-0000-0000-00000000aa%';
---   delete from orders      where id like '00000000-0000-0000-0000-00000000aa%';
---   delete from loja_items  where id like '00000000-0000-0000-0000-0000000000b%';
---   delete from products    where id like '00000000-0000-0000-0000-0000000000d%';
---   delete from clients     where id like '00000000-0000-0000-0000-0000000000c%';
+--   delete from resgates    where id::text like '00000000-0000-0000-0000-00000000ee%';
+--   delete from order_items where order_id::text like '00000000-0000-0000-0000-00000000aa%';
+--   delete from orders      where id::text like '00000000-0000-0000-0000-00000000aa%';
+--   delete from loja_items  where id::text like '00000000-0000-0000-0000-0000000000b%';
+--   delete from products    where id::text like '00000000-0000-0000-0000-0000000000d%';
+--   delete from clients     where id::text like '00000000-0000-0000-0000-0000000000c%';
 -- commit;
 -- ============================================================
