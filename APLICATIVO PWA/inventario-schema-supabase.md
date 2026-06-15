@@ -206,6 +206,8 @@ Módulo **separado** da lojinha de pontos.
 **`orders`** — tabela única; o `status` carrega o ciclo de vida (não há tabela separada
 de "compra confirmada").
 
+- `titulo` — nome da obra/projeto do orçamento (ex.: "Igreja São Francisco"), nulável;
+  autorado na criação do orçamento (3b).
 - `numero` `generated always as identity` — id humano/sequencial (o "número do orçamento"),
   além do `id` uuid interno.
 - `client_id`/`painter_id` `not null`, `on delete restrict` — não dá pra apagar cliente/pintor
@@ -262,13 +264,13 @@ de "compra confirmada").
 View de leitura que calcula em tempo de consulta os números derivados do pintor — fiel ao princípio
 "guardar o fato, derivar o rótulo": nada aqui é coluna guardada.
 
-| Campo                                                                  | Origem                                                           |
-| ---------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `id`, `nome`, `telefone`, `documento`, `email`, `active`, `created_at` | passados direto de `painters`                                    |
-| `pedidos`                                                              | `count` dos `orders` do pintor                                   |
-| `aprovados`                                                            | `count` dos `orders` com `status = 'aprovado'`                   |
-| `volume`                                                               | `sum(orders.valor_bruto)` dos aprovados (base do bônus)          |
-| `saldo`                                                                | `sum(point_transactions.valor)` do pintor (o ledger é a verdade) |
+| Campo                                                                  | Origem                                                                           |
+| ---------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `id`, `nome`, `telefone`, `documento`, `email`, `active`, `created_at` | passados direto de `painters`                                                    |
+| `pedidos`                                                              | `count` dos `orders` não-rascunho (rascunho é WIP do pintor, não conta p/ admin) |
+| `aprovados`                                                            | `count` dos `orders` com `status = 'aprovado'`                                   |
+| `volume`                                                               | `sum(orders.valor_bruto)` dos aprovados (base do bônus)                          |
+| `saldo`                                                                | `sum(point_transactions.valor)` do pintor (o ledger é a verdade)                 |
 
 Dois pontos técnicos travados:
 
@@ -280,9 +282,46 @@ Dois pontos técnicos travados:
   `point_transactions` na mesma query faz o fan-out de uma inflar o agregado da outra. `pedidos`/
   `volume` saem do join com `orders`; `saldo` sai de subconsulta isolada.
 
-Consumida hoje pela tela **Pintores (lista)** do admin (`painter_stats` → mapper → `PintoresClient`).
+Consumida pelas telas **Pintores (lista)** e **Pintor (detalhe)** do admin (`painter_stats` → mapper → client).
 
 ---
+
+### `pedidos_admin`
+
+Pedidos para o admin: resolve nomes e dois derivados do ledger. `security_invoker = on`.
+
+| Campo                                          | Origem                                                       |
+| ---------------------------------------------- | ------------------------------------------------------------ |
+| campos de `orders` (incl. `titulo`)            | passados direto                                              |
+| `painter_nome`, `client_nome`, `client_cidade` | join `painters` / `clients`                                  |
+| `bonus_creditado`                              | `sum` das linhas `bonus` do ledger do pedido (0 até aprovar) |
+| `estorno_motivo`                               | `motivo` da linha `estorno` do ledger (se houver)            |
+
+`bonus_creditado` é a **verdade do ledger**, não recálculo por % atual. Consumida pelas telas
+de Pedidos (lista/detalhe) e pelo detalhe do pintor.
+
+### `loja_items_admin`
+
+Itens da lojinha com o custo em pontos derivado. `security_invoker = on`.
+
+| Campo                  | Origem                                                                 |
+| ---------------------- | ---------------------------------------------------------------------- |
+| campos de `loja_items` | passados direto                                                        |
+| `custo_pts`            | `round(valor_base × (multiplicador ?? settings.multiplicador_padrao))` |
+| `promo`                | `multiplicador is not null and multiplicador < padrão`                 |
+
+`cross join settings` traz o multiplicador global (linha única) pra cada item; o `coalesce`
+faz herdar o padrão quando o item não tem multiplicador próprio.
+
+### `resgates_admin`
+
+Resgates com nomes resolvidos. `security_invoker = on`.
+
+| Campo                      | Origem                                       |
+| -------------------------- | -------------------------------------------- |
+| campos de `resgates`       | passados direto                              |
+| `painter_nome`             | join `painters`                              |
+| `item_nome`, `item_imagem` | `left join loja_items` (nulável, `set null`) |
 
 ## Comportamento de `on delete` (resumo)
 
@@ -338,19 +377,23 @@ campo); recuperação por e-mail (requer SMTP próprio); lib compartilhada do `r
 
 ## Migrations (ordem de aplicação)
 
-| Arquivo                         | Conteúdo                                                                              |
-| ------------------------------- | ------------------------------------------------------------------------------------- |
-| `…_fundacao_enums_settings.sql` | 5 enums + tabela `settings` (linha única)                                             |
-| `…_entidades_base.sql`          | `painters`, `admins`, `clients`, `products`                                           |
-| `…_pedidos.sql`                 | `orders`, `order_items`                                                               |
-| `…_lojinha_e_ledger.sql`        | `loja_items`, `resgates`, `point_transactions`                                        |
-| `…_painter_telefone_unico.sql`  | `painters.telefone` obrigatório + único (credencial)                                  |
-| `…_painter_email_contato.sql`   | `painters.email` (contato, opcional)                                                  |
-| `…_rls_identidade.sql`          | RLS em `admins`/`painters` + função `is_admin()`                                      |
-| `…_rls_dominio.sql`             | RLS de leitura no comercial/pontos/lojinha/settings/products + `current_painter_id()` |
-| `…_ledger_imutavel.sql`         | trigger de imutabilidade em `point_transactions`                                      |
-| `…_rls_clients.sql`             | RLS faltante em `clients`                                                             |
-| `…_painter_stats_view.sql`      | view `painter_stats` (derivações do pintor, `security_invoker`)                       |
+| Arquivo                                | Conteúdo                                                                              |
+| -------------------------------------- | ------------------------------------------------------------------------------------- |
+| `…_fundacao_enums_settings.sql`        | 5 enums + tabela `settings` (linha única)                                             |
+| `…_entidades_base.sql`                 | `painters`, `admins`, `clients`, `products`                                           |
+| `…_pedidos.sql`                        | `orders`, `order_items`                                                               |
+| `…_lojinha_e_ledger.sql`               | `loja_items`, `resgates`, `point_transactions`                                        |
+| `…_painter_telefone_unico.sql`         | `painters.telefone` obrigatório + único (credencial)                                  |
+| `…_painter_email_contato.sql`          | `painters.email` (contato, opcional)                                                  |
+| `…_rls_identidade.sql`                 | RLS em `admins`/`painters` + função `is_admin()`                                      |
+| `…_rls_dominio.sql`                    | RLS de leitura no comercial/pontos/lojinha/settings/products + `current_painter_id()` |
+| `…_ledger_imutavel.sql`                | trigger de imutabilidade em `point_transactions`                                      |
+| `…_rls_clients.sql`                    | RLS faltante em `clients`                                                             |
+| `…_painter_stats_view.sql`             | view `painter_stats` (derivações do pintor, `security_invoker`)                       |
+| `…_orders_titulo.sql`                  | coluna `orders.titulo`                                                                |
+| `…_pedidos_admin_view.sql`             | view `pedidos_admin` (nomes + bônus/estorno derivados)                                |
+| `…_lojinha_views.sql`                  | views `loja_items_admin`, `resgates_admin`                                            |
+| `…_painter_stats_excluir_rascunho.sql` | `painter_stats.pedidos` passa a excluir rascunho                                      |
 
 Banco hospedado (Supabase free tier). Migrations aplicadas via `supabase db push`
 (projeto linkado por `supabase link`). Para recriar o schema do zero: clonar o repo,
