@@ -61,23 +61,23 @@ insert into loja_items (id, name, valor_base, multiplicador, stock, categoria) v
 -- aprovado/estornado têm confirmação preenchida; pendente/rascunho não.
 -- valor_bruto é a BASE do bônus (congelada).
 insert into orders (id, client_id, painter_id, status, valor_bruto, desconto, pagamento,
-                    confirmed_at, confirmed_by, valor_confirmado) values
+                    confirmed_at, confirmed_by, valor_confirmado, created_at) values
   -- Pintor Teste
   ('00000000-0000-0000-0000-00000000aa01', '00000000-0000-0000-0000-0000000000c1', '94f21de4-f8dd-4c91-9014-92f5946f483e',
-     'aprovado',  2938.80, 0,   'Pix da loja', now() - interval '20 days', (select auth_user_id from admins limit 1), 2938.80),
+     'aprovado',  2938.80, 0,   'Pix da loja', now() - interval '66 days', (select auth_user_id from admins limit 1), 2938.80, now() - interval '70 days'),
   ('00000000-0000-0000-0000-00000000aa02', '00000000-0000-0000-0000-0000000000c2', '94f21de4-f8dd-4c91-9014-92f5946f483e',
-     'aprovado',  1581.00, 100, 'Maquininha',  now() - interval '15 days', (select auth_user_id from admins limit 1), 1481.00),
+     'aprovado',  1581.00, 100, 'Maquininha',  now() - interval '64 days', (select auth_user_id from admins limit 1), 1481.00, now() - interval '68 days'),
   ('00000000-0000-0000-0000-00000000aa03', '00000000-0000-0000-0000-0000000000c3', '94f21de4-f8dd-4c91-9014-92f5946f483e',
-     'pendente',  1508.00, 0,   'Vai pagar na loja', null, null, null),
+     'pendente',  1508.00, 0,   'Vai pagar na loja', null, null, null, now() - interval '12 days'),
   ('00000000-0000-0000-0000-00000000aa04', '00000000-0000-0000-0000-0000000000c1', '94f21de4-f8dd-4c91-9014-92f5946f483e',
-     'estornado', 1600.00, 0,   'Maquininha',  now() - interval '25 days', (select auth_user_id from admins limit 1), 1600.00),
+     'estornado', 1600.00, 0,   'Maquininha',  now() - interval '42 days', (select auth_user_id from admins limit 1), 1600.00, now() - interval '45 days'),
   ('00000000-0000-0000-0000-00000000aa05', '00000000-0000-0000-0000-0000000000c4', '94f21de4-f8dd-4c91-9014-92f5946f483e',
-     'rascunho',   509.40, 0,   null, null, null, null),
+     'rascunho',   509.40, 0,   null, null, null, null, now() - interval '6 days'),
   -- Pintor Sintetico
   ('00000000-0000-0000-0000-00000000aa06', '00000000-0000-0000-0000-0000000000c2', '85b0f493-d414-43fd-ad7c-e6c9452695e7',
-     'aprovado',   509.40, 0,   'Dinheiro',    now() - interval '10 days', (select auth_user_id from admins limit 1), 509.40),
+     'aprovado',   509.40, 0,   'Dinheiro',    now() - interval '28 days', (select auth_user_id from admins limit 1), 509.40, now() - interval '30 days'),
   ('00000000-0000-0000-0000-00000000aa07', '00000000-0000-0000-0000-0000000000c3', '85b0f493-d414-43fd-ad7c-e6c9452695e7',
-     'pendente',  1149.60, 0,   'Pix da loja', null, null, null);
+     'pendente',  1149.60, 0,   'Pix da loja', null, null, null, now() - interval '2 days');
 
 -- ── Itens dos pedidos (snapshot) ───────────────────────────
 -- name/unit_price congelados; product_id é referência fraca (set null).
