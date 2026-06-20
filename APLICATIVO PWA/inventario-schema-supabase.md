@@ -323,6 +323,30 @@ Resgates com nomes resolvidos. `security_invoker = on`.
 | `painter_nome`             | join `painters`                              |
 | `item_nome`, `item_imagem` | `left join loja_items` (nulável, `set null`) |
 
+### `clients_admin`
+
+Clientes para o admin + o **pintor mais recente** de cada um (derivado de `orders`, pois
+`clients` não tem coluna de pintor). `security_invoker = on`.
+
+| Campo               | Origem                                                             |
+| ------------------- | ------------------------------------------------------------------ |
+| campos de `clients` | passados direto                                                    |
+| `painter_nome`      | nome do pintor do **pedido mais recente** do cliente (`null` se 0) |
+
+Consumida pela tela **Clientes** (admin, rota `dashboard`).
+
+### `products_public`
+
+Catálogo exposto ao **pintor** — `products` **sem `cost`** (sensível). Diferente das outras
+views, roda **`security_invoker = off`** (como dono): ignora a RLS só-admin de `products` e lista
+os ativos; o custo nunca vaza. `grant select to authenticated`.
+
+| Campo                                 | Origem              |
+| ------------------------------------- | ------------------- |
+| `id, code, name, brand, price, stock` | `products` (ativos) |
+
+Consumida pela tela de **Orçamento** (pintor), via o payload do layout `(app)`.
+
 ## Comportamento de `on delete` (resumo)
 
 A escolha não é regra fixa — é "o que deve acontecer com esta linha quando o outro lado some":
@@ -394,6 +418,8 @@ campo); recuperação por e-mail (requer SMTP próprio); lib compartilhada do `r
 | `…_pedidos_admin_view.sql`             | view `pedidos_admin` (nomes + bônus/estorno derivados)                                |
 | `…_lojinha_views.sql`                  | views `loja_items_admin`, `resgates_admin`                                            |
 | `…_painter_stats_excluir_rascunho.sql` | `painter_stats.pedidos` passa a excluir rascunho                                      |
+| `…_clients_admin_view.sql`             | view `clients_admin` (cliente + pintor mais recente)                                  |
+| `…_products_public_view.sql`           | view `products_public` (catálogo ao pintor, sem `cost`, `security_invoker` off)       |
 
 Banco hospedado (Supabase free tier). Migrations aplicadas via `supabase db push`
 (projeto linkado por `supabase link`). Para recriar o schema do zero: clonar o repo,

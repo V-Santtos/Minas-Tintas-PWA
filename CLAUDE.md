@@ -120,42 +120,79 @@ admin; assets renomeados sem espaços; `sw.js` no `.gitignore`.
 
 ## Camada de dados (item 3)
 
-**Feito:** `seed.sql` de desenvolvimento (dados representativos p/ validar leituras, fora das
-migrations — não sobe no `db push`); view `painter_stats` (`security_invoker=on`; `saldo`/`pedidos`/
-`aprovados`/`volume` derivados, nada disso é coluna); tela **Pintores (lista)** lendo dela pelo padrão
-**server-wrapper + client-view** — `page.tsx` (Server Component) busca e mapeia → `PintoresClient.tsx`
-recebe por prop. Esse padrão é o molde das próximas telas.
+### Leitura — CONCLUÍDA (admin + pintor)
 
-**Pendente:**
+Todas as telas de leitura migraram de mock para Supabase real.
 
-- **Policies de escrita** (insert/update/delete) — hoje só leitura. Princípio de roteamento:
-  atômico / autoria do sistema / que fure a RLS de leitura (ledger, status+bônus, resgate+estoque)
-  → endpoint/RPC `service_role`; escrita simples de uma tabela escopada ao dono → policy de RLS.
-- **Endereço do pintor:** `painters` não tem cidade/CEP/endereço, mas o modal de cadastro os coleta.
-  As colunas entram **junto com a escrita de cadastro (3b)**, onde os campos ganham destino. Até lá
-  a coluna "Cidade" da lista exibe `—`.
-- **Rota do detalhe do pintor:** a lista linka por slug-de-nome e `/pintores/[slug]` ainda lê mock.
-  Trocar para rota por **`id`** quando o detalhe virar dado real (mesma fatia) — nome não é único,
-  `id` é a chave correta.
-- **UI de cadastro/reset de pintor** ligando aos endpoints `/api/pintores` (hoje só via console).
-- **`products`/`cost`:** definir exposição do catálogo ao pintor (view sem `cost` ou endpoint) —
-  pré-requisito da tela de orçamento do pintor.
-- **`rules.ts` consumir `settings.bonus_percent`** — a função já aceita a taxa por parâmetro; falta
-  a camada ler e repassar. Entra na fatia de **Pedidos**, onde o bônus é exibido/creditado.
+**Admin** (padrão **server-wrapper + client-view**: `page.tsx` Server Component busca/mapeia →
+`*Client.tsx` recebe por prop): Pintores (lista + detalhe), Pedidos (lista + detalhe), Lojinha,
+Clientes (`dashboard`), Relatórios (year-aware).
 
-**Futuro (sem fase):** troca de telefone do pintor pelo admin (troca de credencial); recuperação
-por e-mail (requer SMTP); lib compartilhada do `rules.ts`.
+**Pintor** (padrão **layout = ponto único de fetch**): o `(app)/layout.tsx` busca todo o payload
+de leitura uma vez e semeia o `PintorProvider`; as telas leem do contexto. Reais: Home (saldo,
+pedidos recentes, carrossel de loja, "a liberar"), Pedidos (lista + detalhe), Loja (lista +
+detalhe), Perfil (principal, Meus dados, Clientes, Atividade), e o **catálogo** do Orçamento.
 
-**Limpeza do seed:** ao encerrar o item 3, rodar o bloco "ROLLBACK DO SEED" em `supabase/seed.sql`.
-Cuidado: ele apaga `point_transactions` por `painter_id` e levaria junto lançamentos avulsos de teste
-(ex.: o `+10` manual no Pintor Teste) — remover esses antes, ou mirar o `delete` só nos tipos do seed.
-Apagar do ledger exige desabilitar a trigger de imutabilidade (já incluso no bloco).
+### Arquitetura de leitura
 
----
+- **RLS faz o escopo.** As views derivadas são `security_invoker = on` → o mesmo view serve admin
+  e pintor: admin vê tudo, pintor vê só o próprio. Reuso total.
+- **Exceção `products_public`**: `security_invoker = off` (roda como dono) pra furar a RLS
+  só-admin de `products` e mostrar o catálogo ao pintor — **sem `cost`**.
+- **Offline plugável (pintor)**: o fetch fica concentrado no `layout.tsx`. Offline (Fase 2) troca
+  esse fetch por cache nesse arquivo só, sem tocar nas telas. Hoje 100% online; offline é
+  aditivo/desligável.
+- **Views derivadas** (detalhe no `inventario-schema-supabase.md`): `painter_stats`,
+  `pedidos_admin`, `loja_items_admin`, `resgates_admin`, `clients_admin`, `products_public`.
+
+### Escrita (3b) — PENDENTE
+
+Princípio de roteamento: atômico / autoria do sistema / que fure a RLS de leitura (ledger,
+status+bônus, resgate+estoque) → endpoint/RPC `service_role`; escrita simples de uma tabela
+escopada ao dono → policy de RLS.
+
+**Pintor:**
+
+- Enviar orçamento (pedido rascunho→pendente + itens) — inclui a **escolha de cliente** no
+  orçamento, ainda mock (`CLIENTS`/`CURRENT_PAINTER`), por ser parte do fluxo.
+- Resgatar + cancelar resgate (devolução) — hoje otimista/sessão, não persiste no ledger.
+- Cadastrar/editar cliente (aba Clientes) — hoje só estado local.
+
+**Admin:**
+
+- Aprovar/recusar pedido; confirmar pagamento/estorno.
+- CRUD de item da loja + ajustar multiplicador global.
+- Aprovar/recusar/entregar resgate.
+- CRUD de cliente (modal); criar pedido (modal, hoje pré-visualização).
+- Cadastrar/resetar pintor (ligar a `/api/pintores`; aqui entram as **colunas de endereço** de
+  `painters`, hoje ausentes → `city = '—'` nas telas).
+- Editar `settings` (`bonus_percent`, `multiplicador`).
+- `configuracoes` dos dois apps são 3b: pintor = toggles de notificação + copy estática; admin =
+  conta (nome/email/foto/senha, hoje placeholder — semear com o admin real ao construir a escrita).
+
+### Adiado (sem fase)
+
+- **Gráficos reais da Atividade do pintor** — hoje lista do ledger; evoluir pra série temporal
+  agregada de `point_transactions`.
+- **Offline (Fase 2)** — cache do payload no `layout.tsx`.
+
+### Dados / seed
+
+- **Login do Pintor Teste**: ficou com `teste@pintor.com` em vez do sintético
+  `33999990000@pintor.local` → login por telefone não acha. Corrigir no Auth (ou recriar).
+- **`order_items` no seed**: pedido sem itens cai no placeholder `DEFAULT_DETAIL_ITEMS` no detalhe.
+- **Limpeza do seed** ao encerrar: bloco "ROLLBACK DO SEED" em `supabase/seed.sql` (apaga
+  `point_transactions` por `painter_id`; exige desabilitar a trigger de imutabilidade, já no bloco).
+
+### Futuro (sem fase)
+
+Troca de telefone do pintor pelo admin; recuperação por e-mail (SMTP); lib compartilhada do
+`rules.ts` (o "a liberar" do pintor ainda usa a taxa default do `bonusPts`, não `settings`).
 
 ## Em aberto / observações
 
-- Mocks **não persistem** entre reloads (sem backend ligado à UI ainda) — alvo do item 3.
+- Leitura (item 3) **concluída** — mocks substituídos por Supabase real. A persistência restante
+  (escritas) é o **3b**.
 - `rules.ts` duplicado idêntico nos dois apps (candidato a lib compartilhada).
 - O `.gitignore` raiz exclui: `.claude/` (config local), `sessao-atual.md` (notas de sessão),
   `**/node_modules/`, `**/.next/`, `**/.env*`.
