@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import {
   Search,
   X,
@@ -11,10 +11,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { type Client } from "@/lib/mock";
-import {
-  CadastrarClienteModal,
-  loadManualClients,
-} from "@/components/CadastrarClienteModal";
+import { CadastrarClienteModal } from "@/components/CadastrarClienteModal";
 
 export default function ClientesClient({
   clients: clientsProp,
@@ -23,22 +20,13 @@ export default function ClientesClient({
 }) {
   const [query, setQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [localClients, setLocalClients] = useState<Client[]>([]);
   const [clientModalOpen, setClientModalOpen] = useState(false);
   const [clientPrefill, setClientPrefill] = useState("");
   const [editClient, setEditClient] = useState<Client | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    setLocalClients(loadManualClients());
-  }, []);
-
-  // Mock clients que ainda não foram editados localmente ficam visíveis
-  const localNames = new Set(localClients.map((c) => c.name.toLowerCase()));
-  const realClients = clientsProp.filter(
-    (c) => !localNames.has(c.name.toLowerCase()),
-  );
-  const allClients = [...localClients, ...realClients];
+  // Lista vem direto do server; revalidatePath atualiza após salvar.
+  const allClients = clientsProp;
 
   const q = query.toLowerCase().trim();
   const digits = q.replace(/\D/g, "");
@@ -68,15 +56,6 @@ export default function ClientesClient({
     setEditClient(client);
     setClientPrefill("");
     setClientModalOpen(true);
-  }
-
-  function handleSaveClient(client: Client) {
-    setLocalClients((prev) => {
-      if (editClient?.id) {
-        return prev.map((c) => (c.id === editClient.id ? client : c));
-      }
-      return [client, ...prev];
-    });
   }
 
   return (
@@ -388,6 +367,7 @@ export default function ClientesClient({
                           >
                             {c.type === "empresa" ? "Empresa" : "Pessoa física"}
                             {c.phone ? ` · ${c.phone}` : ""}
+                            {c.cidade ? ` · ${c.cidade}` : ""}
                           </div>
                         </div>
 
@@ -458,7 +438,6 @@ export default function ClientesClient({
         prefillName={clientPrefill}
         editClient={editClient}
         onClose={() => setClientModalOpen(false)}
-        onSave={handleSaveClient}
       />
     </div>
   );
