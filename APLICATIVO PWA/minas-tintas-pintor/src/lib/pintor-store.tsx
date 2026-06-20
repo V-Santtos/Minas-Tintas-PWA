@@ -1,7 +1,53 @@
 ﻿"use client";
 
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
-import { CATALOG, SALDO_INICIAL, bonusPts } from "./pintor-data";
+import {
+  createContext,
+  useContext,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import {
+  bonusPts,
+  type Order,
+  type LojaProduct,
+  type CatalogItem,
+} from "./pintor-data";
+
+export type PintorReadData = {
+  saldo: number;
+  profile: {
+    name: string;
+    firstName: string;
+    phone: string;
+    cpf: string;
+    parceiroDesde: string;
+  };
+  orders: Order[];
+  loja: LojaProduct[];
+  pendingRedemptions: PendingRedemption[];
+  clientes: {
+    id: string;
+    type: "pessoa" | "empresa";
+    name: string;
+    phone: string;
+    document: string;
+    cep: string;
+    address: string;
+    number: string;
+    city: string;
+    neighborhood: string;
+    note: string;
+  }[];
+  atividade: {
+    id: string;
+    date: string;
+    label: string;
+    pts: number;
+    kind: "in" | "out";
+  }[];
+  catalog: CatalogItem[];
+};
 
 export type PendingRedemption = {
   id: string;
@@ -25,9 +71,12 @@ type Store = {
   setSaldo: (n: number) => void;
   resgatar: (pts: number) => void;
   pendingRedemptions: PendingRedemption[];
-  requestRedemption: (item: Omit<PendingRedemption, "id" | "status" | "requestedAt">) => void;
+  requestRedemption: (
+    item: Omit<PendingRedemption, "id" | "status" | "requestedAt">,
+  ) => void;
   cancelRedemption: (id: string) => void;
 
+  data: PintorReadData;
   cart: Record<string, number>;
   addCart: (id: string, delta: number) => void;
   clearCart: () => void;
@@ -47,22 +96,26 @@ type Store = {
 
 const PintorContext = createContext<Store | null>(null);
 
-export function PintorProvider({ children }: { children: ReactNode }) {
-  const [saldo, setSaldo] = useState(SALDO_INICIAL);
+export function PintorProvider({
+  data,
+  children,
+}: {
+  data: PintorReadData;
+  children: ReactNode;
+}) {
+  const [saldo, setSaldo] = useState(data.saldo);
   const [cart, setCart] = useState<Record<string, number>>({});
-  const [selectedClient, setSelectedClient] = useState<{ name: string; phone: string } | null>(null);
+  const [selectedClient, setSelectedClient] = useState<{
+    name: string;
+    phone: string;
+  } | null>(null);
   const [selectedPayment, setSelectedPayment] = useState<string | null>(null);
-  const [lastSubmitted, setLastSubmitted] = useState<SubmittedOrder | null>(null);
-  const [pendingRedemptions, setPendingRedemptions] = useState<PendingRedemption[]>([
-    {
-      id: "res-bone-01",
-      itemId: "bone",
-      itemName: "Boné Minas Tintas",
-      pts: 800,
-      requestedAt: "Hoje, 09:20",
-      status: "pendente",
-    },
-  ]);
+  const [lastSubmitted, setLastSubmitted] = useState<SubmittedOrder | null>(
+    null,
+  );
+  const [pendingRedemptions, setPendingRedemptions] = useState<
+    PendingRedemption[]
+  >(data.pendingRedemptions);
 
   const addCart = (id: string, delta: number) => {
     setCart((prev) => {
@@ -82,7 +135,9 @@ export function PintorProvider({ children }: { children: ReactNode }) {
 
   const resgatar = (pts: number) => setSaldo((s) => Math.max(0, s - pts));
 
-  const requestRedemption = (item: Omit<PendingRedemption, "id" | "status" | "requestedAt">) => {
+  const requestRedemption = (
+    item: Omit<PendingRedemption, "id" | "status" | "requestedAt">,
+  ) => {
     setPendingRedemptions((prev) => [
       {
         ...item,
@@ -105,26 +160,42 @@ export function PintorProvider({ children }: { children: ReactNode }) {
   const { cartQty, cartTotal, cartBonus } = useMemo(() => {
     const qty = Object.values(cart).reduce((a, b) => a + b, 0);
     const total = Object.keys(cart).reduce((s, id) => {
-      const p = CATALOG.find((x) => x.id === id);
+      const p = data.catalog.find((x) => x.id === id);
       return p ? s + p.price * cart[id] : s;
     }, 0);
     return { cartQty: qty, cartTotal: total, cartBonus: bonusPts(total) };
-  }, [cart]);
+  }, [cart, data.catalog]);
 
   const value: Store = {
-    saldo, setSaldo, resgatar, pendingRedemptions, requestRedemption, cancelRedemption,
-    cart, addCart, clearCart, cartQty, cartTotal, cartBonus,
-    selectedClient, setSelectedClient,
-    selectedPayment, setSelectedPayment,
-    lastSubmitted, setLastSubmitted,
+    data,
+    saldo,
+    setSaldo,
+    resgatar,
+    pendingRedemptions,
+    requestRedemption,
+    cancelRedemption,
+    cart,
+    addCart,
+    clearCart,
+    cartQty,
+    cartTotal,
+    cartBonus,
+    selectedClient,
+    setSelectedClient,
+    selectedPayment,
+    setSelectedPayment,
+    lastSubmitted,
+    setLastSubmitted,
   };
 
-  return <PintorContext.Provider value={value}>{children}</PintorContext.Provider>;
+  return (
+    <PintorContext.Provider value={value}>{children}</PintorContext.Provider>
+  );
 }
 
 export function usePintor(): Store {
   const ctx = useContext(PintorContext);
-  if (!ctx) throw new Error("usePintor deve ser usado dentro de PintorProvider");
+  if (!ctx)
+    throw new Error("usePintor deve ser usado dentro de PintorProvider");
   return ctx;
 }
-

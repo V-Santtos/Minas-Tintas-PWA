@@ -152,7 +152,13 @@ export const CLIENTS: Client[] = [
 ];
 
 // ── Pedidos ───────────────────────────────────────────────
-export type OrderStatus = "aprovado" | "pendente" | "rascunho";
+export type OrderStatus =
+  | "aprovado"
+  | "pendente"
+  | "rascunho"
+  | "recusado"
+  | "cancelado"
+  | "estornado";
 
 export type OrderItem = { name: string; qty: number; price: number };
 
@@ -312,6 +318,30 @@ export const STATUS_CFG: Record<OrderStatus, StatusConfig> = {
     bonusLabel: "BÔNUS ESTIMADO",
     bonusText:
       "Bônus calculado sobre o valor do orçamento. Válido após envio e aprovação.",
+    bonusColor: "var(--muted)",
+  },
+  recusado: {
+    label: "recusado",
+    bg: "#FCEAEA",
+    color: "#CC0000",
+    bonusLabel: "BÔNUS NÃO CREDITADO",
+    bonusText: "Pedido recusado — nenhum bônus foi gerado.",
+    bonusColor: "var(--muted)",
+  },
+  cancelado: {
+    label: "cancelado",
+    bg: "#F2EDE4",
+    color: "#8A817A",
+    bonusLabel: "BÔNUS NÃO CREDITADO",
+    bonusText: "Pedido cancelado.",
+    bonusColor: "var(--muted)",
+  },
+  estornado: {
+    label: "estornado",
+    bg: "#F2EDE4",
+    color: "#8A817A",
+    bonusLabel: "BÔNUS REVERTIDO",
+    bonusText: "Bônus creditado e revertido no estorno.",
     bonusColor: "var(--muted)",
   },
 };
