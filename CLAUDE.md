@@ -44,9 +44,11 @@ Antes de responder ou executar qualquer tarefa, leia:
   assumir — já fomos mordidos por suposições.
 - **Verifique no remoto** (clone fresco) quando eu disser que fiz push — pega descompasso entre o
   que apliquei e o que subiu.
-- **Commits: gere você a mensagem pronta** ao fim de cada mudança lógica, em _conventional commits_
-  (`tipo(escopo): resumo`) — uma linha pras simples, com corpo quando houver várias peças. Prefira
-  commits separados por mudança lógica.
+- **Commits: gere você a mensagem pronta** ao fim de cada **bloco lógico** (não a cada passo),
+  em _conventional commits_ (`tipo(escopo): resumo`) — uma linha pras simples, com **corpo**
+  quando houver várias peças. **Um único título por commit**: se o bloco junta várias mudanças,
+  descreva-as no corpo — não concatene vários títulos na linha do assunto. Separe DB de código
+  quando fizer sentido.
 - **Pendências e decisões adiadas:** mantenha registradas nos docs, pra nada virar buraco esquecido.
 
 ---
