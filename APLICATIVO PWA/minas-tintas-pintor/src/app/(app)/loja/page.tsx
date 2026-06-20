@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { usePintor } from "@/lib/pintor-store";
 import { ptsFmt, type LojaProduct } from "@/lib/pintor-data";
+import { cancelarResgate } from "@/lib/resgate-actions";
 
 type Cat = "tudo" | "ferramentas" | "epi" | "brindes" | "camisetas";
 type Sort = "available" | "promo" | "pts-asc" | "pts-desc";
@@ -72,7 +73,13 @@ function sortProducts(
 
 export default function LojaPage() {
   const router = useRouter();
-  const { saldo, pendingRedemptions, cancelRedemption, data } = usePintor();
+
+  async function handleCancelar(resgateId: string) {
+    const res = await cancelarResgate(resgateId);
+    if (res.ok) router.refresh();
+  }
+
+  const { saldo, pendingRedemptions, data } = usePintor();
   const [cat, setCat] = useState<Cat>("tudo");
   const [sort, setSort] = useState<Sort>("available");
   const [openMenu, setOpenMenu] = useState<"cat" | "sort" | null>(null);
@@ -252,7 +259,7 @@ export default function LojaPage() {
               </div>
               <button
                 type="button"
-                onClick={() => cancelRedemption(item.id)}
+                onClick={() => handleCancelar(item.id)}
                 style={{
                   border: "1px solid var(--line-strong)",
                   background: "transparent",

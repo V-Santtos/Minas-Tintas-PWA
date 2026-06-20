@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { usePintor } from "@/lib/pintor-store";
 import { ptsFmt } from "@/lib/pintor-data";
+import { resgatarItem } from "@/lib/resgate-actions";
 
 const ICONS: Record<string, typeof Package> = {
   package: Package,
@@ -36,11 +37,13 @@ export default function ResgatePage({
 }) {
   const { id } = use(params);
   const router = useRouter();
-  const { saldo, resgatar, requestRedemption, data } = usePintor();
+  const { saldo, data } = usePintor();
 
   const [toastOpen, setToastOpen] = useState(false);
   const [sheetIn, setSheetIn] = useState(false);
   const [displayNum, setDisplayNum] = useState(0);
+  const [erro, setErro] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const rafRef = useRef<number | null>(null);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
@@ -82,7 +85,18 @@ export default function ResgatePage({
     rafRef.current = requestAnimationFrame(tick);
   }
 
-  function confirmarResgate() {
+  async function confirmarResgate() {
+    if (submitting) return;
+    setErro("");
+    setSubmitting(true);
+
+    const res = await resgatarItem(item.id);
+    if (!res.ok) {
+      setSubmitting(false);
+      setErro(res.error);
+      return;
+    }
+
     const oldBalance = saldo;
     const newBalance = Math.max(0, saldo - item.pts);
     setDisplayNum(oldBalance);
@@ -93,16 +107,6 @@ export default function ResgatePage({
     timersRef.current.push(
       setTimeout(() => {
         animateCounter(oldBalance, newBalance, 1100);
-        timersRef.current.push(
-          setTimeout(() => {
-            resgatar(item.pts);
-            requestRedemption({
-              itemId: item.id,
-              itemName: item.name,
-              pts: item.pts,
-            });
-          }, 1100),
-        );
       }, 480),
     );
 
@@ -112,6 +116,7 @@ export default function ResgatePage({
         timersRef.current.push(
           setTimeout(() => {
             setToastOpen(false);
+            router.refresh(); // reSemeia saldo/pendentes do servidor
             router.push("/loja");
           }, 430),
         );
@@ -239,9 +244,11 @@ export default function ResgatePage({
         <button
           className="btn btn-primary btn-full"
           onClick={confirmarResgate}
-          disabled={cantRedeem}
+          disabled={cantRedeem || submitting}
           style={
-            cantRedeem ? { opacity: 0.55, cursor: "not-allowed" } : undefined
+            cantRedeem || submitting
+              ? { opacity: 0.55, cursor: "not-allowed" }
+              : undefined
           }
         >
           <Check size={16} strokeWidth={2.5} color="#fff" />
@@ -253,6 +260,18 @@ export default function ResgatePage({
                 : `Resgatar por ${ptsFmt(p.pts)} pts`}
           </span>
         </button>
+        {erro && (
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: "#CC0000",
+              textAlign: "center",
+            }}
+          >
+            {erro}
+          </div>
+        )}
         <button
           className="btn btn-ghost btn-full"
           onClick={() => router.push("/loja")}

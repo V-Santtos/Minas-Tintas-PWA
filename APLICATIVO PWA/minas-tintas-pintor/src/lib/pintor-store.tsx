@@ -68,13 +68,7 @@ export type SubmittedOrder = {
 
 type Store = {
   saldo: number;
-  setSaldo: (n: number) => void;
-  resgatar: (pts: number) => void;
   pendingRedemptions: PendingRedemption[];
-  requestRedemption: (
-    item: Omit<PendingRedemption, "id" | "status" | "requestedAt">,
-  ) => void;
-  cancelRedemption: (id: string) => void;
 
   data: PintorReadData;
   cart: Record<string, number>;
@@ -103,7 +97,6 @@ export function PintorProvider({
   data: PintorReadData;
   children: ReactNode;
 }) {
-  const [saldo, setSaldo] = useState(data.saldo);
   const [cart, setCart] = useState<Record<string, number>>({});
   const [selectedClient, setSelectedClient] = useState<{
     name: string;
@@ -113,9 +106,6 @@ export function PintorProvider({
   const [lastSubmitted, setLastSubmitted] = useState<SubmittedOrder | null>(
     null,
   );
-  const [pendingRedemptions, setPendingRedemptions] = useState<
-    PendingRedemption[]
-  >(data.pendingRedemptions);
 
   const addCart = (id: string, delta: number) => {
     setCart((prev) => {
@@ -133,30 +123,6 @@ export function PintorProvider({
     setSelectedClient(null);
   };
 
-  const resgatar = (pts: number) => setSaldo((s) => Math.max(0, s - pts));
-
-  const requestRedemption = (
-    item: Omit<PendingRedemption, "id" | "status" | "requestedAt">,
-  ) => {
-    setPendingRedemptions((prev) => [
-      {
-        ...item,
-        id: `res-${item.itemId}-${Date.now()}`,
-        requestedAt: "Agora",
-        status: "pendente",
-      },
-      ...prev,
-    ]);
-  };
-
-  const cancelRedemption = (id: string) => {
-    setPendingRedemptions((prev) => {
-      const redemption = prev.find((item) => item.id === id);
-      if (redemption) setSaldo((s) => s + redemption.pts);
-      return prev.filter((item) => item.id !== id);
-    });
-  };
-
   const { cartQty, cartTotal, cartBonus } = useMemo(() => {
     const qty = Object.values(cart).reduce((a, b) => a + b, 0);
     const total = Object.keys(cart).reduce((s, id) => {
@@ -168,12 +134,8 @@ export function PintorProvider({
 
   const value: Store = {
     data,
-    saldo,
-    setSaldo,
-    resgatar,
-    pendingRedemptions,
-    requestRedemption,
-    cancelRedemption,
+    saldo: data.saldo,
+    pendingRedemptions: data.pendingRedemptions,
     cart,
     addCart,
     clearCart,
