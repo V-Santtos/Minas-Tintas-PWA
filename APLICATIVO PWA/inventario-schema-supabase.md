@@ -361,8 +361,10 @@ A escolha não é regra fixa — é "o que deve acontecer com esta linha quando 
 ## Acesso (RLS) — implementado
 
 Todas as tabelas têm **Row Level Security** ligado (nenhuma fica `UNRESTRICTED`). O acesso é
-negado por padrão; as policies abaixo liberam **leitura**. **Escrita** (insert/update/delete)
-ainda **não tem policy** — fica para a camada de dados (item 3), via policy ou endpoint `service_role`.
+negado por padrão; as policies abaixo liberam **leitura**. A **escrita** segue o roteamento da
+seção _Escrita — RPCs (camada 3b)_ abaixo: escrita simples escopada por papel → policy; escrita
+atômica / que fura a RLS de leitura (ledger, status+bônus, resgate+estoque, pedido+itens) →
+RPC `SECURITY DEFINER`.
 
 Funções auxiliares (`SECURITY DEFINER`, evitam recursão nas policies):
 
@@ -379,23 +381,75 @@ Funções auxiliares (`SECURITY DEFINER`, evitam recursão nas policies):
 | `loja_items`, `settings`                   | qualquer autenticado                                                                     |
 | `products`                                 | só admin (contém `cost` sensível; pintor ainda não consome catálogo)                     |
 
+**Escrita por policy:** `clients` aceita `INSERT`/`UPDATE` de **admin** (`is_admin()`), espelhando a
+leitura — é a única escrita simples por policy até aqui (sem `DELETE`: cliente não tem `active` e a
+FK `restrict` de `orders` barra apagar quem tem pedido). Todas as outras escritas passam por RPC.
+
 **Imutabilidade do ledger:** `point_transactions` tem um trigger (`trg_ledger_imutavel`) que
 **aborta qualquer UPDATE ou DELETE** — inclusive via `service_role`. Só INSERT é permitido.
 Correções são feitas por linha compensatória (estorno/ajuste/devolução), nunca editando o passado.
 
+## Escrita — RPCs (camada 3b)
+
+Roteamento (do CLAUDE.md): **escrita simples de uma tabela escopada ao dono → policy**;
+**escrita atômica / de autoria do sistema / que fura a RLS de leitura → RPC `SECURITY DEFINER`**
+chamada por server action. As RPCs resolvem a identidade pelo JWT (`current_painter_id()` /
+`is_admin()` + `auth.uid()`), **nunca por parâmetro**, e travam as linhas afetadas (`FOR UPDATE`)
+para verificar invariantes antes de agir (anti double-spend / double-approve). Execução concedida
+só a `authenticated`.
+
+| RPC                                | Quem   | O que faz (atômico)                                                                                                                                                                                                         |
+| ---------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `resgatar_item(item)`              | pintor | trava o pintor; recalcula o custo (mesma fórmula da view); checa saldo; baixa estoque; cria `resgates` (snapshot em `pontos_congelados`) + linha `resgate` (−) no ledger                                                    |
+| `cancelar_resgate(resgate)`        | pintor | só o próprio e só `pendente_retirada`; marca `cancelado`; devolve estoque; credita `devolucao` (+snapshot)                                                                                                                  |
+| `aprovar_pedido(pedido)`           | admin  | `pendente→aprovado`; preenche `confirmed_*` e `valor_confirmado`; credita `bonus` = `round(valor_bruto × settings.bonus_percent)` no ledger                                                                                 |
+| `recusar_pedido(pedido)`           | admin  | `pendente→recusado`; sem ledger (RPC só para não expor `UPDATE` de `orders` ao client)                                                                                                                                      |
+| `estornar_pedido(pedido, motivo)`  | admin  | `aprovado→estornado`; reverte o bônus **realmente creditado** (soma das linhas `bonus`) como linha `estorno`; `motivo` obrigatório                                                                                          |
+| `enviar_orcamento(cliente, itens)` | pintor | cria `orders` (pendente) + `order_items` numa transação; **preço sempre de `products`** (cliente manda só `product_id`+`qty`); cliente = id existente (precisa ser do pintor) ou novo por **find-or-create no `documento`** |
+
+Dois pontos de segurança que se repetem:
+
+- **Preço autoritativo:** `enviar_orcamento` ignora qualquer preço vindo do cliente e lê de
+  `products` — senão o pintor inflaria o `valor_bruto` e o próprio bônus.
+- **Bônus na taxa de _agora_:** `aprovar_pedido` lê `settings.bonus_percent` em runtime (mesma
+  taxa que o preview da tela usa), então o creditado bate com o previsto.
+
+As server actions que chamam as RPCs ficam em: `dashboard/actions.ts` (cliente admin),
+`lib/resgate-actions.ts` (pintor), `pedidos/actions.ts` (admin) e `lib/orcamento-actions.ts`
+(pintor). Após a escrita, `router.refresh()` reSemeia o payload do layout (saldo, pendentes,
+pedidos) — não há mais estado otimista para esses dados.
+
 ## Pendente para a camada de dados (item 3)
 
-1. **Policies de escrita** em todas as tabelas (hoje só leitura).
-2. **UI de cadastro/reset de pintor** ligando aos endpoints `POST`/`PATCH /api/pintores`
-   (hoje acionados só via console).
-3. **`products`/`cost`**: decidir exposição do catálogo ao pintor (view sem `cost` ou endpoint)
-   quando o orçamento do pintor existir.
-4. **`rules.ts` consumir `settings.bonus_percent`** — a função `bonusPoints(total, percent?)` já
-   aceita a taxa por parâmetro (com fallback no `BONUS_PERCENT`); falta a camada de dados ler do
-   `settings` e repassar.
+**Feito na 3b:** escrita de cliente (admin), resgate/cancelamento (pintor), decisão de pedido
+(aprovar/recusar/estornar, admin), enviar orçamento (pintor). Leitura de catálogo
+(`products_public`) e da carteira de clientes do pintor (`data.clientes`) ligadas ao real.
+
+**Decisões adiadas (conscientes):**
+
+1. **Agenda de cliente do pintor:** a criação de cliente pelo pintor vive **dentro do orçamento**
+   (find-or-create por `documento`). O cadastro **standalone** na aba Clientes do perfil fica
+   adiado — se for desejado, é a Opção 1 (coluna de autoria `created_by_painter` + ampliar a policy
+   de leitura do pintor para "criou OU tem pedido").
+2. **Normalizar `documento` para dígitos:** hoje gravado **mascarado** (convenção atual; o `unique`
+   é sobre o texto cru, e os dois apps já produzem mascarado). Normalizar é migração de dados +
+   tocar nos dois apps + formatar na exibição.
+3. **Criar pedido pelo admin** ainda é preview/mock — o seletor de cliente do `PedidosClient` é
+   mock (foi desligado do `localStorage`, mas não ligado ao real). Ligar quando entrar.
+
+**Escritas que faltam (admin, mais simples):** CRUD de item da loja + multiplicador; gestão de
+resgate (aprovar/recusar/entregar); editar `settings` (incl. `bonus_percent`/`multiplicador_padrao`);
+conta do admin; UI de cadastro/reset de pintor ligando aos endpoints `POST`/`PATCH /api/pintores`
+(hoje só via console), incluindo as colunas de endereço de `painters`.
+
+**`rules.ts` × `settings.bonus_percent`:** o **crédito autoritativo** já lê `settings` em runtime
+(na `aprovar_pedido`). Falta o **preview** do pintor (`bonusPts` no store, via `rules.ts`) deixar de
+usar a constante estática e passar a ler a taxa do payload — cosmético, só diverge se o admin mudar a
+taxa.
 
 **Futuro (sem fase):** troca de telefone do pintor pelo admin (é troca de credencial, não só
-campo); recuperação por e-mail (requer SMTP próprio); lib compartilhada do `rules.ts`.
+campo); recuperação por e-mail (requer SMTP próprio); lib compartilhada do `rules.ts`; tela in-app
+de guia de instalação do PWA (iPhone/Safari).
 
 ---
 
@@ -420,6 +474,10 @@ campo); recuperação por e-mail (requer SMTP próprio); lib compartilhada do `r
 | `…_painter_stats_excluir_rascunho.sql` | `painter_stats.pedidos` passa a excluir rascunho                                      |
 | `…_clients_admin_view.sql`             | view `clients_admin` (cliente + pintor mais recente)                                  |
 | `…_products_public_view.sql`           | view `products_public` (catálogo ao pintor, sem `cost`, `security_invoker` off)       |
+| `…_rls_clients_escrita_admin.sql`      | policies `INSERT`/`UPDATE` de `clients` (admin)                                       |
+| `…_resgate_rpcs.sql`                   | RPCs `resgatar_item`, `cancelar_resgate` (pintor)                                     |
+| `…_pedido_rpcs.sql`                    | RPCs `aprovar_pedido`, `recusar_pedido`, `estornar_pedido` (admin)                    |
+| `…_orcamento_rpc.sql`                  | RPC `enviar_orcamento` (pintor)                                                       |
 
 Banco hospedado (Supabase free tier). Migrations aplicadas via `supabase db push`
 (projeto linkado por `supabase link`). Para recriar o schema do zero: clonar o repo,
