@@ -63,5 +63,7 @@ export default async function PintorDetailPage({
     bonusPts: Number(r.bonus_creditado),
   }));
 
-  return <PintorDetailClient painter={painter} orders={orders} />;
+  return (
+    <PintorDetailClient painter={painter} orders={orders} painterId={id} />
+  );
 }

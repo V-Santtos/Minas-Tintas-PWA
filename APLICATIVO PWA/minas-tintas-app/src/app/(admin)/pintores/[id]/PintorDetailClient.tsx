@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { savePainter } from "./actions";
 import {
   ArrowLeft,
   Pencil,
@@ -66,9 +67,11 @@ function maskCep(v: string) {
 export default function PintorDetailClient({
   painter,
   orders,
+  painterId,
 }: {
   painter: Painter;
   orders: Order[];
+  painterId: string;
 }) {
   const router = useRouter();
 
@@ -92,6 +95,8 @@ export default function PintorDetailClient({
   const [showConfirmarNovaSenha, setShowConfirmarNovaSenha] = useState(false);
   const [errors, setErrors] = useState<Record<string, boolean>>({});
   const [cepLoading, setCepLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [apiError, setApiError] = useState("");
 
   async function handleCepChange(raw: string) {
     const masked = maskCep(raw);
@@ -127,14 +132,14 @@ export default function PintorDetailClient({
     setShowNovaSenha(false);
     setShowConfirmarNovaSenha(false);
     setErrors({});
+    setApiError("");
     setEditOpen(true);
   }
 
-  function submitEdit() {
+  async function submitEdit() {
     const errs: Record<string, boolean> = {};
     if (!formNome.trim()) errs.nome = true;
     if (!formCpf.trim()) errs.cpf = true;
-    if (!formCidade.trim()) errs.cidade = true;
     if (showChangePwd) {
       if (formNovaSenha.length < 6) errs.novaSenha = true;
       if (formConfirmarNovaSenha !== formNovaSenha)
@@ -144,7 +149,48 @@ export default function PintorDetailClient({
       setErrors(errs);
       return;
     }
+    if (submitting) return;
+    setSubmitting(true);
+    setApiError("");
+
+    const saved = await savePainter({
+      id: painterId,
+      nome: formNome.trim(),
+      documento: formCpf.trim(),
+    });
+    if (!saved.ok) {
+      setSubmitting(false);
+      setApiError(saved.error);
+      return;
+    }
+
+    if (showChangePwd) {
+      const res = await fetch("/api/pintores", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ painter_id: painterId, senha: formNovaSenha }),
+      });
+      if (!res.ok) {
+        setSubmitting(false);
+        const data = await res.json().catch(() => ({}));
+        setApiError(data?.error || "Não foi possível alterar a senha.");
+        return;
+      }
+    }
+
+    setSubmitting(false);
     setEditOpen(false);
+    router.refresh();
+  }
+
+  async function handleToggleActive() {
+    if (submitting) return;
+    setSubmitting(true);
+    setApiError("");
+    const res = await savePainter({ id: painterId, active: !p.active });
+    setSubmitting(false);
+    if (res.ok) router.refresh();
+    else setApiError(res.error);
   }
 
   const inputStyle = (hasError?: boolean): React.CSSProperties => ({
@@ -295,6 +341,8 @@ export default function PintorDetailClient({
             Editar cadastro
           </button>
           <button
+            onClick={handleToggleActive}
+            disabled={submitting}
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -797,11 +845,15 @@ export default function PintorDetailClient({
                 <label style={labelStyle}>Telefone</label>
                 <input
                   type="text"
-                  inputMode="numeric"
-                  placeholder="(32) 99999-9999"
                   value={formTelefone}
-                  onChange={(e) => setFormTelefone(maskPhone(e.target.value))}
-                  style={inputStyle()}
+                  readOnly
+                  disabled
+                  style={{
+                    ...inputStyle(),
+                    background: "var(--paper)",
+                    color: "var(--muted)",
+                    cursor: "not-allowed",
+                  }}
                 />
               </div>
               <div style={fieldStyle}>
@@ -1088,8 +1140,21 @@ export default function PintorDetailClient({
               >
                 Cancelar
               </button>
+              {apiError && (
+                <span
+                  style={{
+                    fontSize: 12.5,
+                    color: "#CC0000",
+                    fontWeight: 600,
+                    alignSelf: "center",
+                  }}
+                >
+                  {apiError}
+                </span>
+              )}
               <button
                 onClick={submitEdit}
+                disabled={submitting}
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -1106,7 +1171,7 @@ export default function PintorDetailClient({
                 }}
               >
                 <Check size={14} strokeWidth={2.5} />
-                Salvar alterações
+                {submitting ? "Salvando..." : "Salvar alterações"}
               </button>
             </div>
           </div>
