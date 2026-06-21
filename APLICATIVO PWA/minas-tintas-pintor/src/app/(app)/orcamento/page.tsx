@@ -28,14 +28,8 @@ import {
   Receipt,
 } from "lucide-react";
 import { usePintor } from "@/lib/pintor-store";
-import {
-  CLIENTS,
-  CURRENT_PAINTER,
-  ADDRESS_TYPES,
-  brl,
-} from "@/lib/pintor-data";
-
-let orderSeq = 482;
+import { ADDRESS_TYPES, brl } from "@/lib/pintor-data";
+import { enviarOrcamento } from "@/lib/orcamento-actions";
 
 const PAYMENT_OPTS = [
   { value: "Vai pagar na loja", icon: Store },
@@ -141,7 +135,28 @@ const bareInput: React.CSSProperties = {
   fontFamily: "var(--font-body)",
 };
 
-type Selected = { name: string; phone: string; linked: boolean };
+type Selected =
+  | {
+      kind: "existing";
+      id: string;
+      name: string;
+      phone: string;
+      linked: boolean;
+    }
+  | {
+      kind: "new";
+      name: string;
+      phone: string;
+      linked: boolean;
+      type: ClientKind;
+      document: string;
+      cep: string;
+      address: string;
+      number: string;
+      neighborhood: string;
+      city: string;
+      note: string;
+    };
 type ClientKind = "pessoa" | "empresa";
 
 export default function OrcamentoPage() {
@@ -149,6 +164,7 @@ export default function OrcamentoPage() {
   const {
     cart,
     addCart,
+    clearCart,
     cartQty,
     cartTotal,
     cartBonus,
@@ -187,6 +203,8 @@ export default function OrcamentoPage() {
   const [showNote, setShowNote] = useState(false);
   const [note, setNote] = useState("");
   const [needsAttention, setNeedsAttention] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const eyebrow = selected ? selected.name.toUpperCase() : "NOVO ORÇAMENTO";
 
@@ -194,12 +212,12 @@ export default function OrcamentoPage() {
     const n = nameQ.trim().toLowerCase();
     const p = phoneQ.trim();
     if (n.length < 2 && p.length < 3) return null;
-    return CLIENTS.filter(
+    return data.clientes.filter(
       (c) =>
         (n.length >= 2 && c.name.toLowerCase().includes(n)) ||
         (p.length >= 3 && c.phone.includes(p)),
     );
-  }, [nameQ, phoneQ]);
+  }, [nameQ, phoneQ, data.clientes]);
 
   const prodResults = useMemo(() => {
     const q = prodQ.trim().toLowerCase();
@@ -212,9 +230,14 @@ export default function OrcamentoPage() {
     );
   }, [prodQ]);
 
-  function pickClient(c: (typeof CLIENTS)[number]) {
-    const linked = c.pintores.some((p) => p.id === CURRENT_PAINTER.id);
-    setSelected({ name: c.name, phone: c.phone, linked });
+  function pickClient(c: (typeof data.clientes)[number]) {
+    setSelected({
+      kind: "existing",
+      id: c.id,
+      name: c.name,
+      phone: c.phone,
+      linked: true,
+    });
     setSelectedClient({ name: c.name, phone: c.phone });
     setNameQ("");
     setPhoneQ("");
@@ -260,7 +283,20 @@ export default function OrcamentoPage() {
     }
     setNcErr([]);
     setNcMsg("");
-    setSelected({ name: nc.name.trim(), phone: nc.phone.trim(), linked: true });
+    setSelected({
+      kind: "new",
+      name: nc.name.trim(),
+      phone: nc.phone.trim(),
+      linked: true,
+      type: nc.type,
+      document: nc.cpf,
+      cep: nc.cep,
+      address: nc.address,
+      number: nc.number,
+      neighborhood: nc.neighborhood,
+      city: nc.city,
+      note: nc.note,
+    });
     setSelectedClient({ name: nc.name.trim(), phone: nc.phone.trim() });
     setMode("search");
   }
@@ -285,7 +321,8 @@ export default function OrcamentoPage() {
     setNeedsAttention(false);
   }
 
-  function submitOrder() {
+  async function submitOrder() {
+    if (submitting) return;
     if (!selectedPayment) {
       setNeedsAttention(true);
       document
@@ -293,18 +330,60 @@ export default function OrcamentoPage() {
         ?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
-    const items = Object.keys(cart).map((id) => {
+    if (!selected) {
+      setSubmitError("Selecione um cliente antes de enviar.");
+      return;
+    }
+
+    setSubmitting(true);
+    setSubmitError("");
+
+    const items = Object.entries(cart).map(([product_id, qty]) => ({
+      product_id,
+      qty,
+    }));
+
+    const res = await enviarOrcamento({
+      clientId: selected.kind === "existing" ? selected.id : null,
+      newClient:
+        selected.kind === "new"
+          ? {
+              nome: selected.name,
+              type: selected.type,
+              documento: selected.document,
+              telefone: selected.phone,
+              cep: selected.cep,
+              rua: selected.address,
+              numero: selected.number,
+              complemento: selected.note,
+              bairro: selected.neighborhood,
+              cidade: selected.city,
+            }
+          : null,
+      items,
+      pagamento: selectedPayment,
+      observacao: note || null,
+    });
+
+    if (!res.ok) {
+      setSubmitting(false);
+      setSubmitError(res.error);
+      return;
+    }
+
+    const summaryItems = Object.keys(cart).map((id) => {
       const p = data.catalog.find((x) => x.id === id)!;
       return { name: p.name, qty: cart[id], price: p.price };
     });
-    const id = String(orderSeq++).padStart(4, "0");
     setLastSubmitted({
-      id,
-      clientName: selected?.name ?? "Cliente sem nome",
+      id: String(res.numero).padStart(4, "0"),
+      clientName: selected.name,
       payment: selectedPayment,
-      items,
+      items: summaryItems,
       total: cartTotal,
     });
+    clearCart();
+    router.refresh();
     router.push("/pedido-enviado");
   }
 
@@ -401,12 +480,8 @@ export default function OrcamentoPage() {
                   </div>
                 )}
                 {clientResults.map((c, i) => {
-                  const isLinked = c.pintores.some(
-                    (p) => p.id === CURRENT_PAINTER.id,
-                  );
-                  const others = c.pintores.filter(
-                    (p) => p.id !== CURRENT_PAINTER.id,
-                  );
+                  const isLinked = true; // data.clientes já vem só com os clientes do pintor
+                  const others: { id: string }[] = [];
                   return (
                     <div
                       key={c.id}
@@ -1124,6 +1199,28 @@ export default function OrcamentoPage() {
         )}
       </div>
 
+      {submitError && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: 88,
+            left: 16,
+            right: 16,
+            background: "#FCEAEA",
+            color: "#CC0000",
+            border: "1px solid rgba(204,0,0,.28)",
+            borderRadius: 10,
+            padding: "10px 14px",
+            fontSize: 13,
+            fontWeight: 600,
+            textAlign: "center",
+            zIndex: 50,
+          }}
+        >
+          {submitError}
+        </div>
+      )}
+
       {/* Cart bar */}
       {cartQty > 0 && (
         <div className="cart-bar">
@@ -1137,9 +1234,14 @@ export default function OrcamentoPage() {
           <button
             className={`cart-send${!selectedPayment ? " needs-payment" : ""}`}
             onClick={submitOrder}
+            disabled={submitting}
           >
             <span>
-              {selectedPayment ? "Enviar à loja" : "Escolha pagamento"}
+              {submitting
+                ? "Enviando..."
+                : selectedPayment
+                  ? "Enviar à loja"
+                  : "Escolha pagamento"}
             </span>
             <ArrowRight size={15} strokeWidth={2} />
           </button>
