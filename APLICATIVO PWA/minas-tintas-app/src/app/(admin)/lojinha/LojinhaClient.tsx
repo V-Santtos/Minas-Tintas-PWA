@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Gift,
   SlidersHorizontal,
@@ -29,6 +30,7 @@ import {
   Search,
 } from "lucide-react";
 import { CATALOG, type Reward, type Resgate } from "@/lib/mock";
+import { saveLojaItem } from "./actions";
 
 const ICON_MAP: Record<
   string,
@@ -77,7 +79,10 @@ export default function LojinhaClient({
   resgates: Resgate[];
   globalMult: number;
 }) {
-  const [rewards, setRewards] = useState<Reward[]>(rewardsProp);
+  const router = useRouter();
+  const rewards = rewardsProp; // server-derived; router.refresh() reSemeia
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [resgates, setResgates] = useState<Resgate[]>(resgatesProp);
   const [hidden, setHidden] = useState(new Set<string>());
 
@@ -183,24 +188,25 @@ export default function LojinhaClient({
     setEditPhotoPos(r.imgPos || { x: 50, y: 50 });
   }
 
-  function saveEdit() {
-    if (!editId) return;
-    setRewards((prev) =>
-      prev.map((r) =>
-        r.id !== editId
-          ? r
-          : {
-              ...r,
-              name: editName.trim() || r.name,
-              stock: Math.max(0, parseInt(editStock) || 0),
-              itemMod: editMod,
-              desc: editDesc,
-              img: editPhoto || "",
-              imgPos: editPhotoPos,
-            },
-      ),
-    );
+  async function saveEdit() {
+    if (!editId || !editReward || saving) return;
+    setSaving(true);
+    setSaveError("");
+    const res = await saveLojaItem({
+      id: editId,
+      name: editName.trim() || editReward.name,
+      valorBase: editReward.custo, // edição não altera o valor_base
+      mod: editMod,
+      stock: Math.max(0, parseInt(editStock) || 0),
+      descricao: editDesc,
+    });
+    setSaving(false);
+    if (!res.ok) {
+      setSaveError(res.error);
+      return;
+    }
     setEditId(null);
+    router.refresh();
   }
 
   function handleEditUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -233,24 +239,24 @@ export default function LojinhaClient({
     setAddCatalogSel(true);
   }
 
-  function submitAdd() {
-    if (!addSearch.trim() || !parseFloat(addCusto)) return;
-    setRewards((prev) => [
-      ...prev,
-      {
-        id: "new-" + Date.now(),
-        name: addSearch,
-        custo: parseFloat(addCusto),
-        venda: addVenda || 0,
-        itemMod: addMod,
-        stock: parseInt(addStock) || 0,
-        icon: "package",
-        img: addPhoto || "",
-        desc: addDesc,
-        imgPos: addPhotoPos,
-      },
-    ]);
+  async function submitAdd() {
+    if (!addSearch.trim() || !parseFloat(addCusto) || saving) return;
+    setSaving(true);
+    setSaveError("");
+    const res = await saveLojaItem({
+      name: addSearch.trim(),
+      valorBase: parseFloat(addCusto),
+      mod: addMod,
+      stock: parseInt(addStock) || 0,
+      descricao: addDesc,
+    });
+    setSaving(false);
+    if (!res.ok) {
+      setSaveError(res.error);
+      return;
+    }
     closeAdd();
+    router.refresh();
   }
 
   function closeAdd() {
@@ -1632,8 +1638,8 @@ export default function LojinhaClient({
               <button onClick={() => setEditId(null)} style={btnGhost}>
                 Cancelar
               </button>
-              <button onClick={saveEdit} style={btnPrimary}>
-                <Check size={15} /> Salvar
+              <button onClick={saveEdit} disabled={saving} style={btnPrimary}>
+                <Check size={15} /> {saving ? "Salvando..." : "Salvar"}
               </button>
             </div>
           </div>
@@ -2007,11 +2013,31 @@ export default function LojinhaClient({
               <button onClick={closeAdd} style={btnGhost}>
                 Cancelar
               </button>
-              <button onClick={submitAdd} style={btnPrimary}>
-                <Plus size={15} /> Adicionar
+              <button onClick={submitAdd} disabled={saving} style={btnPrimary}>
+                <Plus size={15} /> {saving ? "Salvando..." : "Adicionar"}
               </button>
             </div>
           </div>
+        </div>
+      )}
+      {saveError && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: 24,
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "#FCEAEA",
+            color: "#CC0000",
+            border: "1px solid rgba(204,0,0,.28)",
+            borderRadius: 10,
+            padding: "10px 16px",
+            fontSize: 13,
+            fontWeight: 600,
+            zIndex: 200,
+          }}
+        >
+          {saveError}
         </div>
       )}
     </div>
