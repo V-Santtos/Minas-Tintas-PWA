@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { aprovarPedido, recusarPedido, estornarPedido } from "../actions";
 import {
   ArrowLeft,
   Printer,
@@ -88,14 +90,19 @@ function getTimeline(o: Order) {
 export default function PedidoDetailClient({
   order: serverOrder,
   id,
+  orderUuid,
 }: {
   order: Order | null;
   id: string;
+  orderUuid?: string;
 }) {
   const [manualOrders, setManualOrders] = useState<Order[]>([]);
   const [estornoOpen, setEstornoOpen] = useState(false);
   const [estornoMotivo, setEstornoMotivo] = useState("");
   const [estornoError, setEstornoError] = useState(false);
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [erro, setErro] = useState("");
 
   useEffect(() => {
     try {
@@ -139,12 +146,39 @@ export default function PedidoDetailClient({
     setEstornoOpen(true);
   }
 
-  function confirmEstorno() {
+  async function handleAprovar() {
+    if (busy || !orderUuid) return;
+    setBusy(true);
+    setErro("");
+    const res = await aprovarPedido(orderUuid);
+    setBusy(false);
+    if (res.ok) router.refresh();
+    else setErro(res.error);
+  }
+
+  async function handleRecusar() {
+    if (busy || !orderUuid) return;
+    setBusy(true);
+    setErro("");
+    const res = await recusarPedido(orderUuid);
+    setBusy(false);
+    if (res.ok) router.refresh();
+    else setErro(res.error);
+  }
+
+  async function confirmEstorno() {
     if (!estornoMotivo.trim()) {
       setEstornoError(true);
       return;
     }
+    if (!orderUuid || busy) return;
+    setBusy(true);
+    setErro("");
+    const res = await estornarPedido(orderUuid, estornoMotivo.trim());
+    setBusy(false);
     setEstornoOpen(false);
+    if (res.ok) router.refresh();
+    else setErro(res.error);
   }
 
   return (
@@ -270,6 +304,8 @@ export default function PedidoDetailClient({
           {o.status === "pendente" ? (
             <>
               <button
+                onClick={handleRecusar}
+                disabled={busy}
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -282,12 +318,15 @@ export default function PedidoDetailClient({
                   background: "var(--card)",
                   color: "var(--ink-2)",
                   border: "1px solid var(--line)",
-                  cursor: "pointer",
+                  cursor: busy ? "default" : "pointer",
+                  opacity: busy ? 0.6 : 1,
                 }}
               >
                 <X size={14} strokeWidth={2.5} /> Recusar
               </button>
               <button
+                onClick={handleAprovar}
+                disabled={busy}
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -300,7 +339,8 @@ export default function PedidoDetailClient({
                   background: "#4F7A4A",
                   color: "#fff",
                   border: "1px solid transparent",
-                  cursor: "pointer",
+                  cursor: busy ? "default" : "pointer",
+                  opacity: busy ? 0.6 : 1,
                   boxShadow: "0 4px 14px rgba(79,122,74,.28)",
                 }}
               >
@@ -331,6 +371,23 @@ export default function PedidoDetailClient({
           ) : null}
         </div>
       </div>
+
+      {erro && (
+        <div
+          style={{
+            margin: "0 32px 12px",
+            background: "#FCEAEA",
+            color: "#CC0000",
+            border: "1px solid rgba(204,0,0,.28)",
+            borderRadius: 10,
+            padding: "10px 14px",
+            fontSize: 13,
+            fontWeight: 600,
+          }}
+        >
+          {erro}
+        </div>
+      )}
 
       {/* Modal de estorno */}
       {estornoOpen && (

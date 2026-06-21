@@ -66,5 +66,5 @@ export default async function PedidoDetailPage({
     bonusPts,
   };
 
-  return <PedidoDetailClient order={order} id={id} />;
+  return <PedidoDetailClient order={order} id={id} orderUuid={r.id} />;
 }
