@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { CATALOG, type Reward, type Resgate } from "@/lib/mock";
 import { saveLojaItem, entregarResgate, recusarResgate } from "./actions";
+import { saveSettings } from "@/lib/settings-actions";
 
 const ICON_MAP: Record<
   string,
@@ -94,7 +95,7 @@ export default function LojinhaClient({
 
   // Multiplicadores modal
   const [multOpen, setMultOpen] = useState(false);
-  const [globalMult, setGlobalMult] = useState(globalMultProp);
+  const globalMult = globalMultProp; // server-derived; router.refresh() reSemeia
   const [multDraft, setMultDraft] = useState(globalMultProp);
 
   // Editar item modal
@@ -277,6 +278,20 @@ export default function LojinhaClient({
     setSaving(false);
     if (res.ok) router.refresh();
     else setSaveError(res.error);
+  }
+
+  async function handleSaveMult() {
+    if (saving) return;
+    setSaving(true);
+    setSaveError("");
+    const res = await saveSettings({ multiplicadorPadrao: multDraft });
+    setSaving(false);
+    if (res.ok) {
+      setMultOpen(false);
+      router.refresh();
+    } else {
+      setSaveError(res.error);
+    }
   }
 
   function closeAdd() {
@@ -1400,10 +1415,8 @@ export default function LojinhaClient({
                 Cancelar
               </button>
               <button
-                onClick={() => {
-                  setGlobalMult(multDraft);
-                  setMultOpen(false);
-                }}
+                onClick={handleSaveMult}
+                disabled={saving}
                 style={btnPrimary}
               >
                 <Check size={15} /> Salvar
