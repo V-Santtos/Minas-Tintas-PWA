@@ -30,7 +30,7 @@ import {
   Search,
 } from "lucide-react";
 import { CATALOG, type Reward, type Resgate } from "@/lib/mock";
-import { saveLojaItem } from "./actions";
+import { saveLojaItem, entregarResgate, recusarResgate } from "./actions";
 
 const ICON_MAP: Record<
   string,
@@ -83,7 +83,7 @@ export default function LojinhaClient({
   const rewards = rewardsProp; // server-derived; router.refresh() reSemeia
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
-  const [resgates, setResgates] = useState<Resgate[]>(resgatesProp);
+  const resgates = resgatesProp; // server-derived; router.refresh() reSemeia
   const [hidden, setHidden] = useState(new Set<string>());
 
   const [tab, setTab] = useState<"produtos" | "resgates">("produtos");
@@ -257,6 +257,26 @@ export default function LojinhaClient({
     }
     closeAdd();
     router.refresh();
+  }
+
+  async function handleEntregarResgate(id: string) {
+    if (saving) return;
+    setSaving(true);
+    setSaveError("");
+    const res = await entregarResgate(id);
+    setSaving(false);
+    if (res.ok) router.refresh();
+    else setSaveError(res.error);
+  }
+
+  async function handleRecusarResgate(id: string) {
+    if (saving) return;
+    setSaving(true);
+    setSaveError("");
+    const res = await recusarResgate(id);
+    setSaving(false);
+    if (res.ok) router.refresh();
+    else setSaveError(res.error);
   }
 
   function closeAdd() {
@@ -1144,15 +1164,8 @@ export default function LojinhaClient({
                           }}
                         >
                           <button
-                            onClick={() =>
-                              setResgates((prev) =>
-                                prev.map((r) =>
-                                  r.id === re.id
-                                    ? { ...r, status: "recusado" }
-                                    : r,
-                                ),
-                              )
-                            }
+                            onClick={() => handleRecusarResgate(re.id)}
+                            disabled={saving}
                             style={{
                               display: "flex",
                               alignItems: "center",
@@ -1170,15 +1183,8 @@ export default function LojinhaClient({
                             <X size={12} /> Recusar
                           </button>
                           <button
-                            onClick={() =>
-                              setResgates((prev) =>
-                                prev.map((r) =>
-                                  r.id === re.id
-                                    ? { ...r, status: "entregue" }
-                                    : r,
-                                ),
-                              )
-                            }
+                            onClick={() => handleEntregarResgate(re.id)}
+                            disabled={saving}
                             style={{
                               display: "flex",
                               alignItems: "center",

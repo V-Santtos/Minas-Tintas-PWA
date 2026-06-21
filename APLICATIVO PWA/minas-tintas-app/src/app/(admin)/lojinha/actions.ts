@@ -46,3 +46,29 @@ export async function saveLojaItem(
   revalidatePath("/lojinha");
   return { ok: true };
 }
+
+export async function entregarResgate(
+  resgateId: string,
+): Promise<SaveLojaResult> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("entregar_resgate", {
+    p_resgate_id: resgateId,
+  });
+  if (error)
+    return { ok: false, error: error.message || "Não foi possível entregar." };
+  revalidatePath("/lojinha");
+  return { ok: true };
+}
+
+export async function recusarResgate(
+  resgateId: string,
+): Promise<SaveLojaResult> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("cancelar_resgate_admin", {
+    p_resgate_id: resgateId,
+  });
+  if (error)
+    return { ok: false, error: error.message || "Não foi possível recusar." };
+  revalidatePath("/lojinha");
+  return { ok: true };
+}
