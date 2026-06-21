@@ -26,7 +26,8 @@ import {
   Receipt,
   UserPlus,
 } from "lucide-react";
-import { CATALOG, CLIENTS, PAINTERS, brl, type Order } from "@/lib/mock";
+import { brl, type Order } from "@/lib/mock";
+import { criarPedido } from "./actions";
 import { bonusPoints } from "@/lib/rules";
 import { CadastrarClienteModal } from "@/components/CadastrarClienteModal";
 
@@ -41,6 +42,17 @@ type ManualDraft = {
   discount: string;
 };
 type ManualCart = Record<string, number>;
+type PainterOpt = { id: string; name: string; phone: string };
+type ClientOpt = { id: string; name: string; type: "pessoa" | "empresa" };
+type ProductOpt = {
+  id: string;
+  code: string;
+  name: string;
+  brand: string;
+  price: number;
+  cost: number;
+  stock: number;
+};
 
 const STATUS_CFG: Record<
   string,
@@ -83,7 +95,6 @@ const STATUS_CFG: Record<
   },
 };
 
-const MANUAL_ORDERS_KEY = "minas-tintas:manual-orders";
 const EMPTY_MANUAL_DRAFT: ManualDraft = {
   painter: "",
   title: "",
@@ -142,15 +153,21 @@ const FILTERS: { key: Status; label: string; dot?: string }[] = [
 export default function PedidosClient({
   orders: realOrders,
   bonusPercent,
+  painters,
+  clients,
+  products,
 }: {
   orders: Order[];
   bonusPercent: number;
+  painters: PainterOpt[];
+  clients: ClientOpt[];
+  products: ProductOpt[];
 }) {
   const router = useRouter();
   const hojeLabel = new Date()
     .toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
     .replace(".", "");
-  const [tableOrders, setTableOrders] = useState<Order[]>(realOrders);
+  const tableOrders = realOrders;
   const [statusFilter, setStatusFilter] = useState<Status>("todos");
   const [search, setSearch] = useState("");
   const [dateSort, setDateSort] = useState<DateSort>(null);
@@ -165,18 +182,13 @@ export default function PedidosClient({
   const [manualCart, setManualCart] = useState<ManualCart>({});
   const [clientModalOpen, setClientModalOpen] = useState(false);
   const [clientModalPrefill, setClientModalPrefill] = useState("");
+  const [manualPainterId, setManualPainterId] = useState<string | null>(null);
+  const [manualClientId, setManualClientId] = useState<string | null>(null);
+  const [manualClientName, setManualClientName] = useState("");
+  const [submittingOrder, setSubmittingOrder] = useState(false);
+  const [orderError, setOrderError] = useState("");
 
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(MANUAL_ORDERS_KEY);
-      const manualOrders = stored ? (JSON.parse(stored) as Order[]) : [];
-      setTableOrders([...manualOrders, ...realOrders]);
-    } catch {
-      setTableOrders(realOrders);
-    }
-  }, []);
-
-  const allClients = CLIENTS;
+  const allClients = clients;
 
   const stats = calcStats(realOrders);
   const painterOptions = Array.from(
@@ -187,39 +199,41 @@ export default function PedidosClient({
     paymentFilter !== "todos",
   ].filter(Boolean).length;
   const painterMatches = manualDraft.painter.trim()
-    ? PAINTERS.filter(
-        (p) =>
-          p.active &&
+    ? painters
+        .filter((p) =>
           p.name
             .toLowerCase()
             .includes(manualDraft.painter.toLowerCase().trim()),
-      ).slice(0, 5)
+        )
+        .slice(0, 5)
     : [];
-  const titleQuery = manualDraft.title.toLowerCase().trim();
-  const clientMatches = titleQuery
+  const clientQuery = manualClientName.toLowerCase().trim();
+  const clientMatches = clientQuery
     ? allClients
-        .filter((c) => c.name.toLowerCase().includes(titleQuery))
+        .filter((c) => c.name.toLowerCase().includes(clientQuery))
         .slice(0, 6)
     : [];
-  const showNewClientTrigger = titleQuery && clientMatches.length === 0;
+  const showNewClientTrigger = clientQuery && clientMatches.length === 0;
   const productMatches = manualDraft.productSearch.trim()
-    ? CATALOG.filter(
-        (p) =>
-          p.name
-            .toLowerCase()
-            .includes(manualDraft.productSearch.toLowerCase().trim()) ||
-          p.brand
-            .toLowerCase()
-            .includes(manualDraft.productSearch.toLowerCase().trim()) ||
-          p.code
-            .toLowerCase()
-            .includes(manualDraft.productSearch.toLowerCase().trim()),
-      ).slice(0, 5)
+    ? products
+        .filter(
+          (p) =>
+            p.name
+              .toLowerCase()
+              .includes(manualDraft.productSearch.toLowerCase().trim()) ||
+            p.brand
+              .toLowerCase()
+              .includes(manualDraft.productSearch.toLowerCase().trim()) ||
+            p.code
+              .toLowerCase()
+              .includes(manualDraft.productSearch.toLowerCase().trim()),
+        )
+        .slice(0, 5)
     : [];
   const cartEntries = Object.entries(manualCart)
-    .map(([id, qty]) => ({ product: CATALOG.find((p) => p.id === id), qty }))
+    .map(([id, qty]) => ({ product: products.find((p) => p.id === id), qty }))
     .filter(
-      (entry): entry is { product: (typeof CATALOG)[number]; qty: number } =>
+      (entry): entry is { product: ProductOpt; qty: number } =>
         Boolean(entry.product) && entry.qty > 0,
     );
   const manualTotal = cartEntries.reduce(
@@ -265,56 +279,47 @@ export default function PedidosClient({
     setPaymentFilter("todos");
   }
 
-  function submitManualOrder(event: FormEvent<HTMLFormElement>) {
+  async function submitManualOrder(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const painter = PAINTERS.find(
-      (p) => p.active && p.name === manualDraft.painter.trim(),
-    );
-    if (
-      !manualDraft.title.trim() ||
-      cartEntries.length === 0 ||
-      !manualDraft.payment
-    )
+    setOrderError("");
+    if (!manualPainterId) {
+      setOrderError("Selecione o pintor responsável.");
       return;
-    const now = new Date();
-
-    const nextNumber =
-      Math.max(
-        ...tableOrders.map((o) => Number(o.id)).filter(Number.isFinite),
-        0,
-      ) + 1;
-    const discountValue = parseCents(manualDraft.discount);
-    const order: Order = {
-      id: String(nextNumber).padStart(4, "0"),
-      painter: painter?.name || "Sem pintor vinculado",
-      location: painter?.city || "Vincular depois",
-      title: manualDraft.title.trim(),
-      date: now
-        .toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
-        .replace(".", ""),
-      createdAtISO: now.toISOString().slice(0, 10),
-      total: manualTotal,
-      discount: discountValue > 0 ? discountValue : undefined,
+    }
+    if (!manualClientId) {
+      setOrderError("Selecione o cliente.");
+      return;
+    }
+    if (cartEntries.length === 0) {
+      setOrderError("Adicione ao menos um produto.");
+      return;
+    }
+    if (!manualDraft.payment) {
+      setOrderError("Escolha a forma de pagamento.");
+      return;
+    }
+    if (submittingOrder) return;
+    setSubmittingOrder(true);
+    const res = await criarPedido({
+      painterId: manualPainterId,
+      clientId: manualClientId,
       items: cartEntries.map(({ product, qty }) => ({
-        name: product.name,
+        product_id: product.id,
         qty,
-        unit: product.price,
       })),
-      status: "pendente",
-      payment: manualDraft.payment,
-      notes: manualDraft.notes.trim(),
-    };
-
-    const currentManual = tableOrders.filter(
-      (o) => Number(o.id) > Math.max(...realOrders.map((x) => Number(x.id)), 0),
-    );
-    const nextManual = [order, ...currentManual];
-    localStorage.setItem(MANUAL_ORDERS_KEY, JSON.stringify(nextManual));
-    setTableOrders([order, ...tableOrders]);
+      titulo: manualDraft.title.trim() || undefined,
+      desconto: parseCents(manualDraft.discount) || 0,
+      pagamento: manualDraft.payment,
+      observacao: manualDraft.notes.trim() || undefined,
+    });
+    setSubmittingOrder(false);
+    if (!res.ok) {
+      setOrderError(res.error);
+      return;
+    }
+    closeManualModal();
     setStatusFilter("todos");
-    setManualDraft(EMPTY_MANUAL_DRAFT);
-    setManualCart({});
-    setManualOpen(false);
+    router.refresh();
   }
 
   function addManualProduct(id: string) {
@@ -335,6 +340,10 @@ export default function PedidosClient({
   function closeManualModal() {
     setManualDraft(EMPTY_MANUAL_DRAFT);
     setManualCart({});
+    setManualPainterId(null);
+    setManualClientId(null);
+    setManualClientName("");
+    setOrderError("");
     setManualOpen(false);
   }
 
@@ -1142,6 +1151,9 @@ export default function PedidosClient({
             style={{
               width: "100%",
               maxWidth: 640,
+              maxHeight: "calc(100vh - 48px)",
+              display: "flex",
+              flexDirection: "column",
               background: "var(--card)",
               border: "1px solid var(--line)",
               borderRadius: 16,
@@ -1180,8 +1192,8 @@ export default function PedidosClient({
                     lineHeight: 1.45,
                   }}
                 >
-                  Pré-visualização local — ainda não é salvo no sistema. A
-                  gravação real chega no próximo passo.
+                  Cria um pedido já aprovado e credita o bônus ao pintor na
+                  hora.
                 </p>
               </div>
               <button
@@ -1204,7 +1216,16 @@ export default function PedidosClient({
               </button>
             </div>
 
-            <div style={{ padding: 22, display: "grid", gap: 14 }}>
+            <div
+              style={{
+                padding: 22,
+                display: "grid",
+                gap: 14,
+                overflowY: "auto",
+                minHeight: 0,
+                flex: "1 1 auto",
+              }}
+            >
               <label
                 style={{
                   display: "grid",
@@ -1214,14 +1235,15 @@ export default function PedidosClient({
                   color: "var(--ink-2)",
                 }}
               >
-                Obra / cliente
+                Cliente
                 <div style={{ position: "relative" }}>
                   <input
-                    value={manualDraft.title}
-                    onChange={(e) =>
-                      setManualDraft((d) => ({ ...d, title: e.target.value }))
-                    }
-                    placeholder="Buscar cliente, empresa ou obra..."
+                    value={manualClientName}
+                    onChange={(e) => {
+                      setManualClientName(e.target.value);
+                      setManualClientId(null);
+                    }}
+                    placeholder="Buscar cliente ou empresa..."
                     required
                     autoComplete="off"
                     style={{
@@ -1237,7 +1259,7 @@ export default function PedidosClient({
                     }}
                   />
                   {((clientMatches.length > 0 &&
-                    manualDraft.title !== clientMatches[0]?.name) ||
+                    manualClientName !== clientMatches[0]?.name) ||
                     showNewClientTrigger) && (
                     <div
                       style={{
@@ -1259,9 +1281,10 @@ export default function PedidosClient({
                           <button
                             key={c.name}
                             type="button"
-                            onClick={() =>
-                              setManualDraft((d) => ({ ...d, title: c.name }))
-                            }
+                            onClick={() => {
+                              setManualClientId(c.id);
+                              setManualClientName(c.name);
+                            }}
                             style={{
                               width: "100%",
                               display: "flex",
@@ -1309,7 +1332,7 @@ export default function PedidosClient({
                         <button
                           type="button"
                           onClick={() => {
-                            setClientModalPrefill(manualDraft.title);
+                            setClientModalPrefill(manualClientName);
                             setClientModalOpen(true);
                           }}
                           style={{
@@ -1338,7 +1361,7 @@ export default function PedidosClient({
                                 color: "var(--brand)",
                               }}
                             >
-                              Cadastrar &quot;{manualDraft.title}&quot;
+                              Cadastrar &quot;{manualClientName}&quot;
                             </span>
                             <span
                               style={{
@@ -1365,13 +1388,47 @@ export default function PedidosClient({
                   color: "var(--ink-2)",
                 }}
               >
+                Obra / título
+                <input
+                  value={manualDraft.title}
+                  onChange={(e) =>
+                    setManualDraft((d) => ({ ...d, title: e.target.value }))
+                  }
+                  placeholder="Ex.: Reforma fachada — Rua das Flores"
+                  autoComplete="off"
+                  style={{
+                    width: "100%",
+                    height: 40,
+                    borderRadius: 10,
+                    border: "1px solid var(--line)",
+                    background: "var(--card)",
+                    padding: "0 12px",
+                    fontFamily: "var(--font-body)",
+                    color: "var(--ink)",
+                    outline: "none",
+                  }}
+                />
+              </label>
+              <label
+                style={{
+                  display: "grid",
+                  gap: 6,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "var(--ink-2)",
+                }}
+              >
                 Pintor
                 <div style={{ position: "relative" }}>
                   <input
                     value={manualDraft.painter}
-                    onChange={(e) =>
-                      setManualDraft((d) => ({ ...d, painter: e.target.value }))
-                    }
+                    onChange={(e) => {
+                      setManualDraft((d) => ({
+                        ...d,
+                        painter: e.target.value,
+                      }));
+                      setManualPainterId(null);
+                    }}
                     placeholder="Buscar pintor responsável..."
                     autoComplete="off"
                     style={{
@@ -1406,9 +1463,13 @@ export default function PedidosClient({
                           <button
                             key={p.name}
                             type="button"
-                            onClick={() =>
-                              setManualDraft((d) => ({ ...d, painter: p.name }))
-                            }
+                            onClick={() => {
+                              setManualDraft((d) => ({
+                                ...d,
+                                painter: p.name,
+                              }));
+                              setManualPainterId(p.id);
+                            }}
                             style={{
                               width: "100%",
                               display: "flex",
@@ -1444,7 +1505,7 @@ export default function PedidosClient({
                                   color: "var(--muted)",
                                 }}
                               >
-                                {p.city}
+                                {p.phone}
                               </span>
                             </span>
                           </button>
@@ -1921,8 +1982,22 @@ export default function PedidosClient({
               >
                 Cancelar
               </button>
+              {orderError && (
+                <span
+                  style={{
+                    fontSize: 12.5,
+                    color: "#CC0000",
+                    fontWeight: 600,
+                    alignSelf: "center",
+                    marginRight: "auto",
+                  }}
+                >
+                  {orderError}
+                </span>
+              )}
               <button
                 type="submit"
+                disabled={submittingOrder}
                 style={{
                   height: 38,
                   padding: "0 15px",
@@ -1935,7 +2010,7 @@ export default function PedidosClient({
                   boxShadow: "0 2px 6px rgba(28,26,23,.10)",
                 }}
               >
-                Criar pedido
+                {submittingOrder ? "Criando..." : "Criar pedido"}
               </button>
             </div>
           </form>
@@ -1946,6 +2021,10 @@ export default function PedidosClient({
         open={clientModalOpen}
         prefillName={clientModalPrefill}
         onClose={() => setClientModalOpen(false)}
+        onCreated={(c) => {
+          setManualClientId(c.id);
+          setManualClientName(c.nome);
+        }}
       />
     </div>
   );

@@ -43,3 +43,35 @@ export async function estornarPedido(
   revalidatePath("/pedidos");
   return { ok: true };
 }
+
+export type CriarPedidoResult =
+  | { ok: true; numero: number }
+  | { ok: false; error: string };
+
+export async function criarPedido(input: {
+  painterId: string;
+  clientId: string;
+  items: { product_id: string; qty: number }[];
+  titulo?: string;
+  desconto?: number;
+  pagamento?: string;
+  observacao?: string;
+}): Promise<CriarPedidoResult> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("criar_pedido_admin", {
+    p_painter_id: input.painterId,
+    p_client_id: input.clientId,
+    p_items: input.items,
+    p_titulo: input.titulo ?? null,
+    p_desconto: input.desconto ?? 0,
+    p_pagamento: input.pagamento ?? null,
+    p_observacao: input.observacao ?? null,
+  });
+  if (error)
+    return {
+      ok: false,
+      error: error.message || "Não foi possível criar o pedido.",
+    };
+  revalidatePath("/pedidos");
+  return { ok: true, numero: (data as { numero: number })?.numero };
+}

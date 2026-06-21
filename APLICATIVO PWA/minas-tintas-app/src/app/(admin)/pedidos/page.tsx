@@ -10,7 +10,13 @@ const fmtDate = (iso: string) =>
 
 export default async function PedidosPage() {
   const supabase = await createClient();
-  const [{ data: rows }, { data: cfg }] = await Promise.all([
+  const [
+    { data: rows },
+    { data: cfg },
+    { data: painterRows },
+    { data: clientRows },
+    { data: productRows },
+  ] = await Promise.all([
     supabase
       .from("pedidos_admin")
       .select(
@@ -19,6 +25,17 @@ export default async function PedidosPage() {
       .neq("status", "rascunho") // draft é WIP do pintor; admin não lista
       .order("numero", { ascending: false }),
     supabase.from("settings").select("bonus_percent").single(),
+    supabase
+      .from("painters")
+      .select("id, nome, telefone")
+      .eq("active", true)
+      .order("nome"),
+    supabase.from("clients").select("id, nome, type").order("nome"),
+    supabase
+      .from("products")
+      .select("id, code, name, brand, price, cost, stock")
+      .eq("active", true)
+      .order("name"),
   ]);
   const percent = Number(cfg?.bonus_percent ?? 0.01);
 
@@ -49,5 +66,33 @@ export default async function PedidosPage() {
     };
   });
 
-  return <PedidosClient orders={orders} bonusPercent={percent} />;
+  const painters = (painterRows ?? []).map((p) => ({
+    id: p.id,
+    name: p.nome,
+    phone: p.telefone ?? "",
+  }));
+  const clients = (clientRows ?? []).map((c) => ({
+    id: c.id,
+    name: c.nome,
+    type: c.type as "pessoa" | "empresa",
+  }));
+  const products = (productRows ?? []).map((p) => ({
+    id: p.id,
+    code: p.code,
+    name: p.name,
+    brand: p.brand,
+    price: Number(p.price),
+    cost: Number(p.cost),
+    stock: p.stock,
+  }));
+
+  return (
+    <PedidosClient
+      orders={orders}
+      bonusPercent={percent}
+      painters={painters}
+      clients={clients}
+      products={products}
+    />
+  );
 }
