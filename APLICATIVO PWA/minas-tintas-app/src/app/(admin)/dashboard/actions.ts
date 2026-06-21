@@ -17,7 +17,9 @@ export type ClientInput = {
   cidade?: string;
 };
 
-export type SaveClientResult = { ok: true } | { ok: false; error: string };
+export type SaveClientResult =
+  | { ok: true; client?: { id: string; nome: string } }
+  | { ok: false; error: string };
 
 // Escrita simples escopada por papel → RLS (policy is_admin()), sem service_role.
 export async function saveClient(
@@ -38,9 +40,14 @@ export async function saveClient(
     cidade: input.cidade?.trim() || null,
   };
 
-  const { error } = input.id
-    ? await supabase.from("clients").update(row).eq("id", input.id)
-    : await supabase.from("clients").insert(row);
+  const { data, error } = input.id
+    ? await supabase
+        .from("clients")
+        .update(row)
+        .eq("id", input.id)
+        .select("id, nome")
+        .single()
+    : await supabase.from("clients").insert(row).select("id, nome").single();
 
   if (error) {
     if (error.code === "23505")
@@ -49,5 +56,8 @@ export async function saveClient(
   }
 
   revalidatePath("/dashboard");
-  return { ok: true };
+  return {
+    ok: true,
+    client: data ? { id: data.id, nome: data.nome } : undefined,
+  };
 }

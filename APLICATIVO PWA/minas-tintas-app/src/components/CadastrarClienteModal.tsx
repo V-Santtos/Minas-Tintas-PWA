@@ -34,6 +34,7 @@ type Props = {
   prefillName?: string;
   editClient?: Client | null;
   onClose: () => void;
+  onCreated?: (client: { id: string; nome: string }) => void;
 };
 
 const EMPTY = {
@@ -53,6 +54,7 @@ export function CadastrarClienteModal({
   prefillName = "",
   editClient,
   onClose,
+  onCreated,
 }: Props) {
   const [type, setType] = useState<"pessoa" | "empresa">("pessoa");
   const [fields, setFields] = useState({ ...EMPTY, name: prefillName });
@@ -159,6 +161,7 @@ export function CadastrarClienteModal({
       setError(res.error);
       return;
     }
+    if (res.client) onCreated?.(res.client);
     onClose();
   }
 
