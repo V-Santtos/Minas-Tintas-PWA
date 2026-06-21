@@ -26,19 +26,9 @@ import {
   Receipt,
   UserPlus,
 } from "lucide-react";
-import {
-  CATALOG,
-  CLIENTS,
-  PAINTERS,
-  brl,
-  type Order,
-  type Client,
-} from "@/lib/mock";
+import { CATALOG, CLIENTS, PAINTERS, brl, type Order } from "@/lib/mock";
 import { bonusPoints } from "@/lib/rules";
-import {
-  CadastrarClienteModal,
-  loadManualClients,
-} from "@/components/CadastrarClienteModal";
+import { CadastrarClienteModal } from "@/components/CadastrarClienteModal";
 
 type Status = "todos" | Order["status"];
 type DateSort = null | "asc" | "desc";
@@ -173,7 +163,6 @@ export default function PedidosClient({
   const [manualDraft, setManualDraft] =
     useState<ManualDraft>(EMPTY_MANUAL_DRAFT);
   const [manualCart, setManualCart] = useState<ManualCart>({});
-  const [localClients, setLocalClients] = useState<Client[]>([]);
   const [clientModalOpen, setClientModalOpen] = useState(false);
   const [clientModalPrefill, setClientModalPrefill] = useState("");
 
@@ -185,10 +174,9 @@ export default function PedidosClient({
     } catch {
       setTableOrders(realOrders);
     }
-    setLocalClients(loadManualClients());
   }, []);
 
-  const allClients = [...localClients, ...CLIENTS];
+  const allClients = CLIENTS;
 
   const stats = calcStats(realOrders);
   const painterOptions = Array.from(
@@ -348,11 +336,6 @@ export default function PedidosClient({
     setManualDraft(EMPTY_MANUAL_DRAFT);
     setManualCart({});
     setManualOpen(false);
-  }
-
-  function handleNewClient(client: Client) {
-    setLocalClients((prev) => [client, ...prev]);
-    setManualDraft((d) => ({ ...d, title: client.name }));
   }
 
   return (
@@ -1963,7 +1946,6 @@ export default function PedidosClient({
         open={clientModalOpen}
         prefillName={clientModalPrefill}
         onClose={() => setClientModalOpen(false)}
-        onSave={handleNewClient}
       />
     </div>
   );
