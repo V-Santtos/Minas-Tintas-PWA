@@ -47,8 +47,15 @@ export async function POST(request: Request) {
       email_confirm: true,
     });
   if (authError || !created.user) {
+    const duplicado =
+      authError?.code === "email_exists" ||
+      /already.*registered/i.test(authError?.message ?? "");
     return NextResponse.json(
-      { error: authError?.message ?? "Falha ao criar o login." },
+      {
+        error: duplicado
+          ? "Já existe um pintor cadastrado com esse telefone."
+          : "Não foi possível criar o login do pintor.",
+      },
       { status: 400 },
     );
   }
@@ -69,7 +76,15 @@ export async function POST(request: Request) {
   // 5. Se a etapa 4 falhar, desfaz a etapa 3 (sem usuário órfão)
   if (dbError) {
     await adminClient.auth.admin.deleteUser(created.user.id);
-    return NextResponse.json({ error: dbError.message }, { status: 400 });
+    return NextResponse.json(
+      {
+        error:
+          dbError.code === "23505"
+            ? "Já existe um pintor cadastrado com esse telefone."
+            : "Não foi possível salvar o cadastro do pintor.",
+      },
+      { status: 400 },
+    );
   }
 
   return NextResponse.json({ painter }, { status: 201 });

@@ -79,6 +79,8 @@ export default function PintoresClient({
   const [showConfirmarSenha, setShowConfirmarSenha] = useState(false);
   const [errors, setErrors] = useState<Record<string, boolean>>({});
   const [cepLoading, setCepLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [apiError, setApiError] = useState("");
 
   const q = search.toLowerCase().trim();
   const filtered = q
@@ -125,6 +127,7 @@ export default function PintoresClient({
     setShowSenha(false);
     setShowConfirmarSenha(false);
     setErrors({});
+    setApiError("");
     setModalOpen(true);
   }
 
@@ -132,11 +135,10 @@ export default function PintoresClient({
     setModalOpen(false);
   }
 
-  function submitForm() {
+  async function submitForm() {
     const errs: Record<string, boolean> = {};
     if (!formNome.trim()) errs.nome = true;
     if (!formCpf.trim()) errs.cpf = true;
-    if (!formCidade.trim()) errs.cidade = true;
     if (!formTelefone.trim()) errs.telefone = true;
     if (formSenha.length < 6) errs.senha = true;
     if (formConfirmarSenha !== formSenha) errs.confirmarSenha = true;
@@ -144,7 +146,27 @@ export default function PintoresClient({
       setErrors(errs);
       return;
     }
+    if (submitting) return;
+    setSubmitting(true);
+    setApiError("");
+    const res = await fetch("/api/pintores", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nome: formNome.trim(),
+        telefone: formTelefone,
+        documento: formCpf.trim(),
+        senha: formSenha,
+      }),
+    });
+    setSubmitting(false);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setApiError(data?.error || "Não foi possível cadastrar o pintor.");
+      return;
+    }
     setModalOpen(false);
+    router.refresh();
   }
 
   const inputStyle = (hasError?: boolean): React.CSSProperties => ({
@@ -779,8 +801,21 @@ export default function PintoresClient({
               >
                 Cancelar
               </button>
+              {apiError && (
+                <span
+                  style={{
+                    fontSize: 12.5,
+                    color: "#CC0000",
+                    fontWeight: 600,
+                    alignSelf: "center",
+                  }}
+                >
+                  {apiError}
+                </span>
+              )}
               <button
                 onClick={submitForm}
+                disabled={submitting}
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -797,7 +832,7 @@ export default function PintoresClient({
                 }}
               >
                 <UserPlus size={14} strokeWidth={2} />
-                Cadastrar
+                {submitting ? "Cadastrando..." : "Cadastrar"}
               </button>
             </div>
           </div>
