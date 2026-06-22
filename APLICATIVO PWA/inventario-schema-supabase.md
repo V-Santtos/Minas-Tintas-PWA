@@ -381,9 +381,17 @@ Funções auxiliares (`SECURITY DEFINER`, evitam recursão nas policies):
 | `loja_items`, `settings`                   | qualquer autenticado                                                                     |
 | `products`                                 | só admin (contém `cost` sensível; pintor ainda não consome catálogo)                     |
 
-**Escrita por policy:** `clients` aceita `INSERT`/`UPDATE` de **admin** (`is_admin()`), espelhando a
-leitura — é a única escrita simples por policy até aqui (sem `DELETE`: cliente não tem `active` e a
-FK `restrict` de `orders` barra apagar quem tem pedido). Todas as outras escritas passam por RPC.
+**Escrita por policy** (escrita simples escopada por papel, sem RPC):
+
+| Tabela       | Quem escreve                                | Operações                                                                        |
+| ------------ | ------------------------------------------- | -------------------------------------------------------------------------------- |
+| `clients`    | admin (`is_admin()`)                        | INSERT, UPDATE (sem DELETE: cliente não tem `active`; FK `restrict` de `orders`) |
+| `loja_items` | admin (`is_admin()`)                        | INSERT, UPDATE (sem DELETE: "remover" será `active=false`)                       |
+| `settings`   | admin (`is_admin()`)                        | UPDATE (singleton id=1)                                                          |
+| `painters`   | admin (`is_admin()`)                        | UPDATE (nome/documento/active; criação é pelo route `/api/pintores`)             |
+| `admins`     | a própria linha (`auth_user_id=auth.uid()`) | UPDATE (nome)                                                                    |
+
+As demais escritas (atômicas, que furam a RLS de leitura, ou de autoria do sistema) passam por RPC.
 
 **Imutabilidade do ledger:** `point_transactions` tem um trigger (`trg_ledger_imutavel`) que
 **aborta qualquer UPDATE ou DELETE** — inclusive via `service_role`. Só INSERT é permitido.
@@ -398,14 +406,17 @@ chamada por server action. As RPCs resolvem a identidade pelo JWT (`current_pain
 para verificar invariantes antes de agir (anti double-spend / double-approve). Execução concedida
 só a `authenticated`.
 
-| RPC                                | Quem   | O que faz (atômico)                                                                                                                                                                                                         |
-| ---------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `resgatar_item(item)`              | pintor | trava o pintor; recalcula o custo (mesma fórmula da view); checa saldo; baixa estoque; cria `resgates` (snapshot em `pontos_congelados`) + linha `resgate` (−) no ledger                                                    |
-| `cancelar_resgate(resgate)`        | pintor | só o próprio e só `pendente_retirada`; marca `cancelado`; devolve estoque; credita `devolucao` (+snapshot)                                                                                                                  |
-| `aprovar_pedido(pedido)`           | admin  | `pendente→aprovado`; preenche `confirmed_*` e `valor_confirmado`; credita `bonus` = `round(valor_bruto × settings.bonus_percent)` no ledger                                                                                 |
-| `recusar_pedido(pedido)`           | admin  | `pendente→recusado`; sem ledger (RPC só para não expor `UPDATE` de `orders` ao client)                                                                                                                                      |
-| `estornar_pedido(pedido, motivo)`  | admin  | `aprovado→estornado`; reverte o bônus **realmente creditado** (soma das linhas `bonus`) como linha `estorno`; `motivo` obrigatório                                                                                          |
-| `enviar_orcamento(cliente, itens)` | pintor | cria `orders` (pendente) + `order_items` numa transação; **preço sempre de `products`** (cliente manda só `product_id`+`qty`); cliente = id existente (precisa ser do pintor) ou novo por **find-or-create no `documento`** |
+| RPC                                          | Quem   | O que faz (atômico)                                                                                                                                                                                                                         |
+| -------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `resgatar_item(item)`                        | pintor | trava o pintor; recalcula o custo (mesma fórmula da view); checa saldo; baixa estoque; cria `resgates` (snapshot em `pontos_congelados`) + linha `resgate` (−) no ledger                                                                    |
+| `cancelar_resgate(resgate)`                  | pintor | só o próprio e só `pendente_retirada`; marca `cancelado`; devolve estoque; credita `devolucao` (+snapshot)                                                                                                                                  |
+| `aprovar_pedido(pedido)`                     | admin  | `pendente→aprovado`; preenche `confirmed_*` e `valor_confirmado`; credita `bonus` = `round(valor_bruto × settings.bonus_percent)` no ledger                                                                                                 |
+| `recusar_pedido(pedido)`                     | admin  | `pendente→recusado`; sem ledger (RPC só para não expor `UPDATE` de `orders` ao client)                                                                                                                                                      |
+| `estornar_pedido(pedido, motivo)`            | admin  | `aprovado→estornado`; reverte o bônus **realmente creditado** (soma das linhas `bonus`) como linha `estorno`; `motivo` obrigatório                                                                                                          |
+| `enviar_orcamento(cliente, itens)`           | pintor | cria `orders` (pendente) + `order_items` numa transação; **preço sempre de `products`** (cliente manda só `product_id`+`qty`); cliente = id existente (precisa ser do pintor) ou novo por **find-or-create no `documento`**                 |
+| `entregar_resgate(resgate)`                  | admin  | `pendente_retirada→entregue`; carimba `entregue_em`/`entregue_por`; **sem ledger** (pontos já debitados no resgate)                                                                                                                         |
+| `cancelar_resgate_admin(resgate)`            | admin  | `pendente_retirada→cancelado`; devolve estoque + credita `devolucao` (snapshot); espelha `cancelar_resgate`, mas gated por `is_admin` e resolvendo o pintor da própria linha                                                                |
+| `criar_pedido_admin(pintor, cliente, itens)` | admin  | cria `orders`+`order_items` **já aprovado** (confirma + credita bônus na hora); pintor por parâmetro (precisa estar ativo); cliente = id existente; preço autoritativo de `products`. Espelha `enviar_orcamento`+`aprovar_pedido` num passo |
 
 Dois pontos de segurança que se repetem:
 
@@ -415,41 +426,42 @@ Dois pontos de segurança que se repetem:
   taxa que o preview da tela usa), então o creditado bate com o previsto.
 
 As server actions que chamam as RPCs ficam em: `dashboard/actions.ts` (cliente admin),
-`lib/resgate-actions.ts` (pintor), `pedidos/actions.ts` (admin) e `lib/orcamento-actions.ts`
-(pintor). Após a escrita, `router.refresh()` reSemeia o payload do layout (saldo, pendentes,
-pedidos) — não há mais estado otimista para esses dados.
+`lib/resgate-actions.ts` (pintor), `pedidos/actions.ts` (admin: decisão de pedido + criar pedido),
+`lib/orcamento-actions.ts` (pintor) e `lojinha/actions.ts` (admin: gestão de resgate). Após a
+escrita, `router.refresh()` reSemeia o payload do layout (saldo, pendentes, pedidos) — não há mais
+estado otimista para esses dados.
 
-## Pendente para a camada de dados (item 3)
+## Pendências (pós-3b)
 
-**Feito na 3b:** escrita de cliente (admin), resgate/cancelamento (pintor), decisão de pedido
-(aprovar/recusar/estornar, admin), enviar orçamento (pintor). Leitura de catálogo
-(`products_public`) e da carteira de clientes do pintor (`data.clientes`) ligadas ao real.
+**Feito na 3b (escrita do core completa):** cliente (admin CRUD), resgate do pintor
+(resgatar/cancelar), decisão de pedido (aprovar/recusar/estornar), enviar orçamento (pintor),
+CRUD de item da lojinha + multiplicador padrão, gestão de resgate pelo admin (entregar/recusar),
+`bonus_percent` editável na configuracoes, cadastrar/editar/resetar/ativar pintor, criar pedido
+pelo admin (já aprovado), conta do admin (nome + senha). Leituras reais ligadas (catálogo,
+clientes do pintor, e painters/clients/products no payload de pedidos).
 
 **Decisões adiadas (conscientes):**
 
-1. **Agenda de cliente do pintor:** a criação de cliente pelo pintor vive **dentro do orçamento**
-   (find-or-create por `documento`). O cadastro **standalone** na aba Clientes do perfil fica
-   adiado — se for desejado, é a Opção 1 (coluna de autoria `created_by_painter` + ampliar a policy
-   de leitura do pintor para "criou OU tem pedido").
-2. **Normalizar `documento` para dígitos:** hoje gravado **mascarado** (convenção atual; o `unique`
-   é sobre o texto cru, e os dois apps já produzem mascarado). Normalizar é migração de dados +
-   tocar nos dois apps + formatar na exibição.
-3. **Criar pedido pelo admin** ainda é preview/mock — o seletor de cliente do `PedidosClient` é
-   mock (foi desligado do `localStorage`, mas não ligado ao real). Ligar quando entrar.
+1. **Imagens via Supabase Storage:** item da lojinha e foto do admin gravam tudo **menos imagem**
+   (base64 não serve em coluna `text`; bloco próprio de Storage — bucket + URL na coluna `imagem`).
+   O recorte (`imgPos`) também espera esse bloco.
+2. **Agenda standalone de cliente do pintor:** criação de cliente pelo pintor vive **dentro do
+   orçamento** (find-or-create por `documento`). Cadastro standalone na aba Clientes do perfil fica
+   adiado — Opção 1 (coluna `created_by_painter` + ampliar a policy de leitura para "criou OU tem
+   pedido").
+3. **Endereço do pintor:** `painters` não tem colunas de endereço; o form coleta mas **não grava**.
+   Se desejado: colunas em `painters` + estender o route `POST /api/pintores`.
+4. **Normalizar `documento` para dígitos:** gravado **mascarado** (convenção; `unique` sobre o texto
+   cru). Normalizar = migração de dados + tocar nos dois apps + formatar na exibição.
 
-**Escritas que faltam (admin, mais simples):** CRUD de item da loja + multiplicador; gestão de
-resgate (aprovar/recusar/entregar); editar `settings` (incl. `bonus_percent`/`multiplicador_padrao`);
-conta do admin; UI de cadastro/reset de pintor ligando aos endpoints `POST`/`PATCH /api/pintores`
-(hoje só via console), incluindo as colunas de endereço de `painters`.
+**`rules.ts` × `settings.bonus_percent`:** o **crédito autoritativo** lê `settings` em runtime
+(`aprovar_pedido` / `criar_pedido_admin`) e a taxa é editável (configuracoes). Falta só o **preview**
+do pintor (`bonusPts` via `rules.ts`) deixar a constante estática e ler a taxa do payload — cosmético.
 
-**`rules.ts` × `settings.bonus_percent`:** o **crédito autoritativo** já lê `settings` em runtime
-(na `aprovar_pedido`). Falta o **preview** do pintor (`bonusPts` no store, via `rules.ts`) deixar de
-usar a constante estática e passar a ler a taxa do payload — cosmético, só diverge se o admin mudar a
-taxa.
-
-**Futuro (sem fase):** troca de telefone do pintor pelo admin (é troca de credencial, não só
-campo); recuperação por e-mail (requer SMTP próprio); lib compartilhada do `rules.ts`; tela in-app
-de guia de instalação do PWA (iPhone/Safari).
+**Futuro (auth / SMTP):** troca de **e-mail** do admin e **recuperação de senha** por e-mail (exigem
+SMTP próprio — hoje o e-mail do admin é read-only); troca de **telefone** do pintor (é troca de
+credencial: atualizar `painters.telefone` **e** o e-mail sintético do `auth.users` juntos). Outros:
+lib compartilhada do `rules.ts`; tela in-app de guia de instalação do PWA (iPhone/Safari).
 
 ---
 
@@ -478,6 +490,12 @@ de guia de instalação do PWA (iPhone/Safari).
 | `…_resgate_rpcs.sql`                   | RPCs `resgatar_item`, `cancelar_resgate` (pintor)                                     |
 | `…_pedido_rpcs.sql`                    | RPCs `aprovar_pedido`, `recusar_pedido`, `estornar_pedido` (admin)                    |
 | `…_orcamento_rpc.sql`                  | RPC `enviar_orcamento` (pintor)                                                       |
+| `…_rls_loja_items_escrita_admin.sql`   | policies `INSERT`/`UPDATE` de `loja_items` (admin)                                    |
+| `…_resgate_admin_rpcs.sql`             | RPCs `entregar_resgate`, `cancelar_resgate_admin` (admin)                             |
+| `…_rls_settings_escrita_admin.sql`     | policy `UPDATE` de `settings` (admin)                                                 |
+| `…_criar_pedido_admin_rpc.sql`         | RPC `criar_pedido_admin` (pedido já aprovado)                                         |
+| `…_rls_painters_escrita_admin.sql`     | policy `UPDATE` de `painters` (admin: nome/documento/active)                          |
+| `…_rls_admins_self_update.sql`         | policy `UPDATE` de `admins` (self: nome)                                              |
 
 Banco hospedado (Supabase free tier). Migrations aplicadas via `supabase db push`
 (projeto linkado por `supabase link`). Para recriar o schema do zero: clonar o repo,

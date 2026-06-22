@@ -111,7 +111,7 @@ admin; assets renomeados sem espaços; `sw.js` no `.gitignore`.
    Component com `getUser()` + papel via lookup (`admins`/`painters`). Criação de pintor e reset
    de senha pelo admin via `POST`/`PATCH /api/pintores` (admin client `service_role`, server-only).
    RLS ligado em todas as tabelas; ledger imutável por trigger. `rules.ts` aceita a taxa por parâmetro.
-3. **Camada de dados** real substituindo os mocks, mantendo a UI intacta. _(próximo)_
+3. **Camada de dados** ✅ — leitura **e** escrita reais substituindo os mocks, UI intacta (detalhe abaixo).
 4. **Integração com sistema de gestão** da loja (catálogo) — adiada; por ora o catálogo
    (`products`) é cadastrado manualmente pelo admin.
 
@@ -147,30 +147,27 @@ detalhe), Perfil (principal, Meus dados, Clientes, Atividade), e o **catálogo**
 - **Views derivadas** (detalhe no `inventario-schema-supabase.md`): `painter_stats`,
   `pedidos_admin`, `loja_items_admin`, `resgates_admin`, `clients_admin`, `products_public`.
 
-### Escrita (3b) — PENDENTE
+### Escrita (3b) — CONCLUÍDA
 
-Princípio de roteamento: atômico / autoria do sistema / que fure a RLS de leitura (ledger,
-status+bônus, resgate+estoque) → endpoint/RPC `service_role`; escrita simples de uma tabela
-escopada ao dono → policy de RLS.
+**Roteamento (travado):** escrita simples de uma tabela escopada ao papel → **policy de RLS**
+(`is_admin()` ou self `auth_user_id = auth.uid()`) + server action; escrita atômica / de autoria do
+sistema / que fura a RLS de leitura (ledger, status+bônus, resgate+estoque, pedido+itens) → **RPC
+`SECURITY DEFINER`** chamada por server action, com identidade pelo JWT (nunca por parâmetro) e
+`FOR UPDATE` nas invariantes. Após a escrita, `router.refresh()` reSemeia o payload (sem estado
+otimista). Cada RPC/policy está detalhada no `inventario-schema-supabase.md`.
 
-**Pintor:**
+**Pintor:** enviar orçamento (find-or-create de cliente por `documento`), resgatar e cancelar resgate.
+**Admin:** decisão de pedido (aprovar/recusar/estornar), criar pedido (já aprovado), CRUD de item da
+lojinha + multiplicador padrão, gestão de resgate (entregar/recusar), CRUD de cliente, cadastrar/
+editar/resetar/ativar pintor, editar `bonus_percent`, conta do admin (nome + senha; e-mail read-only).
+Pintor novo via `POST /api/pintores`; reset de senha via `PATCH`.
 
-- Enviar orçamento (pedido rascunho→pendente + itens) — inclui a **escolha de cliente** no
-  orçamento, ainda mock (`CLIENTS`/`CURRENT_PAINTER`), por ser parte do fluxo.
-- Resgatar + cancelar resgate (devolução) — hoje otimista/sessão, não persiste no ledger.
-- Cadastrar/editar cliente (aba Clientes) — hoje só estado local.
-
-**Admin:**
-
-- Aprovar/recusar pedido; confirmar pagamento/estorno.
-- CRUD de item da loja + ajustar multiplicador global.
-- Aprovar/recusar/entregar resgate.
-- CRUD de cliente (modal); criar pedido (modal, hoje pré-visualização).
-- Cadastrar/resetar pintor (ligar a `/api/pintores`; aqui entram as **colunas de endereço** de
-  `painters`, hoje ausentes → `city = '—'` nas telas).
-- Editar `settings` (`bonus_percent`, `multiplicador`).
-- `configuracoes` dos dois apps são 3b: pintor = toggles de notificação + copy estática; admin =
-  conta (nome/email/foto/senha, hoje placeholder — semear com o admin real ao construir a escrita).
+**Não entrou na 3b (adiado consciente):** imagens (item da lojinha + foto do admin) via **Supabase
+Storage** — bloco próprio; **endereço do pintor** (sem colunas em `painters` → `city = '—'` nas
+telas); cadastro **standalone** de cliente pelo pintor (Opção 1); **normalizar `documento`**.
+_Auth/SMTP:_ troca de **e-mail** do admin e **recuperação por e-mail** (e-mail do admin é read-only
+hoje); troca de **telefone** do pintor (troca de credencial: `painters.telefone` + o e-mail sintético
+do `auth.users` juntos).
 
 ### Adiado (sem fase)
 
