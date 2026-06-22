@@ -15,11 +15,11 @@ export default async function AdminLayout({
 
   const { data: admin } = await supabase
     .from("admins")
-    .select("auth_user_id")
+    .select("auth_user_id, nome")
     .eq("auth_user_id", user.id)
     .maybeSingle();
 
   if (!admin) redirect("/login");
 
-  return <AdminShell>{children}</AdminShell>;
+  return <AdminShell adminName={admin.nome ?? "Admin"}>{children}</AdminShell>;
 }

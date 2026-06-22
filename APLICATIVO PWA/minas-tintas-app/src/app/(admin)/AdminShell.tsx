@@ -27,11 +27,13 @@ const NAV = [
 
 export default function AdminShell({
   children,
+  adminName,
 }: {
   children: React.ReactNode;
+  adminName: string;
 }) {
   return (
-    <AdminProvider>
+    <AdminProvider initialName={adminName}>
       <AdminLayoutInner>{children}</AdminLayoutInner>
     </AdminProvider>
   );

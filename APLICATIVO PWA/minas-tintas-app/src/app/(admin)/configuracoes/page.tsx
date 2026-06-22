@@ -14,13 +14,58 @@ import {
 import { useAdmin } from "@/lib/admin-context";
 import { createClient } from "@/utils/supabase/client";
 import { saveSettings } from "@/lib/settings-actions";
+import { saveAdminNome } from "./actions";
+
+function PasswordInput({
+  value,
+  onChange,
+  show,
+  onToggle,
+  inputSt,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  show: boolean;
+  onToggle: () => void;
+  inputSt: React.CSSProperties;
+}) {
+  return (
+    <div style={{ position: "relative" }}>
+      <input
+        type={show ? "text" : "password"}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{ ...inputSt, paddingRight: 40 }}
+      />
+      <button
+        type="button"
+        onClick={onToggle}
+        style={{
+          position: "absolute",
+          right: 10,
+          top: "50%",
+          transform: "translateY(-50%)",
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          color: "var(--muted)",
+          display: "flex",
+          padding: 2,
+        }}
+      >
+        {show ? <EyeOff size={15} /> : <Eye size={15} />}
+      </button>
+    </div>
+  );
+}
 
 export default function ConfiguracoesPage() {
   const { profile, setProfile } = useAdmin();
 
   const [nome, setNome] = useState(profile.name);
-  const [email, setEmail] = useState("admin@minastintas.com.br");
+  const [email, setEmail] = useState("");
   const [savedDados, setSavedDados] = useState(false);
+  const [dadosErro, setDadosErro] = useState("");
 
   const [senhaAtual, setSenhaAtual] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
@@ -45,6 +90,9 @@ export default function ConfiguracoesPage() {
       .then(({ data }) => {
         if (data) setBonusPct(String(Number(data.bonus_percent) * 100));
       });
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user?.email) setEmail(data.user.email);
+    });
   }, []);
 
   const fileRef = useRef<HTMLInputElement>(null);
@@ -105,20 +153,46 @@ export default function ConfiguracoesPage() {
     rd.readAsDataURL(f);
   }
 
-  function saveDados() {
+  async function saveDados() {
+    setDadosErro("");
+    const res = await saveAdminNome(nome);
+    if (!res.ok) {
+      setDadosErro(res.error);
+      return;
+    }
     setProfile({ ...profile, name: nome.trim() || profile.name });
     setSavedDados(true);
     setTimeout(() => setSavedDados(false), 2500);
   }
 
-  function saveSenha() {
+  async function saveSenha() {
     setSenhaErro("");
     if (!senhaAtual || !novaSenha || !confirmarSenha) {
       setSenhaErro("Preencha todos os campos.");
       return;
     }
+    if (novaSenha.length < 6) {
+      setSenhaErro("A nova senha precisa de ao menos 6 caracteres.");
+      return;
+    }
     if (novaSenha !== confirmarSenha) {
       setSenhaErro("Nova senha e confirmação não coincidem.");
+      return;
+    }
+    const supabase = createClient();
+    const { error: signErr } = await supabase.auth.signInWithPassword({
+      email,
+      password: senhaAtual,
+    });
+    if (signErr) {
+      setSenhaErro("Senha atual incorreta.");
+      return;
+    }
+    const { error: updErr } = await supabase.auth.updateUser({
+      password: novaSenha,
+    });
+    if (updErr) {
+      setSenhaErro("Não foi possível alterar a senha.");
       return;
     }
     setSavedSenha(true);
@@ -127,7 +201,6 @@ export default function ConfiguracoesPage() {
     setConfirmarSenha("");
     setTimeout(() => setSavedSenha(false), 2500);
   }
-
   async function saveBonus() {
     setBonusErro("");
     const pct = parseFloat(bonusPct.replace(",", "."));
@@ -144,47 +217,6 @@ export default function ConfiguracoesPage() {
     }
     setBonusSaved(true);
     setTimeout(() => setBonusSaved(false), 2500);
-  }
-
-  function PasswordInput({
-    value,
-    onChange,
-    show,
-    onToggle,
-  }: {
-    value: string;
-    onChange: (v: string) => void;
-    show: boolean;
-    onToggle: () => void;
-  }) {
-    return (
-      <div style={{ position: "relative" }}>
-        <input
-          type={show ? "text" : "password"}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          style={{ ...inputSt, paddingRight: 40 }}
-        />
-        <button
-          type="button"
-          onClick={onToggle}
-          style={{
-            position: "absolute",
-            right: 10,
-            top: "50%",
-            transform: "translateY(-50%)",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            color: "var(--muted)",
-            display: "flex",
-            padding: 2,
-          }}
-        >
-          {show ? <EyeOff size={15} /> : <Eye size={15} />}
-        </button>
-      </div>
-    );
   }
 
   return (
@@ -356,12 +388,29 @@ export default function ConfiguracoesPage() {
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                style={inputSt}
+                readOnly
+                disabled
+                style={{
+                  ...inputSt,
+                  background: "var(--paper)",
+                  color: "var(--muted)",
+                  cursor: "not-allowed",
+                }}
               />
             </div>
           </div>
           <div style={cardFootSt}>
+            {dadosErro && (
+              <span
+                style={{
+                  fontSize: 12.5,
+                  color: "var(--brand)",
+                  fontWeight: 600,
+                }}
+              >
+                {dadosErro}
+              </span>
+            )}
             {savedDados && (
               <span
                 style={{
@@ -412,6 +461,7 @@ export default function ConfiguracoesPage() {
                 onChange={setSenhaAtual}
                 show={showAtual}
                 onToggle={() => setShowAtual((v) => !v)}
+                inputSt={inputSt}
               />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -421,6 +471,7 @@ export default function ConfiguracoesPage() {
                 onChange={setNovaSenha}
                 show={showNova}
                 onToggle={() => setShowNova((v) => !v)}
+                inputSt={inputSt}
               />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -430,6 +481,7 @@ export default function ConfiguracoesPage() {
                 onChange={setConfirmarSenha}
                 show={showConfirmar}
                 onToggle={() => setShowConfirmar((v) => !v)}
+                inputSt={inputSt}
               />
             </div>
           </div>
