@@ -23,7 +23,7 @@ export default async function PintorDetailPage({
   const { data: p } = await supabase
     .from("painter_stats")
     .select(
-      "id, nome, documento, telefone, active, created_at, pedidos, aprovados, volume, saldo",
+      "id, nome, documento, telefone, active, created_at, pedidos, aprovados, volume, saldo, cep, rua, numero, complemento, bairro, cidade",
     )
     .eq("id", id)
     .maybeSingle();
@@ -41,7 +41,13 @@ export default async function PintorDetailPage({
   const painter: Painter = {
     name: p.nome,
     cpf: p.documento ?? "",
-    city: "—", // sem coluna em painters (ver pendência endereço, 3b)
+    city: p.cidade ?? "—",
+    cep: p.cep ?? "",
+    rua: p.rua ?? "",
+    numero: p.numero ?? "",
+    complemento: p.complemento ?? "",
+    bairro: p.bairro ?? "",
+    cidade: p.cidade ?? "",
     since: sinceFmt(p.created_at),
     orders: Number(p.pedidos),
     approved: Number(p.aprovados),

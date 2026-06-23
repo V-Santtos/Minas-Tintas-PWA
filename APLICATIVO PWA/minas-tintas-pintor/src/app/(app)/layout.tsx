@@ -60,7 +60,9 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   ] = await Promise.all([
     supabase
       .from("painter_stats")
-      .select("saldo, nome, telefone, documento, created_at")
+      .select(
+        "saldo, nome, telefone, documento, created_at, cep, rua, numero, complemento, bairro, cidade",
+      )
       .eq("id", painter.id)
       .maybeSingle(),
     supabase
@@ -208,6 +210,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       parceiroDesde: ps?.created_at
         ? String(new Date(ps.created_at).getFullYear())
         : "",
+      cep: ps?.cep ?? "",
+      rua: ps?.rua ?? "",
+      numero: ps?.numero ?? "",
+      complemento: ps?.complemento ?? "",
+      bairro: ps?.bairro ?? "",
+      cidade: ps?.cidade ?? "",
     },
     orders,
     loja,

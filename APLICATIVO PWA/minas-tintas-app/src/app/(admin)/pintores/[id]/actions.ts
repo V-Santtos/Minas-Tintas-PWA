@@ -13,11 +13,24 @@ export async function savePainter(input: {
   nome?: string;
   documento?: string;
   active?: boolean;
+  cep?: string;
+  rua?: string;
+  numero?: string;
+  complemento?: string;
+  bairro?: string;
+  cidade?: string;
 }): Promise<SavePainterResult> {
   const row: Record<string, string | boolean | null> = {};
   if (input.nome != null) row.nome = input.nome.trim();
   if (input.documento != null) row.documento = input.documento.trim() || null;
   if (input.active != null) row.active = input.active;
+  if (input.cep != null) row.cep = input.cep.trim() || null;
+  if (input.rua != null) row.rua = input.rua.trim() || null;
+  if (input.numero != null) row.numero = input.numero.trim() || null;
+  if (input.complemento != null)
+    row.complemento = input.complemento.trim() || null;
+  if (input.bairro != null) row.bairro = input.bairro.trim() || null;
+  if (input.cidade != null) row.cidade = input.cidade.trim() || null;
   if (Object.keys(row).length === 0) return { ok: true };
 
   const supabase = await createClient();

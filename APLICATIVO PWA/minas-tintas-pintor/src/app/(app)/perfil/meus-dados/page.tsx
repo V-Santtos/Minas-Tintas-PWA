@@ -7,12 +7,25 @@ import { usePintor } from "@/lib/pintor-store";
 export default function MeusDadosPage() {
   const router = useRouter();
   const { data } = usePintor();
+  const pf = data.profile;
+
+  const cepFmt = pf.cep.replace(/\D/g, "").replace(/^(\d{5})(\d{3})$/, "$1-$2");
+  const endereco =
+    [
+      [pf.rua, pf.numero].filter(Boolean).join(", "),
+      pf.complemento,
+      [pf.bairro, pf.cidade].filter(Boolean).join(" · "),
+      pf.cep ? `CEP ${cepFmt}` : "",
+    ]
+      .filter(Boolean)
+      .join(" · ") || "Não informado";
 
   const FIELDS = [
-    { label: "NOME", value: data.profile.name },
-    { label: "TELEFONE", value: data.profile.phone },
-    { label: "CPF", value: data.profile.cpf },
-    { label: "PINTOR PARCEIRO DESDE", value: data.profile.parceiroDesde },
+    { label: "NOME", value: pf.name },
+    { label: "TELEFONE", value: pf.phone },
+    { label: "CPF", value: pf.cpf },
+    { label: "ENDEREÇO", value: endereco },
+    { label: "PINTOR PARCEIRO DESDE", value: pf.parceiroDesde },
   ];
   return (
     <>

@@ -82,12 +82,12 @@ export default function PintorDetailClient({
   const [formNome, setFormNome] = useState(p.name);
   const [formCpf, setFormCpf] = useState(p.cpf);
   const [formTelefone, setFormTelefone] = useState("");
-  const [formCep, setFormCep] = useState("");
-  const [formCidade, setFormCidade] = useState(p.city);
-  const [formEndereco, setFormEndereco] = useState("");
-  const [formNumero, setFormNumero] = useState("");
-  const [formComplemento, setFormComplemento] = useState("");
-  const [formBairro, setFormBairro] = useState("");
+  const [formCep, setFormCep] = useState(maskCep(p.cep ?? ""));
+  const [formCidade, setFormCidade] = useState(p.cidade ?? "");
+  const [formEndereco, setFormEndereco] = useState(p.rua ?? "");
+  const [formNumero, setFormNumero] = useState(p.numero ?? "");
+  const [formComplemento, setFormComplemento] = useState(p.complemento ?? "");
+  const [formBairro, setFormBairro] = useState(p.bairro ?? "");
   const [showChangePwd, setShowChangePwd] = useState(false);
   const [formNovaSenha, setFormNovaSenha] = useState("");
   const [formConfirmarNovaSenha, setFormConfirmarNovaSenha] = useState("");
@@ -119,13 +119,13 @@ export default function PintorDetailClient({
   function openEdit() {
     setFormNome(p.name);
     setFormCpf(p.cpf);
-    setFormCidade(p.city);
+    setFormCidade(p.cidade ?? "");
     setFormTelefone(p.phone);
-    setFormCep("");
-    setFormEndereco("");
-    setFormNumero("");
-    setFormComplemento("");
-    setFormBairro("");
+    setFormCep(maskCep(p.cep ?? ""));
+    setFormEndereco(p.rua ?? "");
+    setFormNumero(p.numero ?? "");
+    setFormComplemento(p.complemento ?? "");
+    setFormBairro(p.bairro ?? "");
     setShowChangePwd(false);
     setFormNovaSenha("");
     setFormConfirmarNovaSenha("");
@@ -157,6 +157,12 @@ export default function PintorDetailClient({
       id: painterId,
       nome: formNome.trim(),
       documento: formCpf.trim(),
+      cep: formCep.replace(/\D/g, ""),
+      rua: formEndereco.trim(),
+      numero: formNumero.trim(),
+      complemento: formComplemento.trim(),
+      bairro: formBairro.trim(),
+      cidade: formCidade.trim(),
     });
     if (!saved.ok) {
       setSubmitting(false);

@@ -553,6 +553,12 @@ export type Painter = {
   volume: number;
   active: boolean;
   phone: string;
+  cep?: string;
+  rua?: string;
+  numero?: string;
+  complemento?: string;
+  bairro?: string;
+  cidade?: string;
 };
 
 export type Client = {

@@ -22,6 +22,12 @@ export type PintorReadData = {
     phone: string;
     cpf: string;
     parceiroDesde: string;
+    cep: string;
+    rua: string;
+    numero: string;
+    complemento: string;
+    bairro: string;
+    cidade: string;
   };
   orders: Order[];
   loja: LojaProduct[];
