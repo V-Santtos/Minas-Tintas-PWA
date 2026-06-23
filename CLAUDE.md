@@ -69,8 +69,9 @@ Antes de responder ou executar qualquer tarefa, leia:
 | Hosting           | Vercel                                                                                                                                                                       |
 
 **Regra de bônus:** 1% do valor **bruto** do orçamento aprovado, configurável pelo admin.
-Lógica centralizada em `src/lib/rules.ts` (`BONUS_PERCENT`, `bonusPoints`), idêntico nos dois apps
-(candidato a lib compartilhada). Sem percentual hardcoded em nenhum outro lugar.
+Lógica centralizada em `src/lib/rules.ts` (`BONUS_PERCENT`, `bonusPoints`), **duplicado de
+propósito** nos dois apps (decisão travada — não extrair pra lib compartilhada). Sem percentual
+hardcoded em nenhum outro lugar.
 
 **Atenção:** nomes de arquivo em `public/assets/` não podem ter espaços/vírgulas/acentos
 (quebram o precache do service worker).
@@ -185,14 +186,15 @@ do `auth.users` juntos).
 
 ### Futuro (sem fase)
 
-Troca de telefone do pintor pelo admin; recuperação por e-mail (SMTP); lib compartilhada do
-`rules.ts` (o "a liberar" do pintor ainda usa a taxa default do `bonusPts`, não `settings`).
+Troca de telefone do pintor pelo admin; recuperação por e-mail (SMTP); preview do "a liberar"
+do pintor ainda usa a taxa default do `bonusPts`, não `settings` (pendência separada, cosmética).
 
 ## Em aberto / observações
 
 - Leitura (item 3) **concluída** — mocks substituídos por Supabase real. A persistência restante
   (escritas) é o **3b**.
-- `rules.ts` duplicado idêntico nos dois apps (candidato a lib compartilhada).
+- `rules.ts` duplicado idêntico nos dois apps **de propósito** — decisão travada, não vira lib
+  compartilhada. A duplicação é intencional, não dívida.
 - O `.gitignore` raiz exclui: `.claude/` (config local), `sessao-atual.md` (notas de sessão),
   `**/node_modules/`, `**/.next/`, `**/.env*`.
 

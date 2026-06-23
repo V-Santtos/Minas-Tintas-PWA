@@ -461,7 +461,7 @@ do pintor (`bonusPts` via `rules.ts`) deixar a constante estática e ler a taxa 
 **Futuro (auth / SMTP):** troca de **e-mail** do admin e **recuperação de senha** por e-mail (exigem
 SMTP próprio — hoje o e-mail do admin é read-only); troca de **telefone** do pintor (é troca de
 credencial: atualizar `painters.telefone` **e** o e-mail sintético do `auth.users` juntos). Outros:
-lib compartilhada do `rules.ts`; tela in-app de guia de instalação do PWA (iPhone/Safari).
+tela in-app de guia de instalação do PWA (iPhone/Safari).
 
 ---
 
