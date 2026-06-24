@@ -164,8 +164,8 @@ editar/resetar/ativar pintor, editar `bonus_percent`, conta do admin (nome + sen
 Pintor novo via `POST /api/pintores`; reset de senha via `PATCH`.
 
 **Não entrou na 3b (adiado consciente):** imagens (item da lojinha + foto do admin) via **Supabase
-Storage** — bloco próprio; **endereço do pintor** (sem colunas em `painters` → `city = '—'` nas
-telas); cadastro **standalone** de cliente pelo pintor (Opção 1); **normalizar `documento`**.
+Storage** — bloco próprio; cadastro **standalone** de cliente pelo pintor (Opção 1);
+**normalizar `documento`**.
 _Auth/SMTP:_ troca de **e-mail** do admin e **recuperação por e-mail** (e-mail do admin é read-only
 hoje); troca de **telefone** do pintor (troca de credencial: `painters.telefone` + o e-mail sintético
 do `auth.users` juntos).
@@ -197,6 +197,10 @@ do pintor ainda usa a taxa default do `bonusPts`, não `settings` (pendência se
   compartilhada. A duplicação é intencional, não dívida.
 - O `.gitignore` raiz exclui: `.claude/` (config local), `sessao-atual.md` (notas de sessão),
   `**/node_modules/`, `**/.next/`, `**/.env*`.
+- **Endereço do pintor** entregue: colunas em `painters` + na view `painter_stats`; admin edita no
+  detalhe, pintor vê read-only no `meus-dados`. Resíduo: lista de pintores e relatórios ainda
+  mostram `city = '—'` (placeholder, não ligado à coluna); o `*` em "Cidade" no form é decorativo
+  (o campo é opcional).
 
 ---
 
