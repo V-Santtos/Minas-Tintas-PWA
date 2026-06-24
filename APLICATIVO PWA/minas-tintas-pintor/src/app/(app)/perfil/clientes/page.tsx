@@ -2,16 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  ArrowLeft,
-  Building2,
-  CheckCircle,
-  Pencil,
-  Search,
-  User,
-} from "lucide-react";
+import { ArrowLeft, Building2, CheckCircle, Search, User } from "lucide-react";
 import { ADDRESS_TYPES } from "@/lib/pintor-data";
 import { usePintor } from "@/lib/pintor-store";
+import { vincularCliente } from "@/lib/clientes-actions";
 
 type ClientKind = "pessoa" | "empresa";
 type ViewMode = "form" | "list";
@@ -142,19 +136,18 @@ export default function ClientesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const { data } = usePintor();
-  const [clients, setClients] = useState<MyClient[]>(data.clientes);
 
   const filteredClients = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return clients;
-    return clients.filter(
+    if (!q) return data.clientes;
+    return data.clientes.filter(
       (client) =>
         client.name.toLowerCase().includes(q) ||
         client.phone.includes(q) ||
         client.document.includes(q) ||
         client.city.toLowerCase().includes(q),
     );
-  }, [clients, query]);
+  }, [data.clientes, query]);
 
   const docLabel = type === "empresa" ? "CNPJ" : "CPF";
   const docPlaceholder =
@@ -186,24 +179,6 @@ export default function ClientesPage() {
     setView("form");
   }
 
-  function editClient(client: MyClient) {
-    setType(client.type);
-    setName(client.name);
-    setPhone(client.phone);
-    setDocumentValue(client.document);
-    setCep(client.cep ?? "");
-    setAddress(client.address ?? "");
-    setNumber(client.number ?? "");
-    setNeighborhood(client.neighborhood ?? "");
-    setCity(client.city);
-    setNote(client.note ?? "");
-    setErrFields([]);
-    setError("");
-    setSuccess("");
-    setEditingId(client.id);
-    setView("form");
-  }
-
   function changeType(next: ClientKind) {
     setType(next);
     setDocumentValue("");
@@ -214,7 +189,7 @@ export default function ClientesPage() {
     setDocumentValue(type === "empresa" ? fmtCnpj(raw) : fmtCpf(raw));
   }
 
-  function submit() {
+  async function submit() {
     const missing: string[] = [];
     const docDigits = documentValue.replace(/\D/g, "");
     if (!name.trim()) missing.push("name");
@@ -232,40 +207,39 @@ export default function ClientesPage() {
       return;
     }
 
-    const newClient: MyClient = {
-      id: `local-${Date.now()}`,
+    const payload = {
+      nome: name.trim(),
       type,
-      name: name.trim(),
-      phone: phone.trim(),
-      document: documentValue,
+      documento: documentValue,
+      telefone: phone.trim(),
       cep: cep.trim(),
-      address: address.trim(),
-      number: number.trim(),
-      city: city.trim(),
-      neighborhood: neighborhood.trim(),
-      note: note.trim(),
+      rua: address.trim(),
+      numero: number.trim(),
+      complemento: note.trim(),
+      bairro: neighborhood.trim(),
+      cidade: city.trim(),
     };
 
-    if (isEditing) {
-      setClients((prev) =>
-        prev.map((client) =>
-          client.id === editingId
-            ? { ...client, ...newClient, id: client.id }
-            : client,
-        ),
-      );
-    } else {
-      setClients((prev) => [newClient, ...prev]);
+    const res = await vincularCliente(payload);
+    if (!res.ok) {
+      setErrFields([]);
+      setSuccess("");
+      setError(res.error);
+      return;
     }
+
     setErrFields([]);
     setError("");
     setSuccess(
-      isEditing
-        ? `${newClient.name} foi atualizado.`
-        : `${newClient.name} foi adicionado ao seu perfil.`,
+      res.clientCreated
+        ? `${payload.nome} foi cadastrado e vinculado ao seu perfil.`
+        : res.linkCreated
+          ? "Cliente já cadastrado — vinculado ao seu perfil."
+          : "Você já está vinculado a esse cliente.",
     );
     clearForm();
     setView("list");
+    router.refresh();
   }
 
   return (
@@ -575,7 +549,6 @@ export default function ClientesPage() {
               <button
                 key={client.id}
                 type="button"
-                onClick={() => editClient(client)}
                 style={{
                   width: "100%",
                   textAlign: "left",
@@ -636,7 +609,6 @@ export default function ClientesPage() {
                     }}
                   >
                     {client.type === "empresa" ? "Empresa" : "Pessoa física"}
-                    <Pencil size={12} strokeWidth={1.8} color="var(--muted)" />
                   </span>
                 </div>
                 <div
