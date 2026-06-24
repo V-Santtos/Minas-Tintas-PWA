@@ -164,8 +164,7 @@ editar/resetar/ativar pintor, editar `bonus_percent`, conta do admin (nome + sen
 Pintor novo via `POST /api/pintores`; reset de senha via `PATCH`.
 
 **Não entrou na 3b (adiado consciente):** imagens (item da lojinha + foto do admin) via **Supabase
-Storage** — bloco próprio; cadastro **standalone** de cliente pelo pintor (Opção 1);
-**normalizar `documento`**.
+Storage** — bloco próprio; **normalizar `documento`**.
 _Auth/SMTP:_ troca de **e-mail** do admin e **recuperação por e-mail** (e-mail do admin é read-only
 hoje); troca de **telefone** do pintor (troca de credencial: `painters.telefone` + o e-mail sintético
 do `auth.users` juntos).
@@ -201,6 +200,11 @@ do pintor ainda usa a taxa default do `bonusPts`, não `settings` (pendência se
   detalhe, pintor vê read-only no `meus-dados`. Resíduo: lista de pintores e relatórios ainda
   mostram `city = '—'` (placeholder, não ligado à coluna); o `*` em "Cidade" no form é decorativo
   (o campo é opcional).
+- **Agenda standalone de cliente do pintor** entregue: junção M:N `painter_clients` + RPC
+  `vincular_cliente_pintor` (find-or-create por `documento`); a aba Clientes do pintor persiste e o
+  cliente aparece também no seletor do orçamento. Edição do cadastro segue só no admin. Resíduos: o
+  card da lista virou inerte (futuro: "ver detalhes"); `note` mapeia em `complemento` (convenção
+  herdada do orçamento, não `observacoes`).
 
 ---
 
