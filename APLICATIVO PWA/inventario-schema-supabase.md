@@ -41,6 +41,7 @@ erDiagram
 
     PAINTERS ||--o{ ORDERS      : "responsavel por"
     CLIENTS  ||--o{ ORDERS      : "tem"
+    PAINTERS }o--o{ CLIENTS     : "agenda (painter_clients)"
     ORDERS   ||--o{ ORDER_ITEMS : "contem"
     PRODUCTS ||--o{ ORDER_ITEMS : "snapshot de"
 
@@ -198,7 +199,16 @@ _agora_; não versiona, porque o passado fica congelado no ledger e nos snapshot
 
 - `documento` `not null unique` — CPF/CNPJ é o identificador único do cliente (briefing).
 - Endereço em colunas opcionais (`cep`, `rua`, `numero`, `complemento`, `bairro`, `cidade`).
-- **Sem coluna de pintor** — vínculo é derivado de `orders`.
+- **Sem coluna de pintor** — o vínculo pintor↔cliente é derivado de `orders` (responsável de um
+  pedido) **ou** da junção `painter_clients` (agenda do pintor).
+
+**`painter_clients`** — junção M:N pintor↔cliente (agenda standalone do pintor).
+
+- PK composta `(painter_id, client_id)` → idempotente; cada pintor tem a própria linha, vários
+  pintores coexistem no mesmo cliente.
+- Ambas as FKs `on delete cascade` (o vínculo não sobrevive sem as pontas).
+- Preenchida pelo RPC `vincular_cliente_pintor`; o pintor vê **só os próprios** vínculos (RLS),
+  nunca os demais pintores de um cliente.
 
 **`products`** — catálogo de venda (orçamentos), cadastrado manualmente pelo admin.
 Módulo **separado** da lojinha de pontos.
@@ -375,15 +385,16 @@ Funções auxiliares (`SECURITY DEFINER`, evitam recursão nas policies):
 - `is_admin()` — o `auth.uid()` atual está em `admins`?
 - `current_painter_id()` — o `painters.id` do usuário logado.
 
-| Tabela                                     | Quem lê                                                                                  |
-| ------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| `admins`                                   | a própria linha (auto-leitura)                                                           |
-| `painters`                                 | a própria linha; admin lê todas                                                          |
-| `clients`                                  | admin lê todos; pintor lê os clientes com quem tem pedido (vínculo derivado de `orders`) |
-| `orders`, `point_transactions`, `resgates` | pintor lê os seus (`painter_id = current_painter_id()`); admin lê tudo                   |
-| `order_items`                              | herda do pedido pai (vê o item se vê o pedido)                                           |
-| `loja_items`, `settings`                   | qualquer autenticado                                                                     |
-| `products`                                 | só admin (contém `cost` sensível; pintor ainda não consome catálogo)                     |
+| Tabela                                     | Quem lê                                                                                                |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `admins`                                   | a própria linha (auto-leitura)                                                                         |
+| `painters`                                 | a própria linha; admin lê todas                                                                        |
+| `clients`                                  | admin lê todos; pintor lê os clientes com quem tem pedido **ou** vínculo de agenda (`painter_clients`) |
+| `painter_clients`                          | pintor lê os próprios vínculos (`painter_id = current_painter_id()`); admin lê tudo                    |
+| `orders`, `point_transactions`, `resgates` | pintor lê os seus (`painter_id = current_painter_id()`); admin lê tudo                                 |
+| `order_items`                              | herda do pedido pai (vê o item se vê o pedido)                                                         |
+| `loja_items`, `settings`                   | qualquer autenticado                                                                                   |
+| `products`                                 | só admin (contém `cost` sensível; pintor ainda não consome catálogo)                                   |
 
 **Escrita por policy** (escrita simples escopada por papel, sem RPC):
 
@@ -418,6 +429,7 @@ só a `authenticated`.
 | `recusar_pedido(pedido)`                     | admin  | `pendente→recusado`; sem ledger (RPC só para não expor `UPDATE` de `orders` ao client)                                                                                                                                                      |
 | `estornar_pedido(pedido, motivo)`            | admin  | `aprovado→estornado`; reverte o bônus **realmente creditado** (soma das linhas `bonus`) como linha `estorno`; `motivo` obrigatório                                                                                                          |
 | `enviar_orcamento(cliente, itens)`           | pintor | cria `orders` (pendente) + `order_items` numa transação; **preço sempre de `products`** (cliente manda só `product_id`+`qty`); cliente = id existente (precisa ser do pintor) ou novo por **find-or-create no `documento`**                 |
+| `vincular_cliente_pintor(cliente)`           | pintor | agenda standalone: **find-or-create no `documento`** + vínculo em `painter_clients` (`on conflict do nothing`); não sobrescreve cadastro existente; retorna `client_created`/`link_created`                                                 |
 | `entregar_resgate(resgate)`                  | admin  | `pendente_retirada→entregue`; carimba `entregue_em`/`entregue_por`; **sem ledger** (pontos já debitados no resgate)                                                                                                                         |
 | `cancelar_resgate_admin(resgate)`            | admin  | `pendente_retirada→cancelado`; devolve estoque + credita `devolucao` (snapshot); espelha `cancelar_resgate`, mas gated por `is_admin` e resolvendo o pintor da própria linha                                                                |
 | `criar_pedido_admin(pintor, cliente, itens)` | admin  | cria `orders`+`order_items` **já aprovado** (confirma + credita bônus na hora); pintor por parâmetro (precisa estar ativo); cliente = id existente; preço autoritativo de `products`. Espelha `enviar_orcamento`+`aprovar_pedido` num passo |
@@ -449,11 +461,7 @@ clientes do pintor, e painters/clients/products no payload de pedidos).
 1. **Imagens via Supabase Storage:** item da lojinha e foto do admin gravam tudo **menos imagem**
    (base64 não serve em coluna `text`; bloco próprio de Storage — bucket + URL na coluna `imagem`).
    O recorte (`imgPos`) também espera esse bloco.
-2. **Agenda standalone de cliente do pintor:** criação de cliente pelo pintor vive **dentro do
-   orçamento** (find-or-create por `documento`). Cadastro standalone na aba Clientes do perfil fica
-   adiado — Opção 1 (coluna `created_by_painter` + ampliar a policy de leitura para "criou OU tem
-   pedido").
-3. **Normalizar `documento` para dígitos:** gravado **mascarado** (convenção; `unique` sobre o texto
+2. **Normalizar `documento` para dígitos:** gravado **mascarado** (convenção; `unique` sobre o texto
    cru). Normalizar = migração de dados + tocar nos dois apps + formatar na exibição.
 
 **`rules.ts` × `settings.bonus_percent`:** o **crédito autoritativo** lê `settings` em runtime
@@ -469,37 +477,38 @@ tela in-app de guia de instalação do PWA (iPhone/Safari).
 
 ## Migrations (ordem de aplicação)
 
-| Arquivo                                | Conteúdo                                                                                 |
-| -------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `…_fundacao_enums_settings.sql`        | 5 enums + tabela `settings` (linha única)                                                |
-| `…_entidades_base.sql`                 | `painters`, `admins`, `clients`, `products`                                              |
-| `…_pedidos.sql`                        | `orders`, `order_items`                                                                  |
-| `…_lojinha_e_ledger.sql`               | `loja_items`, `resgates`, `point_transactions`                                           |
-| `…_painter_telefone_unico.sql`         | `painters.telefone` obrigatório + único (credencial)                                     |
-| `…_painter_email_contato.sql`          | `painters.email` (contato, opcional)                                                     |
-| `…_rls_identidade.sql`                 | RLS em `admins`/`painters` + função `is_admin()`                                         |
-| `…_rls_dominio.sql`                    | RLS de leitura no comercial/pontos/lojinha/settings/products + `current_painter_id()`    |
-| `…_ledger_imutavel.sql`                | trigger de imutabilidade em `point_transactions`                                         |
-| `…_rls_clients.sql`                    | RLS faltante em `clients`                                                                |
-| `…_painter_stats_view.sql`             | view `painter_stats` (derivações do pintor, `security_invoker`)                          |
-| `…_orders_titulo.sql`                  | coluna `orders.titulo`                                                                   |
-| `…_pedidos_admin_view.sql`             | view `pedidos_admin` (nomes + bônus/estorno derivados)                                   |
-| `…_lojinha_views.sql`                  | views `loja_items_admin`, `resgates_admin`                                               |
-| `…_painter_stats_excluir_rascunho.sql` | `painter_stats.pedidos` passa a excluir rascunho                                         |
-| `…_clients_admin_view.sql`             | view `clients_admin` (cliente + pintor mais recente)                                     |
-| `…_products_public_view.sql`           | view `products_public` (catálogo ao pintor, sem `cost`, `security_invoker` off)          |
-| `…_rls_clients_escrita_admin.sql`      | policies `INSERT`/`UPDATE` de `clients` (admin)                                          |
-| `…_resgate_rpcs.sql`                   | RPCs `resgatar_item`, `cancelar_resgate` (pintor)                                        |
-| `…_pedido_rpcs.sql`                    | RPCs `aprovar_pedido`, `recusar_pedido`, `estornar_pedido` (admin)                       |
-| `…_orcamento_rpc.sql`                  | RPC `enviar_orcamento` (pintor)                                                          |
-| `…_rls_loja_items_escrita_admin.sql`   | policies `INSERT`/`UPDATE` de `loja_items` (admin)                                       |
-| `…_resgate_admin_rpcs.sql`             | RPCs `entregar_resgate`, `cancelar_resgate_admin` (admin)                                |
-| `…_rls_settings_escrita_admin.sql`     | policy `UPDATE` de `settings` (admin)                                                    |
-| `…_criar_pedido_admin_rpc.sql`         | RPC `criar_pedido_admin` (pedido já aprovado)                                            |
-| `…_rls_painters_escrita_admin.sql`     | policy `UPDATE` de `painters` (admin: nome/documento/active/endereço)                    |
-| `…_rls_admins_self_update.sql`         | policy `UPDATE` de `admins` (self: nome)                                                 |
-| `…_painter_endereco.sql`               | colunas de endereço em `painters` (`cep`/`rua`/`numero`/`complemento`/`bairro`/`cidade`) |
-| `…_painter_stats_endereco.sql`         | endereço acrescentado à view `painter_stats` (append)                                    |
+| Arquivo                                | Conteúdo                                                                                     |
+| -------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `…_fundacao_enums_settings.sql`        | 5 enums + tabela `settings` (linha única)                                                    |
+| `…_entidades_base.sql`                 | `painters`, `admins`, `clients`, `products`                                                  |
+| `…_pedidos.sql`                        | `orders`, `order_items`                                                                      |
+| `…_lojinha_e_ledger.sql`               | `loja_items`, `resgates`, `point_transactions`                                               |
+| `…_painter_telefone_unico.sql`         | `painters.telefone` obrigatório + único (credencial)                                         |
+| `…_painter_email_contato.sql`          | `painters.email` (contato, opcional)                                                         |
+| `…_rls_identidade.sql`                 | RLS em `admins`/`painters` + função `is_admin()`                                             |
+| `…_rls_dominio.sql`                    | RLS de leitura no comercial/pontos/lojinha/settings/products + `current_painter_id()`        |
+| `…_ledger_imutavel.sql`                | trigger de imutabilidade em `point_transactions`                                             |
+| `…_rls_clients.sql`                    | RLS faltante em `clients`                                                                    |
+| `…_painter_stats_view.sql`             | view `painter_stats` (derivações do pintor, `security_invoker`)                              |
+| `…_orders_titulo.sql`                  | coluna `orders.titulo`                                                                       |
+| `…_pedidos_admin_view.sql`             | view `pedidos_admin` (nomes + bônus/estorno derivados)                                       |
+| `…_lojinha_views.sql`                  | views `loja_items_admin`, `resgates_admin`                                                   |
+| `…_painter_stats_excluir_rascunho.sql` | `painter_stats.pedidos` passa a excluir rascunho                                             |
+| `…_clients_admin_view.sql`             | view `clients_admin` (cliente + pintor mais recente)                                         |
+| `…_products_public_view.sql`           | view `products_public` (catálogo ao pintor, sem `cost`, `security_invoker` off)              |
+| `…_rls_clients_escrita_admin.sql`      | policies `INSERT`/`UPDATE` de `clients` (admin)                                              |
+| `…_resgate_rpcs.sql`                   | RPCs `resgatar_item`, `cancelar_resgate` (pintor)                                            |
+| `…_pedido_rpcs.sql`                    | RPCs `aprovar_pedido`, `recusar_pedido`, `estornar_pedido` (admin)                           |
+| `…_orcamento_rpc.sql`                  | RPC `enviar_orcamento` (pintor)                                                              |
+| `…_rls_loja_items_escrita_admin.sql`   | policies `INSERT`/`UPDATE` de `loja_items` (admin)                                           |
+| `…_resgate_admin_rpcs.sql`             | RPCs `entregar_resgate`, `cancelar_resgate_admin` (admin)                                    |
+| `…_rls_settings_escrita_admin.sql`     | policy `UPDATE` de `settings` (admin)                                                        |
+| `…_criar_pedido_admin_rpc.sql`         | RPC `criar_pedido_admin` (pedido já aprovado)                                                |
+| `…_rls_painters_escrita_admin.sql`     | policy `UPDATE` de `painters` (admin: nome/documento/active/endereço)                        |
+| `…_rls_admins_self_update.sql`         | policy `UPDATE` de `admins` (self: nome)                                                     |
+| `…_painter_endereco.sql`               | colunas de endereço em `painters` (`cep`/`rua`/`numero`/`complemento`/`bairro`/`cidade`)     |
+| `…_painter_stats_endereco.sql`         | endereço acrescentado à view `painter_stats` (append)                                        |
+| `…_painter_clients.sql`                | junção `painter_clients` + RLS + amplia leitura de `clients` + RPC `vincular_cliente_pintor` |
 
 Banco hospedado (Supabase free tier). Migrations aplicadas via `supabase db push`
 (projeto linkado por `supabase link`). Para recriar o schema do zero: clonar o repo,
