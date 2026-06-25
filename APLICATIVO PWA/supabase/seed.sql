@@ -136,21 +136,33 @@ insert into point_transactions (painter_id, valor, tipo, order_id, resgate_id, m
 commit;
 
 -- ============================================================
--- ROLLBACK DO SEED (descomente e rode pra limpar tudo que foi semeado)
--- A ordem respeita as FKs. point_transactions NÃO aceita DELETE pela
--- trigger de imutabilidade — por isso a limpeza usa um caminho que a
--- trigger permite só se você desabilitar a trigger antes (service_role).
+-- CLEAN SLATE (descomente e rode como service_role ANTES de entrar dado
+-- real). Zera TODOS os dados de teste por tabela inteira — nao por uuid do
+-- seed — porque os pintores de teste acumularam dados criados pelo app
+-- (uuids aleatorios) alem do seed. Mantem `settings` (config global) e
+-- `admins`. A ordem respeita as FKs; a trigger de imutabilidade do ledger
+-- e desabilitada so durante o delete. Validado em sandbox PG16.
 -- ------------------------------------------------------------
 -- begin;
 --   alter table point_transactions disable trigger trg_ledger_imutavel;
---   delete from point_transactions where painter_id in
---     ('94f21de4-f8dd-4c91-9014-92f5946f483e','85b0f493-d414-43fd-ad7c-e6c9452695e7');
+--   delete from point_transactions;
 --   alter table point_transactions enable trigger trg_ledger_imutavel;
---   delete from resgates    where id::text like '00000000-0000-0000-0000-00000000ee%';
---   delete from order_items where order_id::text like '00000000-0000-0000-0000-00000000aa%';
---   delete from orders      where id::text like '00000000-0000-0000-0000-00000000aa%';
---   delete from loja_items  where id::text like '00000000-0000-0000-0000-0000000000b%';
---   delete from products    where id::text like '00000000-0000-0000-0000-0000000000d%';
---   delete from clients     where id::text like '00000000-0000-0000-0000-0000000000c%';
+--   delete from resgates;
+--   delete from order_items;
+--   delete from orders;
+--   delete from painter_clients;
+--   delete from painter_settings;
+--   delete from loja_items;
+--   delete from products;
+--   delete from clients;
+--   delete from painters;          -- remove os 4 pintores de teste
 -- commit;
+--
+-- Depois, no painel do Supabase (Auth -> Users), apague os 4 logins de teste
+-- (o painel limpa sessions/identities junto; NAO use delete from auth.users cru):
+--   teste@pintor.com          Pintor Teste          94f21de4-f8dd-4c91-9014-92f5946f483e
+--   33988881111@pintor.local  Pintor Sintetico      85b0f493-d414-43fd-ad7c-e6c9452695e7
+--   33977772222@pintor.local  Pintor ComEmail       cae0462c-e0af-4ca8-a962-2c76b52a1883
+--   33944445555@pintor.local  Pintor Teste - ADMIN  b5289b82-4b50-431e-8d89-a9d26cb6238b
+-- ============================================================
 -- ============================================================
