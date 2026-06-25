@@ -7,14 +7,15 @@
 ## Onde estamos
 
 **Fase:** 3 — Produção do app real em Next.js
-**Foco atual:** app **PINTOR** em `APLICATIVO PWA/minas-tintas-pintor/` (mobile-first, PWA)
+**Foco atual:** app **PINTOR** em `aplicativo-pwaminas-tintas-pintor/` (mobile-first, PWA)
 **Pintor (real):** ✅ todas as telas construídas fiéis ao protótipo + setup de validação desktop (mockup de iPhone removível) concluído e aprovado. **Próximo:** passada de refinamentos visuais.
-**Admin (real):** `APLICATIVO PWA/minas-tintas-app/` — todas as telas construídas.
+**Admin (real):** `aplicativo-pwaminas-tintas-app/` — todas as telas construídas.
 
 > 📌 Para o estado detalhado da sessão atual (rotas, mockup de validação,
 > como remover, decisões em aberto), ler **`sessao-atual.md`** na raiz do projeto.
 
 ### Protótipos (Fase 2 — fonte de verdade visual, não alterar)
+
 **Mobile:** ✅ 100% validado (`ui_kits/pintor/pintor-app.html`)
 **Admin:** ✅ 100% validado (`ui_kits/admin/admin-app.html`)
 
@@ -24,38 +25,38 @@
 
 ## Arquivos — onde buscar cada coisa
 
-| Arquivo | O que tem |
-|---|---|
+| Arquivo                              | O que tem                                          |
+| ------------------------------------ | -------------------------------------------------- |
 | `../../../03 - Briefing/briefing.md` | Regras de negócio (bônus, lojinha, fluxos, status) |
-| `../colors_and_type.css` | Tokens CSS canônicos |
-| `ui_kits/pintor/pintor-app.html` | ✅ Mobile validado — 7 telas, frame iPhone |
-| `ui_kits/admin/admin-app.html` | Admin em lapidação — sidebar + telas |
+| `../colors_and_type.css`             | Tokens CSS canônicos                               |
+| `ui_kits/pintor/pintor-app.html`     | ✅ Mobile validado — 7 telas, frame iPhone         |
+| `ui_kits/admin/admin-app.html`       | Admin em lapidação — sidebar + telas               |
 
 **Tokens rápidos** (para editar sem abrir o CSS):
 
-| Token | Uso |
-|---|---|
-| `--paper` / `--card` | Fundo página / fundo card |
-| `--ink` / `--muted` | Texto principal / secundário |
-| `--brand` `#CC0000` | Vermelho Minas (único por seção) |
-| `--success` `#4F7A4A` | Verde — aprovado, bônus |
-| `--warning` `#B5751F` | Âmbar — pendente |
-| `--line` | Bordas e divisores |
-| `--font-display` | Plus Jakarta Sans 800 |
-| `--font-body` | Inter |
+| Token                 | Uso                              |
+| --------------------- | -------------------------------- |
+| `--paper` / `--card`  | Fundo página / fundo card        |
+| `--ink` / `--muted`   | Texto principal / secundário     |
+| `--brand` `#CC0000`   | Vermelho Minas (único por seção) |
+| `--success` `#4F7A4A` | Verde — aprovado, bônus          |
+| `--warning` `#B5751F` | Âmbar — pendente                 |
+| `--line`              | Bordas e divisores               |
+| `--font-display`      | Plus Jakarta Sans 800            |
+| `--font-body`         | Inter                            |
 
 ---
 
 ## Status das telas — Admin
 
-| # | Tela | Status |
-|---|---|---|
-| 0 | Home (consulta de clientes) | ✅ Validada |
-| 1 | Pedidos (lista) | ✅ Validada |
-| 2 | Pedido (detalhe) | ✅ Validada |
-| 3 | Pintores | ✅ Validada |
-| 4 | Lojinha admin | ✅ Validada |
-| 5 | Relatórios | ✅ Validada |
+| #   | Tela                        | Status      |
+| --- | --------------------------- | ----------- |
+| 0   | Home (consulta de clientes) | ✅ Validada |
+| 1   | Pedidos (lista)             | ✅ Validada |
+| 2   | Pedido (detalhe)            | ✅ Validada |
+| 3   | Pintores                    | ✅ Validada |
+| 4   | Lojinha admin               | ✅ Validada |
+| 5   | Relatórios                  | ✅ Validada |
 
 ---
 
@@ -63,23 +64,23 @@
 
 ### Estrutura geral
 
-| Elemento | Valor |
-|---|---|
-| Layout | Sidebar 232px escura `#1C1A17` + área principal clara, altura 820px |
-| Display font | Plus Jakarta Sans 800, tracking −0.03em |
-| Usuário logado | Renato Aguiar · gerente · centro |
-| Bônus | 1% do total — `Math.round(total * 0.01)` — creditado automaticamente na aprovação |
-| Sidebar toggle | Ícone `panel-left` fixo — colapsa para 56px, hover expande (peek mode) |
-| Logo sidebar | Centralizada, `height:52px`, seção isolada com `border-bottom` — tela inicial é `home` |
+| Elemento       | Valor                                                                                  |
+| -------------- | -------------------------------------------------------------------------------------- |
+| Layout         | Sidebar 232px escura `#1C1A17` + área principal clara, altura 820px                    |
+| Display font   | Plus Jakarta Sans 800, tracking −0.03em                                                |
+| Usuário logado | Renato Aguiar · gerente · centro                                                       |
+| Bônus          | 1% do total — `Math.round(total * 0.01)` — creditado automaticamente na aprovação      |
+| Sidebar toggle | Ícone `panel-left` fixo — colapsa para 56px, hover expande (peek mode)                 |
+| Logo sidebar   | Centralizada, `height:52px`, seção isolada com `border-bottom` — tela inicial é `home` |
 
 ### Status de pedidos
 
-| Status | Cor | Dot |
-|---|---|---|
-| `pendente` | Âmbar | `#B5751F` |
-| `aprovado` | Verde | `#4F7A4A` |
-| `recusado` | Vermelho | `#CC0000` |
-| `estornado` | Muted | `#8A817A` |
+| Status      | Cor      | Dot       |
+| ----------- | -------- | --------- |
+| `pendente`  | Âmbar    | `#B5751F` |
+| `aprovado`  | Verde    | `#4F7A4A` |
+| `recusado`  | Vermelho | `#CC0000` |
+| `estornado` | Muted    | `#8A817A` |
 
 ### Formas de pagamento (admin e mobile)
 
@@ -119,18 +120,20 @@ Dinheiro · Pix · Cartão · Notinha (grid 2×2 no admin, botões verticais no 
 - Tabela: Nome + CPF mascarado · Cidade · Desde · Pedidos · Saldo · Status
 - Busca: filtra nome, CPF e cidade em tempo real
 - Linha clicável → abre perfil do pintor (screen `'pintor'`)
-- **Cadastrar pintor** (modal): Nome* · CPF* · Cidade* · Telefone · E-mail
+- **Cadastrar pintor** (modal): Nome* · CPF* · Cidade\* · Telefone · E-mail
 - **Perfil do pintor:** 3 stat tiles (pedidos, pontos, volume total aprovado) + histórico de pedidos filtrado + toggle ativo/inativo + back → Pintores
 
 ### Tela 4 — Lojinha admin
 
 **Estrutura geral:**
+
 - Duas abas dentro da mesma tela: **Produtos** e **Resgates**
 - Os botões "Multiplicadores" e "Adicionar item" aparecem **somente na aba Produtos** — somem na aba Resgates
 - O eyebrow e o subtítulo do page-header mudam conforme a aba ativa
 - `border-bottom` do page-header removido via inline style (as tabs já fazem a divisória)
 
 **Aba Produtos:**
+
 - Grid 4 colunas de cards de recompensas com foto, nome, descrição, pts, estoque e badge PROMO
 - Modal "Multiplicadores" — multiplicador global com fórmula visual
 - Modal "Editar item" — nome, custo, estoque, descrição, modificador individual + **seção de foto** (preview com drag para reposicionar, botões Trocar e Remover, ou quadrado tracejado "Adicionar foto" se sem imagem)
@@ -138,6 +141,7 @@ Dinheiro · Pix · Cartão · Notinha (grid 2×2 no admin, botões verticais no 
 - Imagem do Kit EPI salva em `05 - App/assets/kit-epi.png` e vinculada ao produto `id:'epi'`
 
 **Aba Resgates:**
+
 - Badge vermelho no tab com contagem de pendentes
 - Pills filtro: **Pendentes** / **Todos**
 - Lista de resgates como linhas com divisor único (sem card/borda dupla)

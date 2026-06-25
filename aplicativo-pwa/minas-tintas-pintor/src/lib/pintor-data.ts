@@ -430,7 +430,7 @@ export const LOJA_PRODUCTS: LojaProduct[] = [
     locked: false,
     stock: 4,
     icon: "package",
-    img: "/assets/descrição-do-produto-na-foto.png",
+    img: "/assets/descricao-do-produto-na-foto.png",
     name: "Impertech 3em1 — Borracha Líquida",
     desc: "Impermeabilizante em borracha líquida que sela, protege e impermeabiliza telhados, calhas e lajes em uma só demão.",
   },
@@ -505,7 +505,7 @@ export const RESGATE_PRODUCTS: Record<"low" | "high", QuickReward[]> = {
   low: [
     {
       icon: "tag",
-      img: "/assets/pincel).png",
+      img: "/assets/pincel.png",
       name: 'Trincha 2,5" Atlas',
       pts: 180,
       promo: true,
@@ -513,7 +513,7 @@ export const RESGATE_PRODUCTS: Record<"low" | "high", QuickReward[]> = {
     },
     {
       icon: "paintbrush",
-      img: "/assets/Fita).png",
+      img: "/assets/fita.png",
       name: "Fita crepe 50 m Adelbras",
       pts: 220,
       promo: false,
