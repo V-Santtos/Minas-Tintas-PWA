@@ -169,7 +169,7 @@ export default function LojinhaClient({
               c.brand.toLowerCase().includes(addSearch.toLowerCase()) ||
               c.code.toLowerCase().includes(addSearch.toLowerCase()),
           )
-          .slice(0, 5)
+          .slice(0, 8)
       : [];
 
   // Handlers
@@ -1732,7 +1732,9 @@ export default function LojinhaClient({
                       background: "var(--card)",
                       border: "1.5px solid var(--line)",
                       borderRadius: 10,
-                      overflow: "hidden",
+                      maxHeight: 264,
+                      overflowY: "auto",
+                      overflowX: "hidden",
                       boxShadow: "0 8px 24px rgba(0,0,0,.12)",
                     }}
                   >
