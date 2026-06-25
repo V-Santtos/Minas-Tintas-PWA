@@ -202,7 +202,11 @@ _agora_; não versiona, porque o passado fica congelado no ledger e nos snapshot
 
 **`clients`**
 
-- `documento` `not null unique` — CPF/CNPJ é o identificador único do cliente (briefing).
+- `documento` `not null unique` — CPF/CNPJ é o identificador único do cliente (briefing). **Gravado
+  mascarado** (ex. `111.222.333-44`, `12.345.678/0001-90`) — **decisão travada**, não normalizar pra
+  dígitos. O `unique` é sobre o texto cru; o dedupe (find-or-create) depende de **todo writer
+  produzir o mesmo formato** via `fmtCpf`/`fmtCnpj`/`maskCpf`. Qualquer fluxo novo (import, API) deve
+  mascarar igual antes de gravar.
 - Endereço em colunas opcionais (`cep`, `rua`, `numero`, `complemento`, `bairro`, `cidade`).
 - **Sem coluna de pintor** — o vínculo pintor↔cliente é derivado de `orders` (responsável de um
   pedido) **ou** da junção `painter_clients` (agenda do pintor).
@@ -469,12 +473,11 @@ clientes do pintor, e painters/clients/products no payload de pedidos).
 1. **Imagens via Supabase Storage:** item da lojinha e foto do admin gravam tudo **menos imagem**
    (base64 não serve em coluna `text`; bloco próprio de Storage — bucket + URL na coluna `imagem`).
    O recorte (`imgPos`) também espera esse bloco.
-2. **Normalizar `documento` para dígitos:** gravado **mascarado** (convenção; `unique` sobre o texto
-   cru). Normalizar = migração de dados + tocar nos dois apps + formatar na exibição.
 
-**`rules.ts` × `settings.bonus_percent`:** o **crédito autoritativo** lê `settings` em runtime
-(`aprovar_pedido` / `criar_pedido_admin`) e a taxa é editável (configuracoes). Falta só o **preview**
-do pintor (`bonusPts` via `rules.ts`) deixar a constante estática e ler a taxa do payload — cosmético.
+**`rules.ts` × `settings.bonus_percent`:** tanto o **crédito autoritativo** (`aprovar_pedido` /
+`criar_pedido_admin`) quanto o **preview** do pintor (`A liberar`, carrinho, detalhe) leem
+`settings.bonus_percent` em runtime; `BONUS_PERCENT` no `rules.ts` é só fallback. A taxa é editável
+(configuracoes).
 
 **Futuro (auth / SMTP):** troca de **e-mail** do admin e **recuperação de senha** por e-mail (exigem
 SMTP próprio — hoje o e-mail do admin é read-only); troca de **telefone** do pintor (é troca de

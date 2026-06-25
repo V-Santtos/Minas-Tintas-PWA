@@ -164,7 +164,7 @@ editar/resetar/ativar pintor, editar `bonus_percent`, conta do admin (nome + sen
 Pintor novo via `POST /api/pintores`; reset de senha via `PATCH`.
 
 **Não entrou na 3b (adiado consciente):** imagens (item da lojinha + foto do admin) via **Supabase
-Storage** — bloco próprio; **normalizar `documento`**.
+Storage** — bloco próprio.
 _Auth/SMTP:_ troca de **e-mail** do admin e **recuperação por e-mail** (e-mail do admin é read-only
 hoje); troca de **telefone** do pintor (troca de credencial: `painters.telefone` + o e-mail sintético
 do `auth.users` juntos).
@@ -211,6 +211,9 @@ Troca de telefone do pintor pelo admin; recuperação por e-mail (SMTP).
 - **Preview de bônus do pintor** alinhado ao runtime: "A liberar" (home), bônus do carrinho e do
   pedido agora leem `settings.bonus_percent` via `data.bonusPercent`, batendo com o crédito do
   `aprovar_pedido`. `BONUS_PERCENT` fica só como fallback.
+- **`documento` gravado mascarado** (CPF/CNPJ com pontuação) — decisão travada, **não** normalizar
+  pra dígitos. O `unique` é sobre o texto cru e todos os writers mascaram igual (`fmtCpf`/`maskCpf`);
+  qualquer fluxo futuro (import, API) deve mascarar antes de gravar.
 
 ---
 
