@@ -205,6 +205,10 @@ do pintor ainda usa a taxa default do `bonusPts`, não `settings` (pendência se
   cliente aparece também no seletor do orçamento. Edição do cadastro segue só no admin. Resíduos: o
   card da lista virou inerte (futuro: "ver detalhes"); `note` mapeia em `complemento` (convenção
   herdada do orçamento, não `observacoes`).
+- **Preferências de notificação do pintor** persistidas: tabela `painter_settings` + RPC
+  `salvar_notif_prefs`; os toggles de Configurações agora salvam por pintor. **Sem consumidor
+  ainda** — o sistema de notificação (push + feed in-app) não existe e é bloco próprio futuro;
+  as prefs ficam prontas pra quando ele for construído.
 
 ---
 

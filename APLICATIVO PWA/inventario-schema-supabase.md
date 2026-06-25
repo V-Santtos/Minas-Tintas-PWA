@@ -173,6 +173,11 @@ _agora_; não versiona, porque o passado fica congelado no ledger e nos snapshot
 - `bonus_percent` `numeric(5,4)` default `0.01` — percentual de bônus sobre o valor bruto.
 - `multiplicador_padrao` `numeric(4,2)` default `3.0` — multiplicador padrão da lojinha.
 
+**`painter_settings`** — preferências de notificação por pintor (1 linha por pintor, `painter_id` PK). Tabela **separada** de `painters` para isolar a escrita self das colunas de identidade/credencial.
+
+- `notif_pedidos` / `notif_pontos` / `notif_resgates` / `notif_promocoes` `boolean` (defaults `true`/`true`/`true`/`false`).
+- **Sem consumidor ainda** — o sistema de notificação não existe; persistido para sobreviver a reload e ficar pronto quando as notificações forem construídas.
+
 ### Identidade e acesso
 
 **`painters`** — fonte de verdade do parceiro. **Todo** pintor tem linha aqui, com app ou sem.
@@ -395,6 +400,7 @@ Funções auxiliares (`SECURITY DEFINER`, evitam recursão nas policies):
 | `order_items`                              | herda do pedido pai (vê o item se vê o pedido)                                                         |
 | `loja_items`, `settings`                   | qualquer autenticado                                                                                   |
 | `products`                                 | só admin (contém `cost` sensível; pintor ainda não consome catálogo)                                   |
+| `painter_settings`                         | pintor lê as próprias preferências (`painter_id = current_painter_id()`); escrita só pelo RPC          |
 
 **Escrita por policy** (escrita simples escopada por papel, sem RPC):
 
@@ -433,6 +439,7 @@ só a `authenticated`.
 | `entregar_resgate(resgate)`                  | admin  | `pendente_retirada→entregue`; carimba `entregue_em`/`entregue_por`; **sem ledger** (pontos já debitados no resgate)                                                                                                                         |
 | `cancelar_resgate_admin(resgate)`            | admin  | `pendente_retirada→cancelado`; devolve estoque + credita `devolucao` (snapshot); espelha `cancelar_resgate`, mas gated por `is_admin` e resolvendo o pintor da própria linha                                                                |
 | `criar_pedido_admin(pintor, cliente, itens)` | admin  | cria `orders`+`order_items` **já aprovado** (confirma + credita bônus na hora); pintor por parâmetro (precisa estar ativo); cliente = id existente; preço autoritativo de `products`. Espelha `enviar_orcamento`+`aprovar_pedido` num passo |
+| `salvar_notif_prefs(prefs)`                  | pintor | upsert das preferências de notificação do próprio pintor em `painter_settings` (identidade pelo JWT); sem consumidor ainda (notificações não existem)                                                                                       |
 
 Dois pontos de segurança que se repetem:
 
@@ -443,8 +450,9 @@ Dois pontos de segurança que se repetem:
 
 As server actions que chamam as RPCs ficam em: `dashboard/actions.ts` (cliente admin),
 `lib/resgate-actions.ts` (pintor), `pedidos/actions.ts` (admin: decisão de pedido + criar pedido),
-`lib/orcamento-actions.ts` (pintor) e `lojinha/actions.ts` (admin: gestão de resgate). Após a
-escrita, `router.refresh()` reSemeia o payload do layout (saldo, pendentes, pedidos) — não há mais
+`lib/orcamento-actions.ts` (pintor), `lojinha/actions.ts` (admin: gestão de resgate),
+`lib/clientes-actions.ts` (pintor: vincular cliente) e `lib/configuracoes-actions.ts` (pintor:
+prefs de notificação). Após a escrita, `router.refresh()` reSemeia o payload do layout (saldo, pendentes, pedidos) — não há mais
 estado otimista para esses dados.
 
 ## Pendências (pós-3b)
@@ -509,6 +517,7 @@ tela in-app de guia de instalação do PWA (iPhone/Safari).
 | `…_painter_endereco.sql`               | colunas de endereço em `painters` (`cep`/`rua`/`numero`/`complemento`/`bairro`/`cidade`)     |
 | `…_painter_stats_endereco.sql`         | endereço acrescentado à view `painter_stats` (append)                                        |
 | `…_painter_clients.sql`                | junção `painter_clients` + RLS + amplia leitura de `clients` + RPC `vincular_cliente_pintor` |
+| `…_painter_settings.sql`               | tabela `painter_settings` (prefs de notificação) + RLS de leitura + RPC `salvar_notif_prefs` |
 
 Banco hospedado (Supabase free tier). Migrations aplicadas via `supabase db push`
 (projeto linkado por `supabase link`). Para recriar o schema do zero: clonar o repo,
