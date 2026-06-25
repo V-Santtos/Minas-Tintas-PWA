@@ -1,5 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
-import type { Reward, Resgate } from "@/lib/mock";
+import type { Reward, Resgate, CatalogItem } from "@/lib/mock";
 import LojinhaClient from "./LojinhaClient";
 
 const fmtData = (iso: string) =>
@@ -17,20 +17,29 @@ const STATUS_MAP: Record<string, Resgate["status"]> = {
 export default async function LojinhaPage() {
   const supabase = await createClient();
 
-  const [{ data: itemRows }, { data: resgateRows }, { data: cfg }] =
-    await Promise.all([
-      supabase
-        .from("loja_items_admin")
-        .select("id, name, valor_base, multiplicador, stock, imagem, descricao")
-        .order("custo_pts"),
-      supabase
-        .from("resgates_admin")
-        .select(
-          "id, painter_nome, loja_item_id, pontos_congelados, status, created_at",
-        )
-        .order("created_at", { ascending: false }),
-      supabase.from("settings").select("multiplicador_padrao").single(),
-    ]);
+  const [
+    { data: itemRows },
+    { data: resgateRows },
+    { data: cfg },
+    { data: productRows },
+  ] = await Promise.all([
+    supabase
+      .from("loja_items_admin")
+      .select("id, name, valor_base, multiplicador, stock, imagem, descricao")
+      .order("custo_pts"),
+    supabase
+      .from("resgates_admin")
+      .select(
+        "id, painter_nome, loja_item_id, pontos_congelados, status, created_at",
+      )
+      .order("created_at", { ascending: false }),
+    supabase.from("settings").select("multiplicador_padrao").single(),
+    supabase
+      .from("products")
+      .select("id, code, name, brand, price, cost, stock")
+      .eq("active", true)
+      .order("name"),
+  ]);
 
   const padrao = Number(cfg?.multiplicador_padrao ?? 3);
 
@@ -57,7 +66,22 @@ export default async function LojinhaPage() {
     status: STATUS_MAP[r.status] ?? "pendente",
   }));
 
+  const catalog: CatalogItem[] = (productRows ?? []).map((p) => ({
+    id: p.id,
+    code: p.code ?? "",
+    name: p.name,
+    brand: p.brand ?? "",
+    price: Number(p.price),
+    cost: Number(p.cost ?? 0),
+    stock: p.stock,
+  }));
+
   return (
-    <LojinhaClient rewards={rewards} resgates={resgates} globalMult={padrao} />
+    <LojinhaClient
+      rewards={rewards}
+      resgates={resgates}
+      globalMult={padrao}
+      catalog={catalog}
+    />
   );
 }

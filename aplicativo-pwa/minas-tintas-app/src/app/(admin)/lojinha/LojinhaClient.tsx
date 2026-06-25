@@ -29,7 +29,7 @@ import {
   Scissors,
   Search,
 } from "lucide-react";
-import { CATALOG, type Reward, type Resgate } from "@/lib/mock";
+import { type Reward, type Resgate, type CatalogItem } from "@/lib/mock";
 import { saveLojaItem, entregarResgate, recusarResgate } from "./actions";
 import { saveSettings } from "@/lib/settings-actions";
 
@@ -75,10 +75,12 @@ export default function LojinhaClient({
   rewards: rewardsProp,
   resgates: resgatesProp,
   globalMult: globalMultProp,
+  catalog,
 }: {
   rewards: Reward[];
   resgates: Resgate[];
   globalMult: number;
+  catalog: CatalogItem[];
 }) {
   const router = useRouter();
   const rewards = rewardsProp; // server-derived; router.refresh() reSemeia
@@ -160,12 +162,14 @@ export default function LojinhaClient({
     : null;
   const acResults =
     addSearch.trim() && !addCatalogSel
-      ? CATALOG.filter(
-          (c) =>
-            c.name.toLowerCase().includes(addSearch.toLowerCase()) ||
-            c.brand.toLowerCase().includes(addSearch.toLowerCase()) ||
-            c.code.toLowerCase().includes(addSearch.toLowerCase()),
-        ).slice(0, 5)
+      ? catalog
+          .filter(
+            (c) =>
+              c.name.toLowerCase().includes(addSearch.toLowerCase()) ||
+              c.brand.toLowerCase().includes(addSearch.toLowerCase()) ||
+              c.code.toLowerCase().includes(addSearch.toLowerCase()),
+          )
+          .slice(0, 5)
       : [];
 
   // Handlers
@@ -232,7 +236,7 @@ export default function LojinhaClient({
     rd.readAsDataURL(f);
   }
 
-  function selectCatalog(c: (typeof CATALOG)[0]) {
+  function selectCatalog(c: CatalogItem) {
     setAddSearch(c.name);
     setAddCusto(String(c.cost));
     setAddVenda(c.price);
