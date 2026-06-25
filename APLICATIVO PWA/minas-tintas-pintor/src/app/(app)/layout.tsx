@@ -7,6 +7,7 @@ import {
   type PendingRedemption,
 } from "@/lib/pintor-store";
 import type { Order, OrderItem, LojaProduct } from "@/lib/pintor-data";
+import { BONUS_PERCENT } from "@/lib/rules";
 import BottomNav from "@/components/BottomNav";
 import MockStatusBar from "@/components/MockStatusBar"; // [MOCKUP DESKTOP] remover ao publicar
 
@@ -79,7 +80,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         "id, name, valor_base, stock, categoria, imagem, descricao, custo_pts, promo",
       )
       .order("custo_pts"),
-    supabase.from("settings").select("multiplicador_padrao").single(),
+    supabase
+      .from("settings")
+      .select("multiplicador_padrao, bonus_percent")
+      .single(),
     supabase
       .from("resgates_admin")
       .select(
@@ -208,6 +212,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   const data: PintorReadData = {
     saldo: Number(ps?.saldo ?? 0),
+    bonusPercent: Number(cfg?.bonus_percent ?? BONUS_PERCENT),
     profile: {
       name: nome,
       firstName: nome.split(" ")[0] ?? "",

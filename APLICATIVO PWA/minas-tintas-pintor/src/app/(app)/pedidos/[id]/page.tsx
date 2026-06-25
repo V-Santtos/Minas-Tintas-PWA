@@ -49,7 +49,7 @@ export default function PedidoDetailPage({
   }
 
   const st = STATUS_CFG[o.status];
-  const pts = bonusPts(o.amount);
+  const pts = bonusPts(o.amount, data.bonusPercent);
   const items = o.items ?? DEFAULT_DETAIL_ITEMS;
   const isDraft = o.status === "rascunho";
 

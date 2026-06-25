@@ -42,7 +42,7 @@ export default function HomePage() {
     : "low";
   const aLiberar = data.orders
     .filter((o) => o.status === "pendente")
-    .reduce((s, o) => s + bonusPts(o.amount), 0);
+    .reduce((s, o) => s + bonusPts(o.amount, data.bonusPercent), 0);
 
   return (
     <>

@@ -16,6 +16,7 @@ import {
 
 export type PintorReadData = {
   saldo: number;
+  bonusPercent: number;
   profile: {
     name: string;
     firstName: string;
@@ -141,8 +142,12 @@ export function PintorProvider({
       const p = data.catalog.find((x) => x.id === id);
       return p ? s + p.price * cart[id] : s;
     }, 0);
-    return { cartQty: qty, cartTotal: total, cartBonus: bonusPts(total) };
-  }, [cart, data.catalog]);
+    return {
+      cartQty: qty,
+      cartTotal: total,
+      cartBonus: bonusPts(total, data.bonusPercent),
+    };
+  }, [cart, data.catalog, data.bonusPercent]);
 
   const value: Store = {
     data,
