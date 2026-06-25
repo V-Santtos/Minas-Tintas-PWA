@@ -185,8 +185,7 @@ do `auth.users` juntos).
 
 ### Futuro (sem fase)
 
-Troca de telefone do pintor pelo admin; recuperação por e-mail (SMTP); preview do "a liberar"
-do pintor ainda usa a taxa default do `bonusPts`, não `settings` (pendência separada, cosmética).
+Troca de telefone do pintor pelo admin; recuperação por e-mail (SMTP).
 
 ## Em aberto / observações
 
@@ -209,6 +208,9 @@ do pintor ainda usa a taxa default do `bonusPts`, não `settings` (pendência se
   `salvar_notif_prefs`; os toggles de Configurações agora salvam por pintor. **Sem consumidor
   ainda** — o sistema de notificação (push + feed in-app) não existe e é bloco próprio futuro;
   as prefs ficam prontas pra quando ele for construído.
+- **Preview de bônus do pintor** alinhado ao runtime: "A liberar" (home), bônus do carrinho e do
+  pedido agora leem `settings.bonus_percent` via `data.bonusPercent`, batendo com o crédito do
+  `aprovar_pedido`. `BONUS_PERCENT` fica só como fallback.
 
 ---
 
