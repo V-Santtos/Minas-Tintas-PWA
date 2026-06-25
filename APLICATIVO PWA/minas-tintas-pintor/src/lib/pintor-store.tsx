@@ -53,6 +53,12 @@ export type PintorReadData = {
     kind: "in" | "out";
   }[];
   catalog: CatalogItem[];
+  notifPrefs: {
+    pedidos: boolean;
+    pontos: boolean;
+    resgates: boolean;
+    promocoes: boolean;
+  };
 };
 
 export type PendingRedemption = {

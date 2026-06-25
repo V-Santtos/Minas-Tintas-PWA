@@ -57,6 +57,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     { data: clientRows },
     { data: txRows },
     { data: prodRows },
+    { data: prefsRow },
   ] = await Promise.all([
     supabase
       .from("painter_stats")
@@ -100,6 +101,11 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       .from("products_public")
       .select("id, code, name, brand, price")
       .order("name"),
+    supabase
+      .from("painter_settings")
+      .select("notif_pedidos, notif_pontos, notif_resgates, notif_promocoes")
+      .eq("painter_id", painter.id)
+      .maybeSingle(),
   ]);
 
   const padrao = Number(cfg?.multiplicador_padrao ?? 3);
@@ -223,6 +229,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     clientes,
     atividade,
     catalog,
+    notifPrefs: {
+      pedidos: prefsRow?.notif_pedidos ?? true,
+      pontos: prefsRow?.notif_pontos ?? true,
+      resgates: prefsRow?.notif_resgates ?? true,
+      promocoes: prefsRow?.notif_promocoes ?? false,
+    },
   };
 
   return (
