@@ -1,6 +1,6 @@
 # Inventário do schema — Supabase (Minas Tintas PWA)
 
-> **Fonte de verdade:** as migrations em `APLICATIVO PWA/supabase/migrations/`.
+> **Fonte de verdade:** as migrations em `aplicativo-pwa/supabase/migrations/`.
 > Este documento é o **mapa legível** do schema — para entender o porquê de cada
 > tabela sem ler SQL. Se houver divergência, a migration vence; este doc é atualizado
 > para acompanhá-la.

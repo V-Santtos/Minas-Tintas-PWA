@@ -8,8 +8,8 @@ lojinha de pontos.
 
 São **dois apps** num monorepo:
 
-- **Pintor** (`APLICATIVO PWA/minas-tintas-pintor/`) — mobile-first, **é PWA** (instalável, offline shell).
-- **Admin** (`APLICATIVO PWA/minas-tintas-app/`) — desktop-first, **NÃO é PWA** (decisão deliberada:
+- **Pintor** (`aplicativo-pwa/minas-tintas-pintor/`) — mobile-first, **é PWA** (instalável, offline shell).
+- **Admin** (`aplicativo-pwa/minas-tintas-app/`) — desktop-first, **NÃO é PWA** (decisão deliberada:
   roda na máquina fixa da loja, sempre online; cache de service worker seria desvantagem).
 
 ---
@@ -21,7 +21,7 @@ Antes de responder ou executar qualquer tarefa, leia:
 | Arquivo                                                       | O que contém                                                                       |
 | ------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | `Minas Tintas/03 - Briefing/briefing.md`                      | **Fonte de verdade funcional** — bônus, lojinha, fluxos, cadastros, admin, offline |
-| `APLICATIVO PWA/inventario-schema-supabase.md`                | **Mapa do schema** — tabelas, enums, decisões e o diagrama ER                      |
+| `aplicativo-pwa/inventario-schema-supabase.md`                | **Mapa do schema** — tabelas, enums, decisões e o diagrama ER                      |
 | `Minas Tintas/01 - Identidade Visual/paleta/design-tokens.md` | Tokens do sistema visual (Warm Editorial)                                          |
 | `Minas Tintas/05 - App/CONTEXTO.md`                           | Status da fase de telas (o que foi validado)                                       |
 
@@ -82,10 +82,10 @@ hardcoded em nenhum outro lugar.
 
 | Pasta/Arquivo                                  | O que é                                                                              |
 | ---------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `APLICATIVO PWA/minas-tintas-app/`             | App Admin (Next.js, desktop)                                                         |
-| `APLICATIVO PWA/minas-tintas-pintor/`          | App Pintor (Next.js, mobile, PWA)                                                    |
-| `APLICATIVO PWA/supabase/`                     | Projeto Supabase: `config.toml` + `migrations/` (versionado)                         |
-| `APLICATIVO PWA/inventario-schema-supabase.md` | Mapa legível do schema                                                               |
+| `aplicativo-pwa/minas-tintas-app/`             | App Admin (Next.js, desktop)                                                         |
+| `aplicativo-pwa/minas-tintas-pintor/`          | App Pintor (Next.js, mobile, PWA)                                                    |
+| `aplicativo-pwa/supabase/`                     | Projeto Supabase: `config.toml` + `migrations/` (versionado)                         |
+| `aplicativo-pwa/inventario-schema-supabase.md` | Mapa legível do schema                                                               |
 | `Minas Tintas/`                                | Especificação (briefing, identidade visual, protótipos validados) — **não é código** |
 
 Referências de design **(não alterar)**: protótipos em `Minas Tintas/05 - App/ui_kits/{admin,pintor}/*.html`
@@ -104,7 +104,7 @@ admin; assets renomeados sem espaços; `sw.js` no `.gitignore`.
 
 **Fase 1 — Backend (em andamento):**
 
-1. **Schema** ✅ — definido e versionado em `APLICATIVO PWA/supabase/migrations/` (9 tabelas, 5 enums).
+1. **Schema** ✅ — definido e versionado em `aplicativo-pwa/supabase/migrations/` (9 tabelas, 5 enums).
    Documentado em `inventario-schema-supabase.md`.
 2. **Auth** ✅ — `@supabase/ssr` nos dois apps (clients browser/server, middleware de sessão).
    Admin loga por **e-mail**; pintor loga por **telefone** (credencial única; e-mail sintético
