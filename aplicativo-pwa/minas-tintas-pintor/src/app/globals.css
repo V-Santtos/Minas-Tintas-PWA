@@ -171,6 +171,7 @@
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  padding-top: env(safe-area-inset-top);
   padding-bottom: 92px; /* espaço para a bottom-nav */
   scrollbar-width: none; /* Firefox — esconde a barra de rolagem (scroll segue por roda/touch) */
   -ms-overflow-style: none;
