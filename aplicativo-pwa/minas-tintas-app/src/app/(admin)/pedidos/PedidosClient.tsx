@@ -187,6 +187,7 @@ export default function PedidosClient({
   const [manualClientName, setManualClientName] = useState("");
   const [submittingOrder, setSubmittingOrder] = useState(false);
   const [orderError, setOrderError] = useState("");
+  const [clientFocused, setClientFocused] = useState(false);
 
   const allClients = clients;
 
@@ -212,8 +213,7 @@ export default function PedidosClient({
     ? allClients
         .filter((c) => c.name.toLowerCase().includes(clientQuery))
         .slice(0, 6)
-    : [];
-  const showNewClientTrigger = clientQuery && clientMatches.length === 0;
+    : allClients.slice(0, 3); // foco vazio = 3 primeiros (allClients já vem alfabético)
   const productMatches = manualDraft.productSearch.trim()
     ? products
         .filter(
@@ -1243,6 +1243,10 @@ export default function PedidosClient({
                       setManualClientName(e.target.value);
                       setManualClientId(null);
                     }}
+                    onFocus={() => setClientFocused(true)}
+                    onBlur={() =>
+                      setTimeout(() => setClientFocused(false), 120)
+                    }
                     placeholder="Buscar cliente ou empresa..."
                     required
                     autoComplete="off"
@@ -1258,9 +1262,7 @@ export default function PedidosClient({
                       outline: "none",
                     }}
                   />
-                  {((clientMatches.length > 0 &&
-                    manualClientName !== clientMatches[0]?.name) ||
-                    showNewClientTrigger) && (
+                  {clientFocused && (
                     <div
                       style={{
                         position: "absolute",
@@ -1275,6 +1277,17 @@ export default function PedidosClient({
                         boxShadow: "var(--shadow-3)",
                       }}
                     >
+                      {clientQuery && clientMatches.length === 0 && (
+                        <div
+                          style={{
+                            padding: "12px 14px",
+                            fontSize: 13,
+                            color: "var(--muted)",
+                          }}
+                        >
+                          Nenhum cliente encontrado.
+                        </div>
+                      )}
                       {clientMatches.map((c) => {
                         const Icon = c.type === "empresa" ? Building2 : User;
                         return (
@@ -1328,53 +1341,40 @@ export default function PedidosClient({
                           </button>
                         );
                       })}
-                      {showNewClientTrigger && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setClientModalPrefill(manualClientName);
-                            setClientModalOpen(true);
-                          }}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setClientModalPrefill(manualClientName);
+                          setClientModalOpen(true);
+                        }}
+                        style={{
+                          width: "100%",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                          padding: "10px 12px",
+                          border: "none",
+                          borderTop: "1px solid var(--line)",
+                          background: "var(--card)",
+                          textAlign: "left",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <UserPlus
+                          size={15}
+                          strokeWidth={1.75}
+                          color="var(--brand)"
+                        />
+                        <span
                           style={{
-                            width: "100%",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 10,
-                            padding: "10px 12px",
-                            border: "none",
-                            background: "var(--card)",
-                            textAlign: "left",
-                            cursor: "pointer",
+                            fontSize: 13,
+                            fontWeight: 600,
+                            color: "var(--brand)",
                           }}
                         >
-                          <UserPlus
-                            size={15}
-                            strokeWidth={1.75}
-                            color="var(--brand)"
-                          />
-                          <span style={{ flex: 1 }}>
-                            <span
-                              style={{
-                                display: "block",
-                                fontSize: 13,
-                                fontWeight: 600,
-                                color: "var(--brand)",
-                              }}
-                            >
-                              Cadastrar &quot;{manualClientName}&quot;
-                            </span>
-                            <span
-                              style={{
-                                display: "block",
-                                fontSize: 11.5,
-                                color: "var(--muted)",
-                              }}
-                            >
-                              Novo cliente
-                            </span>
-                          </span>
-                        </button>
-                      )}
+                          Cadastrar novo cliente
+                        </span>
+                      </button>
                     </div>
                   )}
                 </div>
