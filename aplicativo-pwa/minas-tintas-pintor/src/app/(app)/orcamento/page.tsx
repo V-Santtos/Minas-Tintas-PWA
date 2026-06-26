@@ -211,6 +211,7 @@ export default function OrcamentoPage() {
   // pagamento
   const [showNote, setShowNote] = useState(false);
   const [note, setNote] = useState("");
+  const [obra, setObra] = useState("");
   const [needsAttention, setNeedsAttention] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -376,6 +377,7 @@ export default function OrcamentoPage() {
       items,
       pagamento: selectedPayment,
       observacao: note || null,
+      titulo: obra.trim() || null,
     });
 
     if (!res.ok) {
@@ -681,6 +683,30 @@ export default function OrcamentoPage() {
                 </span>
               </div>
             )}
+            <div style={{ marginTop: 14 }}>
+              <div className="eyebrow-label" style={{ marginBottom: 8 }}>
+                OBRA
+              </div>
+              <input
+                type="text"
+                value={obra}
+                onChange={(e) => setObra(e.target.value)}
+                placeholder="Ex.: Reforma fachada — Rua das Flores"
+                autoComplete="off"
+                style={{
+                  width: "100%",
+                  height: 44,
+                  border: "1px solid var(--line)",
+                  borderRadius: 10,
+                  padding: "0 12px",
+                  fontSize: 14,
+                  fontFamily: "var(--font-body)",
+                  color: "var(--ink)",
+                  background: "var(--paper)",
+                  outline: "none",
+                }}
+              />
+            </div>
           </>
         )}
 
