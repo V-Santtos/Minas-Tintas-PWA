@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   ChevronLeft,
@@ -179,6 +179,15 @@ export default function OrcamentoPage() {
   const [mode, setMode] = useState<"search" | "newclient">("search");
   const [nameQ, setNameQ] = useState("");
   const [phoneQ, setPhoneQ] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
+  const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onSearchFocus = () => {
+    if (blurTimer.current) clearTimeout(blurTimer.current);
+    setSearchFocused(true);
+  };
+  const onSearchBlur = () => {
+    blurTimer.current = setTimeout(() => setSearchFocused(false), 150);
+  };
 
   // novo cliente
   const [nc, setNc] = useState({
@@ -211,11 +220,15 @@ export default function OrcamentoPage() {
   const clientResults = useMemo(() => {
     const n = nameQ.trim().toLowerCase();
     const p = phoneQ.trim();
-    if (n.length < 2 && p.length < 3) return null;
-    return data.clientes.filter(
+    const sorted = [...data.clientes].sort((a, b) =>
+      a.name.localeCompare(b.name, "pt-BR"),
+    );
+    // nada digitado → 3 primeiros (alfabético), igual ao admin
+    if (!n && !p) return sorted.slice(0, 3);
+    return sorted.filter(
       (c) =>
-        (n.length >= 2 && c.name.toLowerCase().includes(n)) ||
-        (p.length >= 3 && c.phone.includes(p)),
+        (n.length >= 1 && c.name.toLowerCase().includes(n)) ||
+        (p.length >= 1 && c.phone.includes(p)),
     );
   }, [nameQ, phoneQ, data.clientes]);
 
@@ -423,6 +436,8 @@ export default function OrcamentoPage() {
                     setNameQ(e.target.value);
                     setPhoneQ("");
                   }}
+                  onFocus={onSearchFocus}
+                  onBlur={onSearchBlur}
                   style={bareInput}
                 />
               </div>
@@ -452,12 +467,14 @@ export default function OrcamentoPage() {
                     setPhoneQ(fmtPhone(e.target.value));
                     setNameQ("");
                   }}
+                  onFocus={onSearchFocus}
+                  onBlur={onSearchBlur}
                   style={bareInput}
                 />
               </div>
             </div>
 
-            {clientResults && (
+            {searchFocused && clientResults && (
               <div
                 style={{
                   background: "var(--card)",
