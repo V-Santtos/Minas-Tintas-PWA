@@ -422,6 +422,14 @@ As demais escritas (atômicas, que furam a RLS de leitura, ou de autoria do sist
 **aborta qualquer UPDATE ou DELETE** — inclusive via `service_role`. Só INSERT é permitido.
 Correções são feitas por linha compensatória (estorno/ajuste/devolução), nunca editando o passado.
 
+## Realtime (auto-update)
+
+Publicação `supabase_realtime` inclui `orders`, `point_transactions` e `resgates`. `orders` e
+`resgates` têm `replica identity full` (recebem UPDATE de status → no `postgres_changes` a RLS
+precisa do `painter_id` na linha pra filtrar por assinante em UPDATE/DELETE); `point_transactions`
+é append-only → `replica identity default` (PK) basta. Consumido por um listener client
+(`RealtimeRefresh` no layout de cada app) que só dispara `router.refresh()` — não lê o payload.
+
 ## Escrita — RPCs (camada 3b)
 
 Roteamento (do CLAUDE.md): **escrita simples de uma tabela escopada ao dono → policy**;
@@ -521,6 +529,7 @@ tela in-app de guia de instalação do PWA (iPhone/Safari).
 | `…_painter_stats_endereco.sql`         | endereço acrescentado à view `painter_stats` (append)                                        |
 | `…_painter_clients.sql`                | junção `painter_clients` + RLS + amplia leitura de `clients` + RPC `vincular_cliente_pintor` |
 | `…_painter_settings.sql`               | tabela `painter_settings` (prefs de notificação) + RLS de leitura + RPC `salvar_notif_prefs` |
+| `…_realtime_publication.sql`           | publica orders/point_transactions/resgates no realtime + replica identity full               |
 
 Banco hospedado (Supabase free tier). Migrations aplicadas via `supabase db push`
 (projeto linkado por `supabase link`). Para recriar o schema do zero: clonar o repo,

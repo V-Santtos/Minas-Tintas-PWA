@@ -214,6 +214,21 @@ Troca de telefone do pintor pelo admin; recuperação por e-mail (SMTP).
 - **`documento` gravado mascarado** (CPF/CNPJ com pontuação) — decisão travada, **não** normalizar
   pra dígitos. O `unique` é sobre o texto cru e todos os writers mascaram igual (`fmtCpf`/`maskCpf`);
   qualquer fluxo futuro (import, API) deve mascarar antes de gravar.
+- **Atualização em tempo real (auto-update) entregue:** Supabase Realtime no padrão
+  `evento → router.refresh()`. A migration publica `orders`, `point_transactions` e `resgates`
+  na `supabase_realtime` (com `replica identity full` em `orders`/`resgates`, que recebem UPDATE de
+  status); um `RealtimeRefresh` no `layout` de cada app assina `postgres_changes` e dispara
+  `router.refresh()` com debounce — o servidor re-busca com RLS/views intactos e o **payload é
+  ignorado** (nada sensível trafega pro cliente errado; a RLS de `select` escopa os eventos por
+  assinante). Pintor escuta `orders`/`point_transactions`/`resgates`; admin escuta `orders`/`resgates`.
+  O listener assina **depois** de `getSession()` + `realtime.setAuth(token)` — senão o canal sobe
+  anônimo e a RLS filtra tudo ("não atualiza"). **Decisão travada:** o browser client fica no padrão
+  (`autoRefreshToken` ligado); desligar quebra o re-auth do canal quando o token expira. **Resíduo
+  conhecido (só dev):** rodar os dois apps no mesmo `localhost`/navegador colide o cookie de sessão
+  (mesmo nome `sb-<ref>-auth-token`) e troca as identidades → "Requer Admin"/"Pintor não identificado".
+  Testar em perfis/abas-anônimas separadas; ou dar nome de cookie distinto por app via
+  `cookieOptions.name` nos 3 arquivos `utils/supabase/*` (não aplicado — inócuo em prod, domínios
+  já isolam).
 
 ---
 
