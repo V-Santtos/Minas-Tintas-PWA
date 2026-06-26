@@ -46,6 +46,9 @@ const leckerli = Leckerli_One({
 export const metadata: Metadata = {
   title: "Minas Tintas — Pintor",
   description: "Programa de benefícios para pintores",
+  appleWebApp: {
+    statusBarStyle: "black-translucent",
+  },
 };
 
 export const viewport: Viewport = {
@@ -53,6 +56,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: "cover",
   themeColor: "#FAF7F2",
 };
 

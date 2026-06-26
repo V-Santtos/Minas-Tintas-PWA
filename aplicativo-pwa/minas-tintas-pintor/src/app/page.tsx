@@ -1,12 +1,29 @@
-﻿import Link from "next/link";
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import MockStatusBar from "@/components/MockStatusBar"; // [MOCKUP DESKTOP] remover ao publicar
 
 export default function SplashPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const isPwa = window.matchMedia("(display-mode: standalone)").matches;
+    const flag = isPwa ? "splash_seen_pwa" : "splash_seen_browser";
+
+    if (localStorage.getItem(flag)) {
+      router.replace("/login");
+    } else {
+      localStorage.setItem(flag, "1");
+    }
+  }, [router]);
+
   return (
     <div
       className="pintor-app"
-      style={{ background: "#373131", minHeight: "100dvh" }}
+      style={{ background: "#373131", minHeight: "100dvh", height: "100dvh" }}
     >
       <MockStatusBar overlay />{/* [MOCKUP DESKTOP] some no mobile via CSS */}
       <div
@@ -103,4 +120,3 @@ export default function SplashPage() {
     </div>
   );
 }
-
