@@ -2,7 +2,14 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Building2, CheckCircle, Search, User } from "lucide-react";
+import {
+  ArrowLeft,
+  Building2,
+  CheckCircle,
+  Clock,
+  Search,
+  User,
+} from "lucide-react";
 import { ADDRESS_TYPES } from "@/lib/pintor-data";
 import { usePintor } from "@/lib/pintor-store";
 import { vincularCliente } from "@/lib/clientes-actions";
@@ -232,10 +239,10 @@ export default function ClientesPage() {
     setError("");
     setSuccess(
       res.clientCreated
-        ? `${payload.nome} foi cadastrado e vinculado ao seu perfil.`
+        ? `${payload.nome} foi cadastrado. O vínculo será efetivado quando um orçamento com ele for aprovado.`
         : res.linkCreated
-          ? "Cliente já cadastrado — vinculado ao seu perfil."
-          : "Você já está vinculado a esse cliente.",
+          ? "Cliente adicionado à sua agenda. O vínculo será efetivado quando um orçamento com ele for aprovado."
+          : "Esse cliente já está na sua agenda.",
     );
     clearForm();
     setView("list");
@@ -303,24 +310,24 @@ export default function ClientesPage() {
           style={{
             margin: "0 16px 12px",
             padding: "12px 14px",
-            background: "var(--success-tint)",
-            borderColor: "#C6DCC0",
+            background: "var(--paper-deep)",
+            borderColor: "var(--line)",
             display: "flex",
             alignItems: "center",
             gap: 10,
           }}
         >
-          <CheckCircle
+          <Clock
             size={18}
             strokeWidth={1.75}
-            color="var(--success)"
+            color="var(--muted)"
             style={{ flexShrink: 0 }}
           />
           <div>
             <div
               style={{ fontWeight: 700, fontSize: 13.5, color: "var(--ink)" }}
             >
-              Cliente cadastrado
+              Cliente cadastrado · vínculo pendente
             </div>
             <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 1 }}>
               {success}
@@ -593,6 +600,30 @@ export default function ClientesPage() {
                     >
                       {client.phone}
                     </div>
+                    <span
+                      style={{
+                        marginTop: 7,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 5,
+                        borderRadius: 999,
+                        padding: "3px 8px",
+                        fontSize: 10.5,
+                        fontWeight: 700,
+                        background: client.linked
+                          ? "var(--success-tint)"
+                          : "var(--paper-deep)",
+                        border: `1px solid ${client.linked ? "#C6DCC0" : "var(--line)"}`,
+                        color: client.linked ? "var(--success)" : "var(--muted)",
+                      }}
+                    >
+                      {client.linked ? (
+                        <CheckCircle size={11} strokeWidth={2} />
+                      ) : (
+                        <Clock size={11} strokeWidth={2} />
+                      )}
+                      {client.linked ? "Vinculado" : "Pendente"}
+                    </span>
                   </div>
                   <span
                     style={{

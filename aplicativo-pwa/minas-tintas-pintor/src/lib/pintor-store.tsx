@@ -45,6 +45,7 @@ export type PintorReadData = {
     city: string;
     neighborhood: string;
     note: string;
+    linked: boolean; // vinculado = tem ≥1 pedido aprovado; senão, pendente
   }[];
   atividade: {
     id: string;

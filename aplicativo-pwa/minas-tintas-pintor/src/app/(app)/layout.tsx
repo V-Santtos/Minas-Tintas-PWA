@@ -71,7 +71,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     supabase
       .from("pedidos_admin")
       .select(
-        "id, numero, client_nome, status, valor_bruto, pagamento, created_at, bonus_creditado",
+        "id, numero, client_id, client_nome, status, valor_bruto, pagamento, created_at, bonus_creditado",
       )
       .order("created_at", { ascending: false }),
     supabase.from("order_items").select("order_id, name, unit_price, qty"),
@@ -200,6 +200,13 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     };
   });
 
+  // vínculo é derivado: cliente está vinculado se o pintor tem ao menos um pedido
+  // APROVADO com ele. Sem isso (só cadastro/agenda ou pedido pendente) = pendente.
+  const approvedClientIds = new Set(
+    (orderRows ?? [])
+      .filter((r) => r.status === "aprovado" && r.client_id)
+      .map((r) => r.client_id as string),
+  );
   const clientes = (clientRows ?? []).map((c) => ({
     id: c.id,
     type: c.type as "pessoa" | "empresa",
@@ -212,6 +219,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     city: c.cidade ?? "",
     neighborhood: c.bairro ?? "",
     note: c.complemento ?? "",
+    linked: approvedClientIds.has(c.id),
   }));
 
   const data: PintorReadData = {

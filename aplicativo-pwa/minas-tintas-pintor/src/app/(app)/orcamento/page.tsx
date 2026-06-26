@@ -11,7 +11,6 @@ import {
   Info,
   UserPlus,
   UserCheck,
-  UserX,
   Building2,
   ChevronRight,
   PlusCircle,
@@ -250,7 +249,7 @@ export default function OrcamentoPage() {
       id: c.id,
       name: c.name,
       phone: c.phone,
-      linked: true,
+      linked: c.linked,
     });
     setSelectedClient({ name: c.name, phone: c.phone });
     setNameQ("");
@@ -301,7 +300,7 @@ export default function OrcamentoPage() {
       kind: "new",
       name: nc.name.trim(),
       phone: nc.phone.trim(),
-      linked: true,
+      linked: false, // cliente recém-cadastrado nasce pendente até a aprovação
       type: nc.type,
       document: nc.cpf,
       cep: nc.cep,
@@ -499,8 +498,7 @@ export default function OrcamentoPage() {
                   </div>
                 )}
                 {clientResults.map((c, i) => {
-                  const isLinked = true; // data.clientes já vem só com os clientes do pintor
-                  const others: { id: string }[] = [];
+                  const isLinked = c.linked; // vinculado = tem pedido aprovado
                   return (
                     <div
                       key={c.id}
@@ -551,22 +549,22 @@ export default function OrcamentoPage() {
                             <UserCheck size={11} strokeWidth={2.5} /> Você já
                             está vinculado
                           </div>
-                        ) : others.length > 0 ? (
+                        ) : (
                           <div
                             style={{
                               marginTop: 4,
                               fontSize: 11,
-                              color: "var(--warning)",
+                              color: "var(--muted)",
                               fontWeight: 600,
                               display: "flex",
                               alignItems: "center",
                               gap: 4,
                             }}
                           >
-                            <UserX size={11} strokeWidth={2.5} /> Você não está
-                            vinculado a este cliente
+                            <Info size={11} strokeWidth={2.5} /> Vínculo pendente
+                            — efetiva após a aprovação
                           </div>
-                        ) : null}
+                        )}
                       </div>
                       <ChevronRight
                         size={16}
@@ -603,8 +601,12 @@ export default function OrcamentoPage() {
             <div
               style={{
                 marginTop: 0,
-                background: "var(--success-tint)",
-                border: "1px solid #C6DCC0",
+                background: selected.linked
+                  ? "var(--success-tint)"
+                  : "var(--paper-deep)",
+                border: selected.linked
+                  ? "1px solid #C6DCC0"
+                  : "1px solid var(--line)",
                 borderRadius: 12,
                 padding: "12px 14px",
                 display: "flex",
@@ -613,12 +615,21 @@ export default function OrcamentoPage() {
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <CheckCircle
-                  size={18}
-                  strokeWidth={1.75}
-                  color="var(--success)"
-                  style={{ flexShrink: 0 }}
-                />
+                {selected.linked ? (
+                  <CheckCircle
+                    size={18}
+                    strokeWidth={1.75}
+                    color="var(--success)"
+                    style={{ flexShrink: 0 }}
+                  />
+                ) : (
+                  <User
+                    size={18}
+                    strokeWidth={1.75}
+                    color="var(--muted)"
+                    style={{ flexShrink: 0 }}
+                  />
+                )}
                 <div>
                   <div
                     style={{
