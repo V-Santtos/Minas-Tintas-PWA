@@ -25,7 +25,7 @@ export default async function LojinhaPage() {
   ] = await Promise.all([
     supabase
       .from("loja_items_admin")
-      .select("id, name, valor_base, multiplicador, stock, imagem, descricao")
+      .select("id, name, valor_base, mult_delta, stock, imagem, descricao")
       .order("custo_pts"),
     supabase
       .from("resgates_admin")
@@ -43,14 +43,14 @@ export default async function LojinhaPage() {
 
   const padrao = Number(cfg?.multiplicador_padrao ?? 3);
 
-  // itemMod = multiplicador − padrão (0 quando herda). Assim o calcPts do client,
-  // com globalMult = padrão, reproduz exatamente valor_base × multiplicador.
+  // itemMod = mult_delta (já é o delta; 0 quando herda). O calcPts do client,
+  // com globalMult = padrao, faz valor_base × (padrao + delta).
   const rewards: Reward[] = (itemRows ?? []).map((r) => ({
     id: r.id,
     name: r.name,
     custo: Number(r.valor_base),
     venda: Number(r.valor_base),
-    itemMod: r.multiplicador != null ? Number(r.multiplicador) - padrao : 0,
+    itemMod: r.mult_delta != null ? Number(r.mult_delta) : 0,
     stock: r.stock,
     icon: "",
     img: r.imagem ?? "",

@@ -15,24 +15,20 @@ export type LojaItemInput = {
 export type SaveLojaResult = { ok: true } | { ok: false; error: string };
 
 // Escrita simples escopada ao admin → policy is_admin() + server action.
-// multiplicador é derivado do delta com o padrão LIDO NO SERVIDOR (autoritativo):
-// mod 0 = herda (null); mod ≠ 0 = padrão + mod. Imagem fica de fora (bloco futuro).
+// mult_delta é o ajuste relativo ao multiplicador_padrao, gravado CRU (não mais
+// padrao + mod): mod 0 = herda (null). O efetivo é resolvido em leitura
+// (view/RPC) como padrao + delta. Imagem fica de fora (bloco futuro).
 export async function saveLojaItem(
   input: LojaItemInput,
 ): Promise<SaveLojaResult> {
   const supabase = await createClient();
 
-  const { data: cfg } = await supabase
-    .from("settings")
-    .select("multiplicador_padrao")
-    .single();
-  const padrao = Number(cfg?.multiplicador_padrao ?? 3);
-  const multiplicador = input.mod === 0 ? null : padrao + input.mod;
+  const mult_delta = input.mod === 0 ? null : input.mod;
 
   const row = {
     name: input.name.trim(),
     valor_base: input.valorBase,
-    multiplicador,
+    mult_delta,
     stock: Math.max(0, Math.floor(input.stock)),
     descricao: input.descricao?.trim() || null,
   };
