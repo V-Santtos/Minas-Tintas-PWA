@@ -19,8 +19,8 @@ import { useRouter } from "next/navigation";
 
 const NAV = [
   { href: "/dashboard", icon: Home, label: "Início" },
-  { href: "/pedidos", icon: ShoppingBag, label: "Pedidos", badge: 3 },
   { href: "/pintores", icon: Users, label: "Pintores" },
+  { href: "/pedidos", icon: ShoppingBag, label: "Pedidos" },
   { href: "/lojinha", icon: Gift, label: "Lojinha" },
   { href: "/relatorios", icon: BarChart2, label: "Relatórios" },
 ];
@@ -28,18 +28,28 @@ const NAV = [
 export default function AdminShell({
   children,
   adminName,
+  pendingOrders,
 }: {
   children: React.ReactNode;
   adminName: string;
+  pendingOrders: number;
 }) {
   return (
     <AdminProvider initialName={adminName}>
-      <AdminLayoutInner>{children}</AdminLayoutInner>
+      <AdminLayoutInner pendingOrders={pendingOrders}>
+        {children}
+      </AdminLayoutInner>
     </AdminProvider>
   );
 }
 
-function AdminLayoutInner({ children }: { children: React.ReactNode }) {
+function AdminLayoutInner({
+  children,
+  pendingOrders,
+}: {
+  children: React.ReactNode;
+  pendingOrders: number;
+}) {
   const pathname = usePathname();
   const { profile } = useAdmin();
   const [hovered, setHovered] = useState(false);
@@ -124,8 +134,9 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
 
           {/* Nav */}
           <nav style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {NAV.map(({ href, icon: Icon, label, badge }) => {
+            {NAV.map(({ href, icon: Icon, label }) => {
               const active = pathname === href;
+              const badge = href === "/pedidos" ? pendingOrders : 0;
               return (
                 <Link
                   key={href}
@@ -178,7 +189,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
                       {label}
                     </span>
                   )}
-                  {isExpanded && badge && (
+                  {isExpanded && badge > 0 && (
                     <span
                       style={{
                         marginLeft: "auto",

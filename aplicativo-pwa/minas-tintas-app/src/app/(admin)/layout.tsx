@@ -21,5 +21,17 @@ export default async function AdminLayout({
 
   if (!admin) redirect("/login");
 
-  return <AdminShell adminName={admin.nome ?? "Admin"}>{children}</AdminShell>;
+  const { count: pendingOrders } = await supabase
+    .from("pedidos_admin")
+    .select("*", { count: "exact", head: true })
+    .eq("status", "pendente");
+
+  return (
+    <AdminShell
+      adminName={admin.nome ?? "Admin"}
+      pendingOrders={pendingOrders ?? 0}
+    >
+      {children}
+    </AdminShell>
+  );
 }
