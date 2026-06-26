@@ -4,6 +4,7 @@ export type Order = {
   id: string;
   painter: string;
   location: string;
+  clientName?: string;
   title: string;
   date: string;
   total: number;

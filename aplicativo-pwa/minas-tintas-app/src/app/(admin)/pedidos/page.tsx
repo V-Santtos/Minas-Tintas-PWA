@@ -20,7 +20,7 @@ export default async function PedidosPage() {
     supabase
       .from("pedidos_admin")
       .select(
-        "numero, titulo, status, valor_bruto, desconto, pagamento, observacao, created_at, painter_nome, client_cidade, bonus_creditado, estorno_motivo",
+        "numero, titulo, status, valor_bruto, desconto, pagamento, observacao, created_at, painter_nome, client_nome, client_cidade, bonus_creditado, estorno_motivo",
       )
       .neq("status", "rascunho") // draft é WIP do pintor; admin não lista
       .order("numero", { ascending: false }),
@@ -53,6 +53,7 @@ export default async function PedidosPage() {
       id: String(r.numero).padStart(4, "0"),
       painter: r.painter_nome,
       location: r.client_cidade ?? "—", // sem coluna em orders; cidade do cliente
+      clientName: r.client_nome ?? undefined,
       title: r.titulo ?? "—",
       date: fmtDate(r.created_at),
       createdAtISO: r.created_at.slice(0, 10),

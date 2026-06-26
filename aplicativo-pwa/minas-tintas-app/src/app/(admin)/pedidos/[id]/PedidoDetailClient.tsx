@@ -273,6 +273,42 @@ export default function PedidoDetailClient({
             </strong>
             <span style={{ color: "var(--muted)" }}>· {o.location}</span>
           </div>
+          {o.clientName && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginTop: 8,
+              }}
+            >
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  background: "var(--muted)",
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  textTransform: "uppercase",
+                  letterSpacing: ".1em",
+                  color: "var(--muted)",
+                }}
+              >
+                Cliente vinculado
+              </span>
+              <strong
+                style={{ color: "var(--ink)", fontWeight: 700, fontSize: 14.5 }}
+              >
+                {o.clientName}
+              </strong>
+            </div>
+          )}
         </div>
         <div
           style={{

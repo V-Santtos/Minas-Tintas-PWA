@@ -1050,7 +1050,20 @@ export default function PedidosClient({
                       {o.location}
                     </div>
                   </div>
-                  <div style={{ color: "var(--ink-2)" }}>{o.title}</div>
+                  <div>
+                    <div style={{ color: "var(--ink-2)" }}>{o.title}</div>
+                    {o.clientName && (
+                      <div
+                        style={{
+                          fontSize: 11.5,
+                          color: "var(--muted)",
+                          marginTop: 2,
+                        }}
+                      >
+                        {o.clientName}
+                      </div>
+                    )}
+                  </div>
                   <div style={{ color: "var(--muted)", fontSize: 12.5 }}>
                     {o.date}
                   </div>

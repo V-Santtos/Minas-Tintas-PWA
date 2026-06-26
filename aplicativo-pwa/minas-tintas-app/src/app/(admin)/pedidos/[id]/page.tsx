@@ -21,7 +21,7 @@ export default async function PedidoDetailPage({
     supabase
       .from("pedidos_admin")
       .select(
-        "id, numero, titulo, status, valor_bruto, desconto, pagamento, observacao, created_at, painter_nome, client_cidade, bonus_creditado, estorno_motivo",
+        "id, numero, titulo, status, valor_bruto, desconto, pagamento, observacao, created_at, painter_nome, client_nome, client_cidade, bonus_creditado, estorno_motivo",
       )
       .eq("numero", numero)
       .maybeSingle(),
@@ -49,6 +49,7 @@ export default async function PedidoDetailPage({
     id: String(r.numero).padStart(4, "0"),
     painter: r.painter_nome,
     location: r.client_cidade ?? "—",
+    clientName: r.client_nome ?? undefined,
     title: r.titulo ?? "—",
     date: fmtDate(r.created_at),
     createdAtISO: r.created_at.slice(0, 10),
