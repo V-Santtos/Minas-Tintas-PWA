@@ -242,6 +242,15 @@ Troca de telefone do pintor pelo admin; recuperação por e-mail (SMTP).
   quebrou porque nunca pediu a coluna). Em renames futuros: subir o código compatível **antes** do
   `db push`, ou a view expor os dois nomes por um deploy (expand/contract). Relevante pro catálogo
   via API mais à frente.
+- **Lojinha: quantidade no resgate + item de resgate único** entregue. `resgates.quantidade` (1 linha
+  cobre N unidades; `pontos_congelados` = total) e `loja_items.resgate_unico`. A RPC `resgatar_item`
+  passou a `(item, qtd default 1)`: baixa `qtd` de estoque, debita `qtd × custo`, grava 1 resgate;
+  item único força qtd 1 e barra se o pintor já tem resgate dele em `pendente_retirada`/`entregue`
+  (**cancelado libera** — desfez). Cancelamentos (pintor e admin) devolvem `quantidade` de estoque.
+  Admin: checkbox de único no form + "×N" no card de resgate. Pintor: seletor de quantidade na tela
+  do item (capado por estoque e saldo, escondido p/ único), badge "ÚNICO"/"RESGATADO" e item
+  já-resgatado fica inativo (esmaecido + cadeado). **Decisões travadas:** quantidade como coluna (não
+  N linhas); cancelado libera o único.
 
 ---
 
