@@ -108,6 +108,8 @@ export default function LojinhaClient({
   const [editPhoto, setEditPhoto] = useState<string | null>(null);
   const [editPhotoPos, setEditPhotoPos] = useState({ x: 50, y: 50 });
   const [editDesc, setEditDesc] = useState("");
+  const [editUnico, setEditUnico] = useState(false);
+  const [addUnico, setAddUnico] = useState(false);
   const editFileRef = useRef<HTMLInputElement>(null);
 
   // Adicionar item modal
@@ -189,6 +191,7 @@ export default function LojinhaClient({
     setEditStock(String(r.stock));
     setEditMod(r.itemMod || 0);
     setEditDesc(r.desc || "");
+    setEditUnico(r.resgateUnico);
     setEditPhoto(imgSrc(r.img));
     setEditPhotoPos(r.imgPos || { x: 50, y: 50 });
   }
@@ -204,6 +207,7 @@ export default function LojinhaClient({
       mod: editMod,
       stock: Math.max(0, parseInt(editStock) || 0),
       descricao: editDesc,
+      resgateUnico: editUnico,
     });
     setSaving(false);
     if (!res.ok) {
@@ -254,6 +258,7 @@ export default function LojinhaClient({
       mod: addMod,
       stock: parseInt(addStock) || 0,
       descricao: addDesc,
+      resgateUnico: addUnico,
     });
     setSaving(false);
     if (!res.ok) {
@@ -309,6 +314,7 @@ export default function LojinhaClient({
     setAddStock("");
     setAddDesc("");
     setAddCatalogSel(false);
+    setAddUnico(false);
   }
 
   // Pts calculations
@@ -1125,6 +1131,7 @@ export default function LojinhaClient({
                         }}
                       >
                         {item.name}
+                        {re.qtd > 1 ? ` ×${re.qtd}` : ""}
                       </div>
                       <div
                         style={{
@@ -1656,6 +1663,39 @@ export default function LojinhaClient({
                   }}
                 />
               </div>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 10,
+                  cursor: "pointer",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={editUnico}
+                  onChange={(e) => setEditUnico(e.target.checked)}
+                  style={{
+                    width: 16,
+                    height: 16,
+                    marginTop: 2,
+                    accentColor: "var(--ink)",
+                  }}
+                />
+                <span>
+                  <span style={labelSt}>Resgate único por pintor</span>
+                  <span
+                    style={{
+                      display: "block",
+                      fontSize: 11,
+                      color: "var(--muted)",
+                      marginTop: 2,
+                    }}
+                  >
+                    Cada pintor só pode resgatar este item uma vez.
+                  </span>
+                </span>
+              </label>
             </div>
             <div style={modalFoot}>
               <button onClick={() => setEditId(null)} style={btnGhost}>
@@ -2033,6 +2073,39 @@ export default function LojinhaClient({
                   placeholder="Descreva o item…"
                 />
               </div>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 10,
+                  cursor: "pointer",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={addUnico}
+                  onChange={(e) => setAddUnico(e.target.checked)}
+                  style={{
+                    width: 16,
+                    height: 16,
+                    marginTop: 2,
+                    accentColor: "var(--ink)",
+                  }}
+                />
+                <span>
+                  <span style={labelSt}>Resgate único por pintor</span>
+                  <span
+                    style={{
+                      display: "block",
+                      fontSize: 11,
+                      color: "var(--muted)",
+                      marginTop: 2,
+                    }}
+                  >
+                    Cada pintor só pode resgatar este item uma vez.
+                  </span>
+                </span>
+              </label>
             </div>
             <div style={modalFoot}>
               <button onClick={closeAdd} style={btnGhost}>

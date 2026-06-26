@@ -277,6 +277,7 @@ export type Reward = {
   venda: number;
   itemMod: number;
   stock: number;
+  resgateUnico: boolean;
   icon: string;
   img: string;
   desc: string;
@@ -290,6 +291,7 @@ export type Resgate = {
   pts: number;
   data: string;
   status: "pendente" | "entregue" | "recusado";
+  qtd: number;
 };
 
 export type CatalogItem = {
@@ -313,6 +315,7 @@ export const REWARDS: Reward[] = [
     icon: "scissors",
     img: "Fita).png",
     desc: "Fita crepe 50 mm × 50 m para delimitação de áreas, proteção de rodapés e acabamentos em pintura.",
+    resgateUnico: false,
   },
   {
     id: "bone",
@@ -324,6 +327,7 @@ export const REWARDS: Reward[] = [
     icon: "hard-hat",
     img: "bone.png",
     desc: "Boné aba curva com bordado exclusivo da marca Minas Tintas. Fechamento traseiro com fivela ajustável.",
+    resgateUnico: false,
   },
   {
     id: "pinceis",
@@ -335,6 +339,7 @@ export const REWARDS: Reward[] = [
     icon: "paintbrush",
     img: "Pincel Atlas.png",
     desc: 'Kit com 3 pincéis Atlas de cerdas naturais — 1", 2" e 3". Para cortes limpos e acabamento fino.',
+    resgateUnico: false,
   },
   {
     id: "epi",
@@ -346,6 +351,7 @@ export const REWARDS: Reward[] = [
     icon: "shield",
     img: "kit-epi.png",
     desc: "Kit completo com máscara de proteção, óculos anti-impacto e luvas de látex. Proteção essencial durante a pintura.",
+    resgateUnico: false,
   },
   {
     id: "camiseta",
@@ -357,6 +363,7 @@ export const REWARDS: Reward[] = [
     icon: "shirt",
     img: "camiseta.png",
     desc: "Camiseta 100% algodão penteado com estampa exclusiva Minas Tintas. Disponível nos tamanhos P ao GG.",
+    resgateUnico: false,
   },
   {
     id: "rolo",
@@ -368,6 +375,7 @@ export const REWARDS: Reward[] = [
     icon: "paint-roller",
     img: "rolo profissional anti gota 23cm .png",
     desc: "Rolo de lã 23 cm com tecnologia anti-gota para acabamento limpo e preciso em paredes e tetos.",
+    resgateUnico: false,
   },
   {
     id: "impertech",
@@ -379,6 +387,7 @@ export const REWARDS: Reward[] = [
     icon: "droplets",
     img: "descrição do produto na foto.png",
     desc: "Impermeabilizante em borracha líquida que sela, protege e impermeabiliza telhados, calhas e lajes em uma só demão.",
+    resgateUnico: false,
   },
   {
     id: "macacao",
@@ -390,6 +399,7 @@ export const REWARDS: Reward[] = [
     icon: "shirt",
     img: "macacao.png",
     desc: "Macacão descartável em TNT resistente, com capuz e elástico nos punhos. Proteção completa durante a pintura.",
+    resgateUnico: false,
   },
   {
     id: "caixa",
@@ -401,6 +411,7 @@ export const REWARDS: Reward[] = [
     icon: "briefcase",
     img: "caixa de ferramenta.png",
     desc: 'Caixa organizadora 16" em plástico reforçado com travas duplas e compartimentos internos removíveis.',
+    resgateUnico: false,
   },
   {
     id: "lixadeira",
@@ -412,6 +423,7 @@ export const REWARDS: Reward[] = [
     icon: "wrench",
     img: "maquina orbital.png",
     desc: 'Lixadeira orbital 5" com base de velcro e 12.000 RPM. Ideal para lixamento de paredes, madeira e massa corrida.',
+    resgateUnico: false,
   },
 ];
 
@@ -423,6 +435,7 @@ export const RESGATES: Resgate[] = [
     pts: 900,
     data: "2026-05-19",
     status: "pendente",
+    qtd: 1,
   },
   {
     id: "re2",
@@ -431,6 +444,7 @@ export const RESGATES: Resgate[] = [
     pts: 600,
     data: "2026-05-18",
     status: "pendente",
+    qtd: 1,
   },
   {
     id: "re3",
@@ -439,6 +453,7 @@ export const RESGATES: Resgate[] = [
     pts: 1200,
     data: "2026-05-14",
     status: "entregue",
+    qtd: 1,
   },
   {
     id: "re4",
@@ -447,6 +462,7 @@ export const RESGATES: Resgate[] = [
     pts: 1500,
     data: "2026-05-10",
     status: "entregue",
+    qtd: 1,
   },
   {
     id: "re5",
@@ -455,6 +471,7 @@ export const RESGATES: Resgate[] = [
     pts: 1500,
     data: "2026-05-07",
     status: "recusado",
+    qtd: 1,
   },
 ];
 

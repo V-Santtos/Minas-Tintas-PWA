@@ -9,6 +9,7 @@ export type LojaItemInput = {
   valorBase: number;
   mod: number; // delta relativo ao multiplicador_padrao (0 = herda → null)
   stock: number;
+  resgateUnico: boolean;
   descricao?: string;
 };
 
@@ -31,6 +32,7 @@ export async function saveLojaItem(
     mult_delta,
     stock: Math.max(0, Math.floor(input.stock)),
     descricao: input.descricao?.trim() || null,
+    resgate_unico: input.resgateUnico,
   };
 
   const { error } = input.id

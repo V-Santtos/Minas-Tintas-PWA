@@ -25,12 +25,14 @@ export default async function LojinhaPage() {
   ] = await Promise.all([
     supabase
       .from("loja_items_admin")
-      .select("id, name, valor_base, mult_delta, stock, imagem, descricao")
+      .select(
+        "id, name, valor_base, mult_delta, stock, imagem, descricao, resgate_unico",
+      )
       .order("custo_pts"),
     supabase
       .from("resgates_admin")
       .select(
-        "id, painter_nome, loja_item_id, pontos_congelados, status, created_at",
+        "id, painter_nome, loja_item_id, pontos_congelados, status, created_at, quantidade",
       )
       .order("created_at", { ascending: false }),
     supabase.from("settings").select("multiplicador_padrao").single(),
@@ -52,6 +54,7 @@ export default async function LojinhaPage() {
     venda: Number(r.valor_base),
     itemMod: r.mult_delta != null ? Number(r.mult_delta) : 0,
     stock: r.stock,
+    resgateUnico: r.resgate_unico,
     icon: "",
     img: r.imagem ?? "",
     desc: r.descricao ?? "",
@@ -64,6 +67,7 @@ export default async function LojinhaPage() {
     pts: r.pontos_congelados,
     data: fmtData(r.created_at),
     status: STATUS_MAP[r.status] ?? "pendente",
+    qtd: r.quantidade,
   }));
 
   const catalog: CatalogItem[] = (productRows ?? []).map((p) => ({
