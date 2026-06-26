@@ -6,7 +6,6 @@ import Link from "next/link";
 import { aprovarPedido, recusarPedido, estornarPedido } from "../actions";
 import {
   ArrowLeft,
-  Printer,
   X,
   Check,
   RotateCcw,
@@ -318,25 +317,6 @@ export default function PedidoDetailClient({
             flexShrink: 0,
           }}
         >
-          <button
-            onClick={() => window.print()}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 7,
-              padding: "9px 14px",
-              borderRadius: 10,
-              fontFamily: "var(--font-body)",
-              fontWeight: 600,
-              fontSize: 13,
-              background: "var(--card)",
-              color: "var(--ink)",
-              border: "1px solid var(--line)",
-              cursor: "pointer",
-            }}
-          >
-            <Printer size={14} strokeWidth={2} /> Imprimir
-          </button>
           {o.status === "pendente" ? (
             <>
               <button

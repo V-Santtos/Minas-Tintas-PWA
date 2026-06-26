@@ -15,7 +15,6 @@ import {
 import {
   ChevronLeft,
   ChevronRight,
-  Printer,
   Trophy,
   Award,
   Star,
@@ -399,34 +398,8 @@ export default function RelatoriosClient({
           </span>
 
           {/* Chevron next */}
-          <button
-            onClick={next}
-            style={{
-              ...ctrlBtn,
-              width: 32,
-              borderRight: "1px solid var(--line)",
-            }}
-          >
+          <button onClick={next} style={{ ...ctrlBtn, width: 32 }}>
             <ChevronRight size={13} strokeWidth={2} />
-          </button>
-
-          {/* Print */}
-          <button
-            onClick={() => window.print()}
-            style={{
-              ...ctrlBtn,
-              color: "var(--ink)",
-              gap: 6,
-              padding: "0 14px",
-              fontFamily: "var(--font-body)",
-              fontSize: 13,
-              fontWeight: 500,
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            <Printer size={13} strokeWidth={1.75} />
-            Imprimir
           </button>
         </div>
       </div>
