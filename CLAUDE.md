@@ -229,6 +229,19 @@ Troca de telefone do pintor pelo admin; recuperação por e-mail (SMTP).
   Testar em perfis/abas-anônimas separadas; ou dar nome de cookie distinto por app via
   `cookieOptions.name` nos 3 arquivos `utils/supabase/*` (não aplicado — inócuo em prod, domínios
   já isolam).
+- **Multiplicador individual da lojinha = delta** (corrigido): `loja_items.multiplicador` virou
+  `mult_delta` e guarda o **ajuste relativo** ao `multiplicador_padrao`, não o multiplicador absoluto.
+  Antes a escrita gravava `padrão + mod`, cozinhando o padrão vigente → itens com mod individual
+  ficavam congelados e não reprecificavam quando o multiplicador global mudava. Agora
+  `lojinha/actions.ts` grava `input.mod` cru (sem ler `settings`); `lojinha/page.tsx` lê `mult_delta`
+  e mapeia `itemMod` direto do delta; view e RPC resolvem o efetivo como `padrão + coalesce(delta, 0)`.
+  Pintor sem mudança (lê `custo_pts`/`promo` da view). **Decisão travada:** delta, nunca absoluto.
+- **Lição (deploy): rename de coluna é breaking na janela de deploy.** Migrar o DB antes de subir o
+  código deixa qualquer consumidor que ainda pede a coluna antiga no escuro — foi o que sumiu os itens
+  do admin (view já com `mult_delta`, código deployado ainda pedindo `multiplicador`; pintor não
+  quebrou porque nunca pediu a coluna). Em renames futuros: subir o código compatível **antes** do
+  `db push`, ou a view expor os dois nomes por um deploy (expand/contract). Relevante pro catálogo
+  via API mais à frente.
 
 ---
 

@@ -21,14 +21,14 @@ de ser centralizado em `rules.ts`).
 
 São **derivados, nunca colunas**:
 
-| Derivado                         | Como se calcula                                                           |
-| -------------------------------- | ------------------------------------------------------------------------- |
-| Saldo de pontos do pintor        | `sum(valor)` em `point_transactions` daquele pintor                       |
-| Pintores vinculados a um cliente | relido de `orders` (agrupado por pintor, ordenado por data)               |
-| Bônus/pontos de um pedido        | a linha `tipo='bonus'` no ledger gerada na confirmação                    |
-| Custo em pontos de um item       | `round(valor_base × (multiplicador ?? multiplicador_padrao))`             |
-| "Item em promoção?"              | `multiplicador < multiplicador_padrao` (só **abaixo** do padrão tem selo) |
-| "Item bloqueado?" (cadeado)      | `saldo do pintor < custo do item`                                         |
+| Derivado                         | Como se calcula                                                        |
+| -------------------------------- | ---------------------------------------------------------------------- |
+| Saldo de pontos do pintor        | `sum(valor)` em `point_transactions` daquele pintor                    |
+| Pintores vinculados a um cliente | relido de `orders` (agrupado por pintor, ordenado por data)            |
+| Bônus/pontos de um pedido        | a linha `tipo='bonus'` no ledger gerada na confirmação                 |
+| Custo em pontos de um item       | `round(valor_base × (multiplicador_padrao + coalesce(mult_delta, 0)))` |
+| "Item em promoção?"              | `mult_delta < 0` (delta negativo = abaixo do padrão = selo)            |
+| "Item bloqueado?" (cadeado)      | `saldo do pintor < custo do item`                                      |
 
 ---
 
@@ -126,7 +126,7 @@ erDiagram
         uuid id PK
         text name
         decimal valor_base
-        decimal multiplicador "nulavel = herda padrao"
+        decimal mult_delta "nulavel = herda; delta sobre o padrao"
         int stock
         bool active
     }
@@ -250,9 +250,11 @@ de "compra confirmada").
 
 **`loja_items`** — item da lojinha de pontos.
 
-- `multiplicador` `numeric(4,2)` **nulável**: vazio = herda `settings.multiplicador_padrao`.
-  Definido = override (abaixo do padrão vira promoção; acima é só mais caro). "Voltar a herdar"
-  = apagar o campo (voltar a nulo), **não** copiar o padrão.
+- `mult_delta` `numeric(4,2)` **nulável**: ajuste (delta) relativo a `settings.multiplicador_padrao`;
+  vazio = herda. Efetivo em leitura = `padrão + coalesce(mult_delta, 0)` — itens com delta
+  **acompanham** o multiplicador global (delta negativo vira promoção; positivo é só mais caro).
+  "Voltar a herdar" = apagar o campo (voltar a nulo). **Gravado cru** (o delta), nunca `padrão + delta`:
+  gravar o absoluto congelava o item no padrão vigente na escrita e parava de reprecificar.
 - `stock` `check (stock >= 0)`.
 - Custo em pontos é derivado (não há coluna de custo).
 
@@ -327,14 +329,14 @@ de Pedidos (lista/detalhe) e pelo detalhe do pintor.
 
 Itens da lojinha com o custo em pontos derivado. `security_invoker = on`.
 
-| Campo                  | Origem                                                                 |
-| ---------------------- | ---------------------------------------------------------------------- |
-| campos de `loja_items` | passados direto                                                        |
-| `custo_pts`            | `round(valor_base × (multiplicador ?? settings.multiplicador_padrao))` |
-| `promo`                | `multiplicador is not null and multiplicador < padrão`                 |
+| Campo                  | Origem                                                                          |
+| ---------------------- | ------------------------------------------------------------------------------- |
+| campos de `loja_items` | passados direto                                                                 |
+| `custo_pts`            | `round(valor_base × (settings.multiplicador_padrao + coalesce(mult_delta, 0)))` |
+| `promo`                | `coalesce(mult_delta, 0) < 0`                                                   |
 
-`cross join settings` traz o multiplicador global (linha única) pra cada item; o `coalesce`
-faz herdar o padrão quando o item não tem multiplicador próprio.
+`cross join settings` traz o multiplicador global (linha única) pra cada item; o efetivo é
+`padrão + delta` (delta nulo = herda, sem ajuste).
 
 ### `resgates_admin`
 
@@ -496,40 +498,41 @@ tela in-app de guia de instalação do PWA (iPhone/Safari).
 
 ## Migrations (ordem de aplicação)
 
-| Arquivo                                | Conteúdo                                                                                     |
-| -------------------------------------- | -------------------------------------------------------------------------------------------- |
-| `…_fundacao_enums_settings.sql`        | 5 enums + tabela `settings` (linha única)                                                    |
-| `…_entidades_base.sql`                 | `painters`, `admins`, `clients`, `products`                                                  |
-| `…_pedidos.sql`                        | `orders`, `order_items`                                                                      |
-| `…_lojinha_e_ledger.sql`               | `loja_items`, `resgates`, `point_transactions`                                               |
-| `…_painter_telefone_unico.sql`         | `painters.telefone` obrigatório + único (credencial)                                         |
-| `…_painter_email_contato.sql`          | `painters.email` (contato, opcional)                                                         |
-| `…_rls_identidade.sql`                 | RLS em `admins`/`painters` + função `is_admin()`                                             |
-| `…_rls_dominio.sql`                    | RLS de leitura no comercial/pontos/lojinha/settings/products + `current_painter_id()`        |
-| `…_ledger_imutavel.sql`                | trigger de imutabilidade em `point_transactions`                                             |
-| `…_rls_clients.sql`                    | RLS faltante em `clients`                                                                    |
-| `…_painter_stats_view.sql`             | view `painter_stats` (derivações do pintor, `security_invoker`)                              |
-| `…_orders_titulo.sql`                  | coluna `orders.titulo`                                                                       |
-| `…_pedidos_admin_view.sql`             | view `pedidos_admin` (nomes + bônus/estorno derivados)                                       |
-| `…_lojinha_views.sql`                  | views `loja_items_admin`, `resgates_admin`                                                   |
-| `…_painter_stats_excluir_rascunho.sql` | `painter_stats.pedidos` passa a excluir rascunho                                             |
-| `…_clients_admin_view.sql`             | view `clients_admin` (cliente + pintor mais recente)                                         |
-| `…_products_public_view.sql`           | view `products_public` (catálogo ao pintor, sem `cost`, `security_invoker` off)              |
-| `…_rls_clients_escrita_admin.sql`      | policies `INSERT`/`UPDATE` de `clients` (admin)                                              |
-| `…_resgate_rpcs.sql`                   | RPCs `resgatar_item`, `cancelar_resgate` (pintor)                                            |
-| `…_pedido_rpcs.sql`                    | RPCs `aprovar_pedido`, `recusar_pedido`, `estornar_pedido` (admin)                           |
-| `…_orcamento_rpc.sql`                  | RPC `enviar_orcamento` (pintor)                                                              |
-| `…_rls_loja_items_escrita_admin.sql`   | policies `INSERT`/`UPDATE` de `loja_items` (admin)                                           |
-| `…_resgate_admin_rpcs.sql`             | RPCs `entregar_resgate`, `cancelar_resgate_admin` (admin)                                    |
-| `…_rls_settings_escrita_admin.sql`     | policy `UPDATE` de `settings` (admin)                                                        |
-| `…_criar_pedido_admin_rpc.sql`         | RPC `criar_pedido_admin` (pedido já aprovado)                                                |
-| `…_rls_painters_escrita_admin.sql`     | policy `UPDATE` de `painters` (admin: nome/documento/active/endereço)                        |
-| `…_rls_admins_self_update.sql`         | policy `UPDATE` de `admins` (self: nome)                                                     |
-| `…_painter_endereco.sql`               | colunas de endereço em `painters` (`cep`/`rua`/`numero`/`complemento`/`bairro`/`cidade`)     |
-| `…_painter_stats_endereco.sql`         | endereço acrescentado à view `painter_stats` (append)                                        |
-| `…_painter_clients.sql`                | junção `painter_clients` + RLS + amplia leitura de `clients` + RPC `vincular_cliente_pintor` |
-| `…_painter_settings.sql`               | tabela `painter_settings` (prefs de notificação) + RLS de leitura + RPC `salvar_notif_prefs` |
-| `…_realtime_publication.sql`           | publica orders/point_transactions/resgates no realtime + replica identity full               |
+| Arquivo                                | Conteúdo                                                                                                                                           |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `…_fundacao_enums_settings.sql`        | 5 enums + tabela `settings` (linha única)                                                                                                          |
+| `…_entidades_base.sql`                 | `painters`, `admins`, `clients`, `products`                                                                                                        |
+| `…_pedidos.sql`                        | `orders`, `order_items`                                                                                                                            |
+| `…_lojinha_e_ledger.sql`               | `loja_items`, `resgates`, `point_transactions`                                                                                                     |
+| `…_painter_telefone_unico.sql`         | `painters.telefone` obrigatório + único (credencial)                                                                                               |
+| `…_painter_email_contato.sql`          | `painters.email` (contato, opcional)                                                                                                               |
+| `…_rls_identidade.sql`                 | RLS em `admins`/`painters` + função `is_admin()`                                                                                                   |
+| `…_rls_dominio.sql`                    | RLS de leitura no comercial/pontos/lojinha/settings/products + `current_painter_id()`                                                              |
+| `…_ledger_imutavel.sql`                | trigger de imutabilidade em `point_transactions`                                                                                                   |
+| `…_rls_clients.sql`                    | RLS faltante em `clients`                                                                                                                          |
+| `…_painter_stats_view.sql`             | view `painter_stats` (derivações do pintor, `security_invoker`)                                                                                    |
+| `…_orders_titulo.sql`                  | coluna `orders.titulo`                                                                                                                             |
+| `…_pedidos_admin_view.sql`             | view `pedidos_admin` (nomes + bônus/estorno derivados)                                                                                             |
+| `…_lojinha_views.sql`                  | views `loja_items_admin`, `resgates_admin`                                                                                                         |
+| `…_painter_stats_excluir_rascunho.sql` | `painter_stats.pedidos` passa a excluir rascunho                                                                                                   |
+| `…_clients_admin_view.sql`             | view `clients_admin` (cliente + pintor mais recente)                                                                                               |
+| `…_products_public_view.sql`           | view `products_public` (catálogo ao pintor, sem `cost`, `security_invoker` off)                                                                    |
+| `…_rls_clients_escrita_admin.sql`      | policies `INSERT`/`UPDATE` de `clients` (admin)                                                                                                    |
+| `…_resgate_rpcs.sql`                   | RPCs `resgatar_item`, `cancelar_resgate` (pintor)                                                                                                  |
+| `…_pedido_rpcs.sql`                    | RPCs `aprovar_pedido`, `recusar_pedido`, `estornar_pedido` (admin)                                                                                 |
+| `…_orcamento_rpc.sql`                  | RPC `enviar_orcamento` (pintor)                                                                                                                    |
+| `…_rls_loja_items_escrita_admin.sql`   | policies `INSERT`/`UPDATE` de `loja_items` (admin)                                                                                                 |
+| `…_resgate_admin_rpcs.sql`             | RPCs `entregar_resgate`, `cancelar_resgate_admin` (admin)                                                                                          |
+| `…_rls_settings_escrita_admin.sql`     | policy `UPDATE` de `settings` (admin)                                                                                                              |
+| `…_criar_pedido_admin_rpc.sql`         | RPC `criar_pedido_admin` (pedido já aprovado)                                                                                                      |
+| `…_rls_painters_escrita_admin.sql`     | policy `UPDATE` de `painters` (admin: nome/documento/active/endereço)                                                                              |
+| `…_rls_admins_self_update.sql`         | policy `UPDATE` de `admins` (self: nome)                                                                                                           |
+| `…_painter_endereco.sql`               | colunas de endereço em `painters` (`cep`/`rua`/`numero`/`complemento`/`bairro`/`cidade`)                                                           |
+| `…_painter_stats_endereco.sql`         | endereço acrescentado à view `painter_stats` (append)                                                                                              |
+| `…_painter_clients.sql`                | junção `painter_clients` + RLS + amplia leitura de `clients` + RPC `vincular_cliente_pintor`                                                       |
+| `…_painter_settings.sql`               | tabela `painter_settings` (prefs de notificação) + RLS de leitura + RPC `salvar_notif_prefs`                                                       |
+| `…_realtime_publication.sql`           | publica orders/point_transactions/resgates no realtime + replica identity full                                                                     |
+| `…_lojinha_mult_delta.sql`             | `loja_items.multiplicador`→`mult_delta` (vira delta relativo ao padrão); view `loja_items_admin` + RPC `resgatar_item` aditivas (`padrão + delta`) |
 
 Banco hospedado (Supabase free tier). Migrations aplicadas via `supabase db push`
 (projeto linkado por `supabase link`). Para recriar o schema do zero: clonar o repo,
