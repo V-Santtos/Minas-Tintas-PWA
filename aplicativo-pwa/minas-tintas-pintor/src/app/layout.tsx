@@ -47,7 +47,15 @@ export const metadata: Metadata = {
   title: "Minas Tintas — Pintor",
   description: "Programa de benefícios para pintores",
   appleWebApp: {
+    capable: true,
     statusBarStyle: "black-translucent",
+  },
+  // iOS só honra o `black-translucent` quando a meta legada com prefixo `apple-`
+  // está presente. Esta versão do Next só emite a nova `mobile-web-app-capable`
+  // (basta pra instalar/standalone, mas NÃO ativa a status bar translúcida),
+  // então adicionamos a legada manualmente. Sem ela, fica a faixa creme no topo.
+  other: {
+    "apple-mobile-web-app-capable": "yes",
   },
 };
 
