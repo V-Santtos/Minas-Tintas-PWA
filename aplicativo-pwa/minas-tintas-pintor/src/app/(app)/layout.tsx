@@ -78,7 +78,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     supabase
       .from("loja_items_admin")
       .select(
-        "id, name, valor_base, stock, categoria, imagem, descricao, custo_pts, promo",
+        "id, name, valor_base, stock, categoria, imagem, descricao, custo_pts, promo, resgate_unico",
       )
       .order("custo_pts"),
     supabase
@@ -90,7 +90,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       .select(
         "id, loja_item_id, item_nome, pontos_congelados, status, created_at",
       )
-      .eq("status", "pendente_retirada")
+      .in("status", ["pendente_retirada", "entregue"])
       .order("created_at", { ascending: false }),
     supabase
       .from("clients")
@@ -136,6 +136,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   }));
 
   // locked = sem estoque (afford-ability é checada nas telas via saldo)
+  const resgatados = new Set((resgateRows ?? []).map((r) => r.loja_item_id));
   const loja: LojaProduct[] = (lojaRows ?? []).map((r) => ({
     id: r.id,
     cat: (LOJA_CATS.includes(r.categoria)
@@ -150,18 +151,20 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     img: r.imagem ?? "",
     name: r.name,
     desc: r.descricao ?? "",
+    unico: r.resgate_unico,
+    jaResgatado: r.resgate_unico && resgatados.has(r.id),
   }));
 
-  const pendingRedemptions: PendingRedemption[] = (resgateRows ?? []).map(
-    (r) => ({
+  const pendingRedemptions: PendingRedemption[] = (resgateRows ?? [])
+    .filter((r) => r.status === "pendente_retirada")
+    .map((r) => ({
       id: r.id,
       itemId: r.loja_item_id ?? "",
       itemName: r.item_nome ?? "Item",
       pts: r.pontos_congelados,
       requestedAt: fmtData(r.created_at),
       status: "pendente",
-    }),
-  );
+    }));
 
   const catalog = (prodRows ?? []).map((pr) => ({
     id: pr.id,

@@ -53,10 +53,10 @@ function sortProducts(
   if (sort === "available") {
     return [
       ...list
-        .filter((p) => !p.locked && p.pts <= balance)
+        .filter((p) => !p.locked && !p.jaResgatado && p.pts <= balance)
         .sort((a, b) => a.pts - b.pts),
       ...list
-        .filter((p) => !p.locked && p.pts > balance)
+        .filter((p) => !p.locked && (p.jaResgatado || p.pts > balance))
         .sort((a, b) => a.pts - b.pts),
       ...list.filter((p) => p.locked),
     ];
@@ -412,7 +412,7 @@ export default function LojaPage() {
       <div className="rewards-grid">
         {products.map((p) => {
           const Ico = ICONS[p.icon] ?? Package;
-          const cantAfford = p.locked || p.pts > saldo;
+          const cantAfford = p.locked || p.pts > saldo || p.jaResgatado;
           return (
             <button
               key={p.id}
@@ -436,6 +436,24 @@ export default function LojaPage() {
                   }}
                 >
                   PROMO
+                </div>
+              )}
+              {p.unico && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 8,
+                    right: 8,
+                    background: p.jaResgatado ? "var(--success)" : "var(--ink)",
+                    color: "#fff",
+                    fontSize: 9,
+                    fontWeight: 700,
+                    padding: "2px 6px",
+                    borderRadius: 4,
+                    letterSpacing: ".04em",
+                  }}
+                >
+                  {p.jaResgatado ? "RESGATADO" : "ÚNICO"}
                 </div>
               )}
               <div className="reward-thumb">

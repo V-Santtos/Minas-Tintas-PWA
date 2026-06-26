@@ -362,6 +362,8 @@ export type LojaProduct = {
   promo: boolean;
   locked: boolean;
   stock: number;
+  unico: boolean;
+  jaResgatado: boolean;
   icon: string;
   img: string;
   name: string;
@@ -377,6 +379,8 @@ export const LOJA_PRODUCTS: LojaProduct[] = [
     promo: false,
     locked: false,
     stock: 3,
+    unico: false,
+    jaResgatado: false,
     icon: "tag",
     img: "/assets/bone.png",
     name: "Boné Minas Tintas",
@@ -390,6 +394,8 @@ export const LOJA_PRODUCTS: LojaProduct[] = [
     promo: true,
     locked: false,
     stock: 5,
+    unico: false,
+    jaResgatado: false,
     icon: "paint-roller",
     img: "/assets/rolo-profissional-anti-gota-23cm.png",
     name: "Rolo profissional anti-gota 23 cm",
@@ -403,6 +409,8 @@ export const LOJA_PRODUCTS: LojaProduct[] = [
     promo: false,
     locked: false,
     stock: 8,
+    unico: false,
+    jaResgatado: false,
     icon: "package",
     img: "/assets/Fita-crepe-50mm-50m.png",
     name: "Fita crepe 50 mm × 50 m",
@@ -416,6 +424,8 @@ export const LOJA_PRODUCTS: LojaProduct[] = [
     promo: false,
     locked: false,
     stock: 2,
+    unico: false,
+    jaResgatado: false,
     icon: "paintbrush",
     img: "/assets/Pincel-Atlas.png",
     name: "Kit pincéis (3 peças) Atlas",
@@ -429,6 +439,8 @@ export const LOJA_PRODUCTS: LojaProduct[] = [
     promo: false,
     locked: false,
     stock: 4,
+    unico: false,
+    jaResgatado: false,
     icon: "package",
     img: "/assets/descricao-do-produto-na-foto.png",
     name: "Impertech 3em1 — Borracha Líquida",
@@ -442,6 +454,8 @@ export const LOJA_PRODUCTS: LojaProduct[] = [
     promo: false,
     locked: false,
     stock: 6,
+    unico: false,
+    jaResgatado: false,
     icon: "shirt",
     img: "/assets/camiseta.png",
     name: "Camiseta Minas Tintas — algodão",
@@ -455,6 +469,8 @@ export const LOJA_PRODUCTS: LojaProduct[] = [
     promo: false,
     locked: false,
     stock: 2,
+    unico: false,
+    jaResgatado: false,
     icon: "shirt",
     img: "/assets/macacao.png",
     name: "Macacão de pintor — tamanho G",
@@ -468,6 +484,8 @@ export const LOJA_PRODUCTS: LojaProduct[] = [
     promo: false,
     locked: false,
     stock: 1,
+    unico: false,
+    jaResgatado: false,
     icon: "briefcase",
     img: "/assets/caixa-de-ferramenta.png",
     name: 'Caixa de ferramentas 16"',
@@ -481,6 +499,8 @@ export const LOJA_PRODUCTS: LojaProduct[] = [
     promo: false,
     locked: true,
     stock: 1,
+    unico: false,
+    jaResgatado: false,
     icon: "wrench",
     img: "/assets/maquina-orbital.png",
     name: 'Lixadeira orbital 5"',

@@ -6,9 +6,15 @@ export type RpcResult = { ok: true } | { ok: false; error: string };
 
 // Resgate atômico no banco (RPC SECURITY DEFINER). O servidor resolve o pintor
 // pelo JWT e recalcula o custo; daqui só vai o id do item.
-export async function resgatarItem(itemId: string): Promise<RpcResult> {
+export async function resgatarItem(
+  itemId: string,
+  qtd = 1,
+): Promise<RpcResult> {
   const supabase = await createClient();
-  const { error } = await supabase.rpc("resgatar_item", { p_item_id: itemId });
+  const { error } = await supabase.rpc("resgatar_item", {
+    p_item_id: itemId,
+    p_qtd: qtd,
+  });
   if (error)
     return { ok: false, error: error.message || "Não foi possível resgatar." };
   return { ok: true };

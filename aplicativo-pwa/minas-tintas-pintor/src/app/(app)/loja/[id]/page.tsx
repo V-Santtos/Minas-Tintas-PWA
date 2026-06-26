@@ -39,6 +39,7 @@ export default function ResgatePage({
   const router = useRouter();
   const { saldo, data } = usePintor();
 
+  const [qtd, setQtd] = useState(1);
   const [toastOpen, setToastOpen] = useState(false);
   const [sheetIn, setSheetIn] = useState(false);
   const [displayNum, setDisplayNum] = useState(0);
@@ -72,7 +73,16 @@ export default function ResgatePage({
 
   const Ico = ICONS[p.icon] ?? Package;
   const item = p;
-  const cantRedeem = p.locked || p.pts > saldo;
+  const unitPts = p.pts; // a view ja da o custo POR UNIDADE
+  const affordableQtd = unitPts > 0 ? Math.floor(saldo / unitPts) : 0;
+  const maxQtd = Math.min(p.stock, affordableQtd); // 0 se nao paga nem 1
+  const showStepper = !p.unico && !p.locked && maxQtd > 1;
+  const qtdEfetiva = p.unico
+    ? 1
+    : Math.min(Math.max(1, qtd), Math.max(1, maxQtd));
+  const totalPts = unitPts * qtdEfetiva;
+  const jaResgatado = p.unico && p.jaResgatado;
+  const cantRedeem = p.locked || jaResgatado || totalPts > saldo;
 
   function animateCounter(from: number, to: number, duration: number) {
     const start = performance.now();
@@ -90,7 +100,7 @@ export default function ResgatePage({
     setErro("");
     setSubmitting(true);
 
-    const res = await resgatarItem(item.id);
+    const res = await resgatarItem(item.id, qtdEfetiva);
     if (!res.ok) {
       setSubmitting(false);
       setErro(res.error);
@@ -98,7 +108,7 @@ export default function ResgatePage({
     }
 
     const oldBalance = saldo;
-    const newBalance = Math.max(0, saldo - item.pts);
+    const newBalance = Math.max(0, saldo - totalPts);
     setDisplayNum(oldBalance);
     setToastOpen(true);
 
@@ -241,6 +251,100 @@ export default function ResgatePage({
           gap: 10,
         }}
       >
+        {p.unico && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "10px 14px",
+              borderRadius: 12,
+              background: "var(--paper-deep)",
+              border: "1px solid var(--line)",
+              fontSize: 12.5,
+              color: "var(--muted)",
+              lineHeight: 1.5,
+            }}
+          >
+            <Tag
+              size={14}
+              strokeWidth={1.8}
+              color="var(--muted)"
+              style={{ flexShrink: 0 }}
+            />
+            {jaResgatado
+              ? "Você já resgatou este item — é de resgate único por pintor."
+              : "Resgate único: cada pintor pode resgatar este item uma vez."}
+          </div>
+        )}
+        {showStepper && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "12px 16px",
+              borderRadius: 14,
+              border: "1px solid var(--line)",
+              background: "var(--card)",
+            }}
+          >
+            <span
+              style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}
+            >
+              Quantidade
+            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <button
+                onClick={() => setQtd((q) => Math.max(1, q - 1))}
+                disabled={qtdEfetiva <= 1}
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: "50%",
+                  border: "1.5px solid var(--line)",
+                  background: "transparent",
+                  fontSize: 20,
+                  lineHeight: 1,
+                  color: "var(--ink)",
+                  opacity: qtdEfetiva <= 1 ? 0.4 : 1,
+                  cursor: qtdEfetiva <= 1 ? "not-allowed" : "pointer",
+                }}
+              >
+                −
+              </button>
+              <span
+                style={{
+                  fontFamily: "var(--font-jakarta)",
+                  fontWeight: 800,
+                  fontSize: 18,
+                  minWidth: 24,
+                  textAlign: "center",
+                }}
+              >
+                {qtdEfetiva}
+              </span>
+              <button
+                onClick={() => setQtd((q) => Math.min(maxQtd, q + 1))}
+                disabled={qtdEfetiva >= maxQtd}
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: "50%",
+                  border: "1.5px solid var(--line)",
+                  background: "transparent",
+                  fontSize: 20,
+                  lineHeight: 1,
+                  color: "var(--ink)",
+                  opacity: qtdEfetiva >= maxQtd ? 0.4 : 1,
+                  cursor: qtdEfetiva >= maxQtd ? "not-allowed" : "pointer",
+                }}
+              >
+                +
+              </button>
+            </div>
+          </div>
+        )}
         <button
           className="btn btn-primary btn-full"
           onClick={confirmarResgate}
@@ -255,9 +359,11 @@ export default function ResgatePage({
           <span>
             {p.locked
               ? "Indisponível"
-              : p.pts > saldo
-                ? `Faltam ${ptsFmt(p.pts - saldo)} pts`
-                : `Resgatar por ${ptsFmt(p.pts)} pts`}
+              : jaResgatado
+                ? "Já resgatado"
+                : totalPts > saldo
+                  ? `Faltam ${ptsFmt(totalPts - saldo)} pts`
+                  : `Resgatar por ${ptsFmt(totalPts)} pts`}
           </span>
         </button>
         {erro && (
