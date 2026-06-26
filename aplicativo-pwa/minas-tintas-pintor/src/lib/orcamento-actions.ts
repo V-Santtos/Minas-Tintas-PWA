@@ -50,3 +50,19 @@ export async function enviarOrcamento(
   const r = data as { id: string; numero: number };
   return { ok: true, id: r.id, numero: r.numero };
 }
+
+// Cancelar orçamento pendente do próprio pintor (RPC valida posse + status).
+export async function cancelarOrcamento(
+  numero: number,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("cancelar_orcamento", {
+    p_numero: numero,
+  });
+  if (error)
+    return {
+      ok: false,
+      error: error.message || "Não foi possível cancelar o orçamento.",
+    };
+  return { ok: true };
+}

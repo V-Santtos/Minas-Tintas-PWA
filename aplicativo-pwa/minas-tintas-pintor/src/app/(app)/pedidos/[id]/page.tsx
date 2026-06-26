@@ -1,9 +1,10 @@
 ﻿"use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Pencil } from "lucide-react";
 import { usePintor } from "@/lib/pintor-store";
+import { cancelarOrcamento } from "@/lib/orcamento-actions";
 import {
   STATUS_CFG,
   DEFAULT_DETAIL_ITEMS,
@@ -21,6 +22,7 @@ export default function PedidoDetailPage({
   const { id } = use(params);
   const router = useRouter();
   const { lastSubmitted, data } = usePintor();
+  const [cancelling, setCancelling] = useState(false);
 
   let o: Order | undefined = data.orders.find((x) => x.id === id);
   if (!o && lastSubmitted && lastSubmitted.id === id) {
@@ -52,6 +54,23 @@ export default function PedidoDetailPage({
   const pts = bonusPts(o.amount, data.bonusPercent);
   const items = o.items ?? DEFAULT_DETAIL_ITEMS;
   const isDraft = o.status === "rascunho";
+  const numero = Number(o.id);
+
+  async function handleCancel() {
+    if (cancelling) return;
+    if (!confirm("Cancelar este orçamento? Esta ação não pode ser desfeita."))
+      return;
+    setCancelling(true);
+    const res = await cancelarOrcamento(numero);
+    if (!res.ok) {
+      setCancelling(false);
+      alert(res.error);
+      router.refresh(); // status pode ter mudado (ex.: admin aprovou) — re-sincroniza
+      return;
+    }
+    router.refresh();
+    router.back();
+  }
 
   return (
     <>
@@ -246,6 +265,29 @@ export default function PedidoDetailPage({
             }}
           >
             Excluir rascunho
+          </button>
+        </div>
+      )}
+      {/* Cancelar orçamento pendente */}
+      {o.status === "pendente" && (
+        <div style={{ padding: "0 16px 24px" }}>
+          <button
+            onClick={handleCancel}
+            disabled={cancelling}
+            style={{
+              width: "100%",
+              padding: 12,
+              borderRadius: 12,
+              border: "1px solid var(--line)",
+              background: "transparent",
+              fontSize: 14,
+              fontWeight: 600,
+              color: "var(--brand)",
+              cursor: cancelling ? "default" : "pointer",
+              opacity: cancelling ? 0.6 : 1,
+            }}
+          >
+            {cancelling ? "Cancelando..." : "Cancelar orçamento"}
           </button>
         </div>
       )}
