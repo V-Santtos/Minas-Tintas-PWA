@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import AdminShell from "./AdminShell";
+import RealtimeRefresh from "@/components/RealtimeRefresh";
 
 export default async function AdminLayout({
   children,
@@ -27,11 +28,14 @@ export default async function AdminLayout({
     .eq("status", "pendente");
 
   return (
-    <AdminShell
-      adminName={admin.nome ?? "Admin"}
-      pendingOrders={pendingOrders ?? 0}
-    >
-      {children}
-    </AdminShell>
+    <>
+      <RealtimeRefresh />
+      <AdminShell
+        adminName={admin.nome ?? "Admin"}
+        pendingOrders={pendingOrders ?? 0}
+      >
+        {children}
+      </AdminShell>
+    </>
   );
 }

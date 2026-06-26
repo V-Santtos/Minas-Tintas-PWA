@@ -10,6 +10,7 @@ import type { Order, OrderItem, LojaProduct } from "@/lib/pintor-data";
 import { BONUS_PERCENT } from "@/lib/rules";
 import BottomNav from "@/components/BottomNav";
 import MockStatusBar from "@/components/MockStatusBar"; // [MOCKUP DESKTOP] remover ao publicar
+import RealtimeRefresh from "@/components/RealtimeRefresh";
 
 const MES = [
   "jan",
@@ -244,9 +245,9 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <PintorProvider data={data}>
+      <RealtimeRefresh />
       <div className="pintor-app">
         <MockStatusBar />
-        {/* [MOCKUP DESKTOP] some no mobile via CSS */}
         <div className="pintor-scroll">{children}</div>
         <BottomNav />
       </div>
