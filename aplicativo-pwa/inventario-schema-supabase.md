@@ -89,7 +89,6 @@ erDiagram
         text name
         text brand
         decimal price
-        decimal cost "so admin"
         int stock "nao baixa na aprovacao"
         bool active
     }
@@ -224,7 +223,6 @@ _agora_; não versiona, porque o passado fica congelado no ledger e nos snapshot
 **`products`** — catálogo de venda (orçamentos), cadastrado manualmente pelo admin.
 Módulo **separado** da lojinha de pontos.
 
-- `cost` é sensível (só admin enxerga — via RLS, pendente).
 - `stock` **não** baixa na aprovação (informativo).
 
 **`orders`** — tabela única; o `status` carrega o ciclo de vida (não há tabela separada
@@ -369,9 +367,8 @@ Consumida pela tela **Clientes** (admin, rota `dashboard`).
 
 ### `products_public`
 
-Catálogo exposto ao **pintor** — `products` **sem `cost`** (sensível). Diferente das outras
-views, roda **`security_invoker = off`** (como dono): ignora a RLS só-admin de `products` e lista
-os ativos; o custo nunca vaza. `grant select to authenticated`.
+Catálogo exposto ao **pintor**. Diferente das outras views, roda **`security_invoker = off`**
+(como dono): ignora a RLS só-admin de `products` e lista os ativos. `grant select to authenticated`.
 
 | Campo                                 | Origem              |
 | ------------------------------------- | ------------------- |
@@ -412,7 +409,7 @@ Funções auxiliares (`SECURITY DEFINER`, evitam recursão nas policies):
 | `orders`, `point_transactions`, `resgates` | pintor lê os seus (`painter_id = current_painter_id()`); admin lê tudo                                 |
 | `order_items`                              | herda do pedido pai (vê o item se vê o pedido)                                                         |
 | `loja_items`, `settings`                   | qualquer autenticado                                                                                   |
-| `products`                                 | só admin (contém `cost` sensível; pintor ainda não consome catálogo)                                   |
+| `products`                                 | só admin (base); pintor lê o catálogo via view `products_public` (`security_invoker = off`)            |
 | `painter_settings`                         | pintor lê as próprias preferências (`painter_id = current_painter_id()`); escrita só pelo RPC          |
 
 **Escrita por policy** (escrita simples escopada por papel, sem RPC):

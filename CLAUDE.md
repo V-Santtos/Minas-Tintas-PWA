@@ -182,6 +182,14 @@ do `auth.users` juntos).
 - **`order_items` no seed**: pedido sem itens cai no placeholder `DEFAULT_DETAIL_ITEMS` no detalhe.
 - **Limpeza do seed** ao encerrar: bloco "ROLLBACK DO SEED" em `supabase/seed.sql` (apaga
   `point_transactions` por `painter_id`; exige desabilitar a trigger de imutabilidade, já no bloco).
+- **Seed de `loja_items` migrado pra `mult_delta`** (corrigido): inseria na coluna antiga
+  `multiplicador` (renomeada) com valores **absolutos** → `db reset` limpo quebrava. Agora usa
+  `mult_delta` com valores recalculados como **delta = absoluto − 3** (b2 `-1.00`, b5 `1.00`; demais
+  herdam `null`). Validado em PG16 (custo_pts 600/600/1200/750/4000; promo só no b2).
+- **PENDÊNCIA — auditar o `seed.sql` ponta a ponta antes do go-live:** aplicar todas as migrations num
+  PG16 limpo + rodar o seed inteiro, pra pegar outras colunas defasadas que só aparecem num reset (o
+  `mult_delta` foi achado por acaso). Baixa urgência (seed só roda em reset/go-live); fazer **antes**
+  do passo de seed do go-live.
 
 ### Futuro (sem fase)
 
@@ -251,6 +259,18 @@ Troca de telefone do pintor pelo admin; recuperação por e-mail (SMTP).
   do item (capado por estoque e saldo, escondido p/ único), badge "ÚNICO"/"RESGATADO" e item
   já-resgatado fica inativo (esmaecido + cadeado). **Decisões travadas:** quantidade como coluna (não
   N linhas); cancelado libera o único.
+  já-resgatado fica inativo (esmaecido + cadeado). **Decisões travadas:** quantidade como coluna (não
+  N linhas); cancelado libera o único.
+- **`products.cost` removido + item de estoque usa preço.** A coluna só existia esperando vir do ERP;
+  a API do Hiper expõe **preço de venda, não custo**, e o catálogo passa a ser read-only alimentado
+  pela sync (sem CRUD admin que escreva custo) → sem fonte, `cost` ficaria sempre nulo. Removidos os
+  consumidores: a **margem** `(1 − cost/price)` no card de busca do orçamento e a **exibição/prefill
+  de custo** na busca do catálogo da lojinha. Efeito no add-item da lojinha: item vindo do **estoque**
+  deriva o `valor_base` (e os pontos) do **preço do produto**, não mais do custo — no modo estoque o
+  campo "Custo" some e o valor sai de "Preço de venda"; a entrada manual mantém "Custo (R$)".
+  Migration `…_drop_products_cost.sql`; drop seguro por expand/contract (código sem `cost` deployado
+  **antes** do `db push`). Seed de `products` ajustado (sem `cost`). **Decisão travada:** catálogo sem
+  `cost` enquanto o Hiper não fornecer; pontos do item de estoque = preço × multiplicador.
 
 ---
 
