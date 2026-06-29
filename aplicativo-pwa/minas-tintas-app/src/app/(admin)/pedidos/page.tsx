@@ -33,7 +33,7 @@ export default async function PedidosPage() {
     supabase.from("clients").select("id, nome, type").order("nome"),
     supabase
       .from("products")
-      .select("id, code, name, brand, price, cost, stock")
+      .select("id, code, name, brand, price, stock")
       .eq("active", true)
       .order("name"),
   ]);
