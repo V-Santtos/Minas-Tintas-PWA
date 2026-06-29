@@ -50,7 +50,6 @@ type ProductOpt = {
   name: string;
   brand: string;
   price: number;
-  cost: number;
   stock: number;
 };
 
@@ -1576,7 +1575,6 @@ export default function PedidosClient({
                       }}
                     >
                       {productMatches.map((p) => {
-                        const margin = Math.round((1 - p.cost / p.price) * 100);
                         const stockWarn = p.stock <= 6;
                         return (
                           <button
@@ -1622,19 +1620,6 @@ export default function PedidosClient({
                               >
                                 <span>{p.brand}</span>
                                 <span>R$ {brl(p.price)}</span>
-                                <span
-                                  style={{
-                                    color:
-                                      margin >= 30
-                                        ? "var(--success)"
-                                        : margin >= 15
-                                          ? "var(--warning)"
-                                          : "var(--brand)",
-                                    fontWeight: 600,
-                                  }}
-                                >
-                                  Margem {margin}%
-                                </span>
                                 <span
                                   style={{
                                     color: stockWarn

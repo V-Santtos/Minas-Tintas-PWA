@@ -242,7 +242,7 @@ export default function LojinhaClient({
 
   function selectCatalog(c: CatalogItem) {
     setAddSearch(c.name);
-    setAddCusto(String(c.cost));
+    setAddCusto(String(c.price)); // valor_base = preco do produto (custo nao existe mais)
     setAddVenda(c.price);
     setAddStock(String(c.stock));
     setAddCatalogSel(true);
@@ -1813,19 +1813,6 @@ export default function LojinhaClient({
                             {c.brand} · {c.code}
                           </div>
                         </div>
-                        <div
-                          style={{
-                            fontSize: 12,
-                            color: "var(--muted)",
-                            flexShrink: 0,
-                            marginLeft: 10,
-                          }}
-                        >
-                          custo R${" "}
-                          {c.cost.toLocaleString("pt-BR", {
-                            minimumFractionDigits: 2,
-                          })}
-                        </div>
                       </div>
                     ))}
                   </div>
@@ -1839,43 +1826,26 @@ export default function LojinhaClient({
                   lineHeight: 1.5,
                 }}
               >
-                Produto da loja? O preço de custo e venda serão preenchidos
-                automaticamente ao selecionar.
+                Produto da loja? O preço será preenchido automaticamente ao
+                selecionar.
               </div>
 
-              {/* Custo + Venda */}
+              {/* Valor do item */}
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
+                  gridTemplateColumns: addCatalogSel ? "1fr" : "1fr 1fr",
                   gap: 14,
                 }}
               >
-                <div
-                  style={{ display: "flex", flexDirection: "column", gap: 6 }}
-                >
-                  <label style={labelSt}>
-                    Custo (R$){" "}
-                    {!addCatalogSel && (
+                {!addCatalogSel && (
+                  <div
+                    style={{ display: "flex", flexDirection: "column", gap: 6 }}
+                  >
+                    <label style={labelSt}>
+                      Custo (R$){" "}
                       <span style={{ color: "var(--brand)" }}>*</span>
-                    )}
-                  </label>
-                  {addCatalogSel ? (
-                    <div
-                      style={{
-                        ...inputSt,
-                        background: "var(--paper-deep)",
-                        color: "var(--muted)",
-                        display: "flex",
-                        alignItems: "center",
-                      }}
-                    >
-                      R${" "}
-                      {parseFloat(addCusto).toLocaleString("pt-BR", {
-                        minimumFractionDigits: 2,
-                      })}
-                    </div>
-                  ) : (
+                    </label>
                     <input
                       type="number"
                       value={addCusto}
@@ -1885,8 +1855,8 @@ export default function LojinhaClient({
                       style={inputSt}
                       placeholder="0,00"
                     />
-                  )}
-                </div>
+                  </div>
+                )}
                 {addVenda !== null && (
                   <div
                     style={{ display: "flex", flexDirection: "column", gap: 6 }}

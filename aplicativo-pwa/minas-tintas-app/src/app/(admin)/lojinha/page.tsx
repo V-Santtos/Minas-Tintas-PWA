@@ -38,7 +38,7 @@ export default async function LojinhaPage() {
     supabase.from("settings").select("multiplicador_padrao").single(),
     supabase
       .from("products")
-      .select("id, code, name, brand, price, cost, stock")
+      .select("id, code, name, brand, price, stock")
       .eq("active", true)
       .order("name"),
   ]);
@@ -76,7 +76,6 @@ export default async function LojinhaPage() {
     name: p.name,
     brand: p.brand ?? "",
     price: Number(p.price),
-    cost: Number(p.cost ?? 0),
     stock: p.stock,
   }));
 

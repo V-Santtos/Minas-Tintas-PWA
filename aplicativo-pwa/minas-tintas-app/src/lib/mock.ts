@@ -301,7 +301,6 @@ export type CatalogItem = {
   name: string;
   brand: string;
   price: number;
-  cost: number;
   stock: number;
 };
 
@@ -483,7 +482,7 @@ export const CATALOG: CatalogItem[] = [
     name: "Tinta látex acrílica fosca 18L — Branco Neve",
     brand: "Suvinil",
     price: 320.0,
-    cost: 196.0,
+
     stock: 47,
   },
   {
@@ -492,7 +491,7 @@ export const CATALOG: CatalogItem[] = [
     name: "Tinta látex 18L — Areia",
     brand: "Coral",
     price: 298.0,
-    cost: 188.0,
+
     stock: 31,
   },
   {
@@ -501,7 +500,6 @@ export const CATALOG: CatalogItem[] = [
     name: "Massa corrida 25kg",
     brand: "Suvinil",
     price: 84.9,
-    cost: 58.0,
     stock: 84,
   },
   {
@@ -510,7 +508,7 @@ export const CATALOG: CatalogItem[] = [
     name: "Selador acrílico 18L",
     brand: "Coral",
     price: 162.0,
-    cost: 108.0,
+
     stock: 12,
   },
   {
@@ -519,7 +517,6 @@ export const CATALOG: CatalogItem[] = [
     name: "Rolo de lã 23 cm — anti-gota",
     brand: "Tigre",
     price: 28.5,
-    cost: 16.8,
     stock: 6,
   },
   {
@@ -528,7 +525,6 @@ export const CATALOG: CatalogItem[] = [
     name: 'Pincel chato 2"',
     brand: "Atlas",
     price: 14.9,
-    cost: 7.4,
     stock: 93,
   },
   {
@@ -537,7 +533,6 @@ export const CATALOG: CatalogItem[] = [
     name: "Fita crepe 50mm × 50m",
     brand: "Eurocel",
     price: 12.4,
-    cost: 6.9,
     stock: 210,
   },
   {
@@ -546,7 +541,7 @@ export const CATALOG: CatalogItem[] = [
     name: "Tinta acrílica semibrilho 18L — Branco Gelo",
     brand: "Suvinil",
     price: 340.0,
-    cost: 214.0,
+
     stock: 18,
   },
   {
@@ -555,7 +550,6 @@ export const CATALOG: CatalogItem[] = [
     name: "Primer multiuso 3,6L",
     brand: "Coral",
     price: 58.9,
-    cost: 38.5,
     stock: 4,
   },
 ];

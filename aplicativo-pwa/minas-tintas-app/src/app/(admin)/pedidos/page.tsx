@@ -83,7 +83,6 @@ export default async function PedidosPage() {
     name: p.name,
     brand: p.brand,
     price: Number(p.price),
-    cost: Number(p.cost),
     stock: p.stock,
   }));
 
