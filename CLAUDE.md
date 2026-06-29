@@ -287,7 +287,7 @@ Catálogo de orçamento (`products`) alimentado pela API e-commerce do **Hiper G
 só as 6 colunas do catálogo são mapeadas — campos ricos do Hiper (categoria, ncm, dimensões…) ficam de
 fora até haver demanda.
 
-**Feito (blocos a/b/c1):**
+**Feito (blocos a/b/c1/c2):**
 
 - **(a) Schema** — `products.source_id uuid unique` (chave de upsert idempotente = `id` do Hiper) +
   `sync_control(recurso pk, ponto_de_sincronizacao, atualizado_em)` (cursor; RLS trancada, só
@@ -319,9 +319,15 @@ fora até haver demanda.
 **Estado:** 1ª carga real feita — 1658 produtos, `sync_control` em 30786. Incremental ok ("nada novo"
 retorna `{ok:true, paginas:0}`).
 
-**PENDENTE (próximo — c2):** botão **"Sincronizar agora"** no admin (`configuracoes/`) — server action
-(verifica admin via `getUser`+`admins`) chamando `sincronizarCatalogo()`, com feedback do `SyncResult` e
-`revalidatePath` das telas que leem `products`. Mesma função core dos outros gatilhos.
+- **(c2) Gatilho manual** — botão "Sincronizar agora" no admin (`configuracoes/`).
+  Server action `sincronizarCatalogoAction` (gate de admin via `getUser` + lookup em
+  `admins`; a rota de cron usa `CRON_SECRET` porque não tem sessão) chama
+  `sincronizarCatalogo()` e revalida `/lojinha` e `/pedidos` (as duas telas do admin que
+  leem `products`). Feedback do `SyncResult` no card. **Watch-point:** a page é `"use client"`,
+  então a action herda o `maxDuration` padrão (sem override). Inofensivo no incremental;
+  num reload do zero (após wipe) pode estourar, mas o cursor por página torna o re-clique
+  retomável — timeout não corrompe. Se virar incômodo: mover pra route handler `POST` com
+  `maxDuration` próprio e o botão chamar via `fetch`.
 
 ---
 
