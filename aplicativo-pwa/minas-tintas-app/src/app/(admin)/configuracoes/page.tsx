@@ -10,11 +10,12 @@ import {
   ImagePlus,
   Trash2,
   Percent,
+  RefreshCw,
 } from "lucide-react";
 import { useAdmin } from "@/lib/admin-context";
 import { createClient } from "@/utils/supabase/client";
 import { saveSettings } from "@/lib/settings-actions";
-import { saveAdminNome } from "./actions";
+import { saveAdminNome, sincronizarCatalogoAction } from "./actions";
 
 function PasswordInput({
   value,
@@ -80,6 +81,29 @@ export default function ConfiguracoesPage() {
   const [bonusSaving, setBonusSaving] = useState(false);
   const [bonusSaved, setBonusSaved] = useState(false);
   const [bonusErro, setBonusErro] = useState("");
+
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState("");
+  const [syncErro, setSyncErro] = useState("");
+
+  async function syncCatalogo() {
+    setSyncErro("");
+    setSyncMsg("");
+    setSyncing(true);
+    const res = await sincronizarCatalogoAction();
+    setSyncing(false);
+    if (!res.ok) {
+      setSyncErro(res.error);
+      return;
+    }
+    const { paginas, upserts, inativos } = res.result;
+    setSyncMsg(
+      paginas === 0
+        ? "Catálogo já está em dia."
+        : `${upserts} produto(s) · ${paginas} página(s)${inativos ? ` · ${inativos} inativo(s)` : ""}.`,
+    );
+    setTimeout(() => setSyncMsg(""), 6000);
+  }
 
   useEffect(() => {
     const supabase = createClient();
@@ -614,6 +638,78 @@ export default function ConfiguracoesPage() {
               }}
             >
               <Save size={14} /> {bonusSaving ? "Salvando..." : "Salvar"}
+            </button>
+          </div>
+        </div>
+        {/* Catálogo (Hiper) */}
+        <div style={cardSt}>
+          <div style={cardHeadSt}>
+            <RefreshCw size={15} strokeWidth={1.75} color="var(--ink-2)" />
+            <span
+              style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}
+            >
+              Catálogo (Hiper)
+            </span>
+          </div>
+          <div style={cardBodySt}>
+            <span
+              style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.6 }}
+            >
+              O catálogo sincroniza sozinho com o Hiper uma vez por dia. Use o
+              botão para puxar as novidades agora — preços e estoque dos
+              produtos.
+            </span>
+          </div>
+          <div style={cardFootSt}>
+            {syncErro && (
+              <span
+                style={{
+                  fontSize: 12.5,
+                  color: "var(--brand)",
+                  fontWeight: 600,
+                }}
+              >
+                {syncErro}
+              </span>
+            )}
+            {syncMsg && (
+              <span
+                style={{
+                  fontSize: 12.5,
+                  color: "var(--success)",
+                  fontWeight: 600,
+                }}
+              >
+                {syncMsg}
+              </span>
+            )}
+            <button
+              onClick={syncCatalogo}
+              disabled={syncing}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "8px 18px",
+                borderRadius: 10,
+                border: "none",
+                background: "var(--ink)",
+                color: "#fff",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: syncing ? "default" : "pointer",
+                opacity: syncing ? 0.7 : 1,
+              }}
+            >
+              <RefreshCw
+                size={14}
+                style={
+                  syncing
+                    ? { animation: "spin 0.9s linear infinite" }
+                    : undefined
+                }
+              />{" "}
+              {syncing ? "Sincronizando..." : "Sincronizar agora"}
             </button>
           </div>
         </div>

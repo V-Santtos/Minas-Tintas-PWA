@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
+import { sincronizarCatalogo, type SyncResult } from "@/lib/hiper/sync";
 
 export type SaveAdminResult = { ok: true } | { ok: false; error: string };
 
@@ -22,4 +23,38 @@ export async function saveAdminNome(nome: string): Promise<SaveAdminResult> {
 
   revalidatePath("/configuracoes");
   return { ok: true };
+}
+
+export type SyncCatalogoResult =
+  | { ok: true; result: SyncResult }
+  | { ok: false; error: string };
+
+// Gatilho manual da sync do catálogo. Verifica admin via getUser + lookup em
+// admins (mesma checagem da rota POST /api/pintores) — a rota de cron usa
+// CRON_SECRET porque não tem sessão; aqui temos, então gateamos por papel.
+export async function sincronizarCatalogoAction(): Promise<SyncCatalogoResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Não autenticado." };
+
+  const { data: admin } = await supabase
+    .from("admins")
+    .select("auth_user_id")
+    .eq("auth_user_id", user.id)
+    .maybeSingle();
+  if (!admin) return { ok: false, error: "Sem permissão." };
+
+  try {
+    const result = await sincronizarCatalogo();
+    // telas do admin que leem products: lojinha (busca de catálogo no add-item)
+    // e pedidos (busca de produto no novo pedido manual).
+    revalidatePath("/lojinha");
+    revalidatePath("/pedidos");
+    return { ok: true, result };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Erro ao sincronizar.";
+    return { ok: false, error: msg };
+  }
 }
