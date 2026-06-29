@@ -43,18 +43,19 @@ insert into products (id, code, name, brand, price, stock) values
   ('00000000-0000-0000-0000-0000000000d4', 'TIG-RO-23', 'Rolo de lã 23 cm — anti-gota',                  'Tigre',    28.50, 6);
 
 -- ── Itens da lojinha de pontos ─────────────────────────────
--- custo em pontos = round(valor_base × (multiplicador ?? settings.multiplicador_padrao=3.0))
---   L1 herda (null→3)   → 600
---   L2 promo (2 < 3)    → 600  (mesmo custo de L1, mas com selo de promoção)
---   L3 herda            → 1200
---   L4 herda            → 750
---   L5 acima do padrão  → 4000 (mais caro, SEM selo)
-insert into loja_items (id, name, valor_base, multiplicador, stock, categoria) values
-  ('00000000-0000-0000-0000-0000000000b1', 'Boné Minas Tintas',              200.00, null,  9, 'brindes'),
-  ('00000000-0000-0000-0000-0000000000b2', 'Rolo profissional anti-gota 23cm',300.00, 2.00,  5, 'ferramentas'),
-  ('00000000-0000-0000-0000-0000000000b3', 'Kit pincéis Atlas (3 peças)',     400.00, null,  2, 'ferramentas'),
-  ('00000000-0000-0000-0000-0000000000b4', 'Camiseta Minas Tintas',           250.00, null,  7, 'camisetas'),
-  ('00000000-0000-0000-0000-0000000000b5', 'Lixadeira orbital 5"',           1000.00, 4.00,  1, 'ferramentas');
+-- custo em pontos = round(valor_base × (multiplicador_padrao=3 + coalesce(mult_delta,0)))
+-- mult_delta: null = herda o padrão; <0 = promo (com selo); >0 = mais caro (sem selo).
+--   L1 herda (null → 3×)      → 600
+--   L2 promo (delta -1 → 2×)  → 600  (mesmo custo de L1, mas com selo de promoção)
+--   L3 herda (null → 3×)      → 1200
+--   L4 herda (null → 3×)      → 750
+--   L5 acima (delta +1 → 4×)  → 4000 (mais caro, SEM selo)
+insert into loja_items (id, name, valor_base, mult_delta, stock, categoria) values
+  ('00000000-0000-0000-0000-0000000000b1', 'Boné Minas Tintas',              200.00, null,   9, 'brindes'),
+  ('00000000-0000-0000-0000-0000000000b2', 'Rolo profissional anti-gota 23cm',300.00, -1.00,  5, 'ferramentas'),
+  ('00000000-0000-0000-0000-0000000000b3', 'Kit pincéis Atlas (3 peças)',     400.00, null,   2, 'ferramentas'),
+  ('00000000-0000-0000-0000-0000000000b4', 'Camiseta Minas Tintas',           250.00, null,   7, 'camisetas'),
+  ('00000000-0000-0000-0000-0000000000b5', 'Lixadeira orbital 5"',           1000.00,  1.00,  1, 'ferramentas');
 
 -- ── Pedidos ────────────────────────────────────────────────
 -- numero é generated always as identity (não passamos).
