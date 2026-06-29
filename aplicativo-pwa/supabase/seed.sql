@@ -34,13 +34,13 @@ insert into clients (id, nome, type, telefone, documento, cidade) values
   ('00000000-0000-0000-0000-0000000000c4', 'Diego Santos',           'pessoa',  '33999993333', '333.444.555-66',   'Manhuaçu');
 
 -- ── Produtos (catálogo de venda) ───────────────────────────
--- cost é sensível (só admin via RLS). Poucos itens; os reais virão
--- da integração futura. order_items são snapshot, então sobrevivem.
-insert into products (id, code, name, brand, price, cost, stock) values
-  ('00000000-0000-0000-0000-0000000000d1', 'SUV-18-BN', 'Tinta látex acrílica fosca 18L — Branco Neve', 'Suvinil', 320.00, 196.00, 47),
-  ('00000000-0000-0000-0000-0000000000d2', 'SUV-MC-25', 'Massa corrida 25kg',                            'Suvinil',  84.90,  58.00, 84),
-  ('00000000-0000-0000-0000-0000000000d3', 'COR-SE-18', 'Selador acrílico 18L',                          'Coral',   162.00, 108.00, 12),
-  ('00000000-0000-0000-0000-0000000000d4', 'TIG-RO-23', 'Rolo de lã 23 cm — anti-gota',                  'Tigre',    28.50,  16.80,  6);
+-- Poucos itens de teste; os reais virão da integração com o ERP (Hiper).
+-- order_items são snapshot, então sobrevivem a remoções.
+insert into products (id, code, name, brand, price, stock) values
+  ('00000000-0000-0000-0000-0000000000d1', 'SUV-18-BN', 'Tinta látex acrílica fosca 18L — Branco Neve', 'Suvinil', 320.00, 47),
+  ('00000000-0000-0000-0000-0000000000d2', 'SUV-MC-25', 'Massa corrida 25kg',                            'Suvinil',  84.90, 84),
+  ('00000000-0000-0000-0000-0000000000d3', 'COR-SE-18', 'Selador acrílico 18L',                          'Coral',   162.00, 12),
+  ('00000000-0000-0000-0000-0000000000d4', 'TIG-RO-23', 'Rolo de lã 23 cm — anti-gota',                  'Tigre',    28.50, 6);
 
 -- ── Itens da lojinha de pontos ─────────────────────────────
 -- custo em pontos = round(valor_base × (multiplicador ?? settings.multiplicador_padrao=3.0))
