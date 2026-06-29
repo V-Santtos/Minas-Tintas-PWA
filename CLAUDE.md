@@ -113,8 +113,9 @@ admin; assets renomeados sem espaços; `sw.js` no `.gitignore`.
    de senha pelo admin via `POST`/`PATCH /api/pintores` (admin client `service_role`, server-only).
    RLS ligado em todas as tabelas; ledger imutável por trigger. `rules.ts` aceita a taxa por parâmetro.
 3. **Camada de dados** ✅ — leitura **e** escrita reais substituindo os mocks, UI intacta (detalhe abaixo).
-4. **Integração com sistema de gestão** da loja (catálogo) — adiada; por ora o catálogo
-   (`products`) é cadastrado manualmente pelo admin.
+4. **Integração com sistema de gestão** da loja (catálogo via **Hiper**) — **em andamento**.
+   `products` é alimentado pela sync incremental do Hiper (upsert por `source_id`); a 1ª carga
+   real já rodou (1658 produtos, cursor 30786). Detalhe em "Integração do catálogo (Hiper)".
 
 **Fase 2 — Offline funcional:** navegar/montar orçamento sem sinal e sincronizar depois
 (depende da camada de dados).
@@ -195,6 +196,13 @@ do `auth.users` juntos).
 
 Troca de telefone do pintor pelo admin; recuperação por e-mail (SMTP).
 
+- **Real-time de estoque (catálogo)** — pós-produção. O `stock` do catálogo é **informativo** (não
+  baixa na aprovação; a baixa real é no Hiper), então defasagem aqui é dica visual, não risco de
+  venda-dupla. Pra frescura quase-imediata: **webhook do Hiper** (`webhook-config`) →
+  `sincronizarCatalogo()` (só **mais um gatilho**, reusa tudo), opcionalmente + **Supabase Realtime
+  em `products`** (migration aditiva: incluir na publicação) pra empurrar pras telas abertas. Aditivo,
+  não reabre nada.
+
 ## Em aberto / observações
 
 - Leitura (item 3) **concluída** — mocks substituídos por Supabase real. A persistência restante
@@ -271,6 +279,49 @@ Troca de telefone do pintor pelo admin; recuperação por e-mail (SMTP).
   Migration `…_drop_products_cost.sql`; drop seguro por expand/contract (código sem `cost` deployado
   **antes** do `db push`). Seed de `products` ajustado (sem `cost`). **Decisão travada:** catálogo sem
   `cost` enquanto o Hiper não fornecer; pontos do item de estoque = preço × multiplicador.
+
+### Integração do catálogo (Hiper)
+
+Catálogo de orçamento (`products`) alimentado pela API e-commerce do **Hiper Gestão** (ERP).
+**Fork B:** `products` segue como tabela canônica (PK local intacta → FK de `order_items` preservado);
+só as 6 colunas do catálogo são mapeadas — campos ricos do Hiper (categoria, ncm, dimensões…) ficam de
+fora até haver demanda.
+
+**Feito (blocos a/b/c1):**
+
+- **(a) Schema** — `products.source_id uuid unique` (chave de upsert idempotente = `id` do Hiper) +
+  `sync_control(recurso pk, ponto_de_sincronizacao, atualizado_em)` (cursor; RLS trancada, só
+  `service_role`). Migration `…_catalogo_source_id_sync_control.sql`.
+- **(b) Função core** — `src/lib/hiper/client.ts` (auth + leitura do delta) e `src/lib/hiper/sync.ts`
+  (`sincronizarCatalogo()`), ambos `server-only`. Auth em 2 passos: `GET /auth/gerar-token/{chave}` →
+  Bearer (~6h, cache por execução, retry em 401). Leitura incremental por cursor `pontoDeSincronizacao`.
+  Upsert por `source_id` em lote por página; cursor persistido **a cada página** (timeout no meio
+  retoma). **Soft-delete:** `active = ativo && !removido` (nunca delete). Mapeamento: `codigo→code`
+  (String), `nome→name` (null → `Produto {codigo}`), `marca→brand` (""→null), `preco→price`,
+  `round(quantidadeEmEstoque)→stock`.
+- **(c1) Gatilho automático** — rota `GET /api/sync/catalogo` (`route.ts`, `maxDuration 60`, protegida
+  por `CRON_SECRET` via `Authorization: Bearer`) + `vercel.json` com cron **diário** (`0 6 * * *` UTC).
+  Hobby roda 1×/dia; **em Pro trocar pra `0 * * * *` (horário) + redeploy**. (c1 entrou no mesmo commit
+  do fix abaixo, `881849a`, não num commit próprio.)
+
+**Lições (Hiper, confirmadas na prática):**
+
+- **"Nada novo" vem como HTTP 400** (não 200 como o swagger sugeria), com
+  `errors: ["Nenhum produto encontrado"]` e `produtos: null`. `getProdutosDelta` detecta pelo **corpo**
+  (não pelo status) e trata como fim; outros 4xx/5xx continuam erro.
+- **Wipe de `products` exige zerar o cursor:** `delete from sync_control;` junto, senão a próxima sync
+  começa do cursor salvo e **não recarrega** o catálogo apagado.
+
+**Envs (server-only, projeto admin — local `.env.local` + Vercel):** `HIPER_CHAVE_SEGURANCA`
+(obrigatório), `HIPER_BASE` (opcional, default `https://ms-ecommerce.hiper.com.br/api/v1`),
+`CRON_SECRET` (protege a rota; a Vercel envia como Bearer no cron).
+
+**Estado:** 1ª carga real feita — 1658 produtos, `sync_control` em 30786. Incremental ok ("nada novo"
+retorna `{ok:true, paginas:0}`).
+
+**PENDENTE (próximo — c2):** botão **"Sincronizar agora"** no admin (`configuracoes/`) — server action
+(verifica admin via `getUser`+`admins`) chamando `sincronizarCatalogo()`, com feedback do `SyncResult` e
+`revalidatePath` das telas que leem `products`. Mesma função core dos outros gatilhos.
 
 ---
 
