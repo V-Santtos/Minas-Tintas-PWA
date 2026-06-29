@@ -7,56 +7,56 @@
 
 @theme {
   /* === CORES === */
-  --color-paper:          #FAF7F2;
-  --color-paper-deep:     #F2EDE4;
-  --color-card:           #FFFFFF;
-  --color-ink:            #1C1A17;
-  --color-ink-2:          #3D3833;
-  --color-muted:          #8A817A;
-  --color-line:           #E7E0D4;
-  --color-line-strong:    #D5CCBC;
+  --color-paper: #faf7f2;
+  --color-paper-deep: #f2ede4;
+  --color-card: #ffffff;
+  --color-ink: #1c1a17;
+  --color-ink-2: #3d3833;
+  --color-muted: #8a817a;
+  --color-line: #e7e0d4;
+  --color-line-strong: #d5ccbc;
 
-  --color-brand:          #CC0000;
-  --color-brand-ink:      #A30000;
-  --color-brand-tint:     #FBE9E9;
+  --color-brand: #cc0000;
+  --color-brand-ink: #a30000;
+  --color-brand-tint: #fbe9e9;
 
-  --color-success:        #4F7A4A;
-  --color-success-tint:   #E8EFE3;
-  --color-warning:        #E07A10;
-  --color-warning-tint:   #FDEBD0;
-  --color-danger:         #CC0000;
-  --color-danger-tint:    #FBE9E9;
-  --color-info:           #4A5A7A;
-  --color-info-tint:      #E5E8EE;
+  --color-success: #4f7a4a;
+  --color-success-tint: #e8efe3;
+  --color-warning: #e07a10;
+  --color-warning-tint: #fdebd0;
+  --color-danger: #cc0000;
+  --color-danger-tint: #fbe9e9;
+  --color-info: #4a5a7a;
+  --color-info-tint: #e5e8ee;
 
   /* Sidebar escura */
-  --color-sidebar:        #1C1A17;
-  --color-sidebar-hover:  rgba(255, 255, 255, 0.06);
+  --color-sidebar: #1c1a17;
+  --color-sidebar-hover: rgba(255, 255, 255, 0.06);
   --color-sidebar-active: rgba(255, 255, 255, 0.14);
 
   /* === FONTES — variáveis injetadas pelo next/font em layout.tsx === */
-  --font-body:    var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
   --font-display: var(--font-jakarta), -apple-system, sans-serif;
   --font-jakarta: var(--font-jakarta), -apple-system, sans-serif;
-  --font-mono:    ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
 
   /* === RAIOS === */
-  --radius-sm:   8px;
-  --radius-md:   12px;
-  --radius-lg:   16px;
-  --radius-xl:   20px;
-  --radius-2xl:  24px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
   --radius-pill: 999px;
 
   /* === ESCALA TIPOGRÁFICA === */
   --text-display: 44px;
-  --text-h1:      32px;
-  --text-h2:      24px;
-  --text-h3:      20px;
-  --text-lg:      17px;
-  --text-body:    15px;
-  --text-sm:      13px;
-  --text-xs:      11px;
+  --text-h1: 32px;
+  --text-h2: 24px;
+  --text-h3: 20px;
+  --text-lg: 17px;
+  --text-body: 15px;
+  --text-sm: 13px;
+  --text-xs: 11px;
 }
 
 /* ============================================================
@@ -64,50 +64,56 @@
    copiados dos protótipos)
    ============================================================ */
 :root {
-  --paper:        #FAF7F2;
-  --paper-deep:   #F2EDE4;
-  --card:         #FFFFFF;
-  --ink:          #1C1A17;
-  --ink-2:        #3D3833;
-  --muted:        #8A817A;
-  --line:         #E7E0D4;
-  --line-strong:  #D5CCBC;
-  --brand:        #CC0000;
-  --brand-ink:    #A30000;
-  --brand-tint:   #FBE9E9;
-  --success:      #4F7A4A;
-  --success-tint: #E8EFE3;
-  --warning:      #E07A10;
-  --warning-tint: #FDEBD0;
-  --danger:       #CC0000;
-  --danger-tint:  #FBE9E9;
-  --info:         #4A5A7A;
-  --info-tint:    #E5E8EE;
+  --paper: #faf7f2;
+  --paper-deep: #f2ede4;
+  --card: #ffffff;
+  --ink: #1c1a17;
+  --ink-2: #3d3833;
+  --muted: #8a817a;
+  --line: #e7e0d4;
+  --line-strong: #d5ccbc;
+  --brand: #cc0000;
+  --brand-ink: #a30000;
+  --brand-tint: #fbe9e9;
+  --success: #4f7a4a;
+  --success-tint: #e8efe3;
+  --warning: #e07a10;
+  --warning-tint: #fdebd0;
+  --danger: #cc0000;
+  --danger-tint: #fbe9e9;
+  --info: #4a5a7a;
+  --info-tint: #e5e8ee;
 
   /* Sidebar */
-  --sidebar:        #1C1A17;
-  --sidebar-hover:  rgba(255,255,255,.06);
-  --sidebar-active: rgba(255,255,255,.14);
+  --sidebar: #1c1a17;
+  --sidebar-hover: rgba(255, 255, 255, 0.06);
+  --sidebar-active: rgba(255, 255, 255, 0.14);
 
   /* Sombras quentes (sem azul) */
-  --shadow-1: 0 1px 2px rgba(28,26,23,.04), 0 1px 1px rgba(28,26,23,.03);
-  --shadow-2: 0 2px 6px rgba(28,26,23,.06), 0 1px 2px rgba(28,26,23,.04);
-  --shadow-3: 0 8px 24px rgba(28,26,23,.08), 0 2px 6px rgba(28,26,23,.04);
-  --shadow-4: 0 16px 40px rgba(28,26,23,.10), 0 4px 10px rgba(28,26,23,.06);
+  --shadow-1:
+    0 1px 2px rgba(28, 26, 23, 0.04), 0 1px 1px rgba(28, 26, 23, 0.03);
+  --shadow-2:
+    0 2px 6px rgba(28, 26, 23, 0.06), 0 1px 2px rgba(28, 26, 23, 0.04);
+  --shadow-3:
+    0 8px 24px rgba(28, 26, 23, 0.08), 0 2px 6px rgba(28, 26, 23, 0.04);
+  --shadow-4:
+    0 16px 40px rgba(28, 26, 23, 0.1), 0 4px 10px rgba(28, 26, 23, 0.06);
 
   /* Motion */
-  --ease-out:    cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-  --dur-fast:    140ms;
-  --dur-base:    220ms;
-  --dur-slow:    360ms;
+  --dur-fast: 140ms;
+  --dur-base: 220ms;
+  --dur-slow: 360ms;
 }
 
 /* ============================================================
    Base
    ============================================================ */
 @layer base {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
@@ -139,7 +145,8 @@
     cursor: pointer;
   }
 
-  img, video {
+  img,
+  video {
     max-width: 100%;
     display: block;
   }

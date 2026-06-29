@@ -62,6 +62,19 @@ async function getTokenValido(): Promise<string> {
   return token;
 }
 
+// O Hiper sinaliza "nada novo" com produtos: null e errors contendo
+// "Nenhum produto encontrado". Na pratica veio com HTTP 400 (nao 200 como o
+// swagger sugeria), entao detectamos pelo corpo, nao pelo status.
+function ehNadaNovo(body: unknown): boolean {
+  if (typeof body !== "object" || body === null) return false;
+  const b = body as Partial<ListaDeProdutosDto>;
+  return (
+    !b.produtos &&
+    Array.isArray(b.errors) &&
+    b.errors.some((e) => /nenhum produto encontrado/i.test(e))
+  );
+}
+
 // Le uma pagina do delta a partir do cursor. Retry unico em 401 (token expirado).
 export async function getProdutosDelta(
   ponto: number,
@@ -74,6 +87,28 @@ export async function getProdutosDelta(
     token = await getTokenValido();
     res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
   }
-  if (!res.ok) throw new Error(`produtos ${res.status}: ${await res.text()}`);
-  return res.json();
+
+  // Le o corpo uma vez (texto) para poder inspecionar mesmo em status de erro.
+  const texto = await res.text();
+  let body: unknown = null;
+  try {
+    body = texto ? JSON.parse(texto) : null;
+  } catch {
+    body = null;
+  }
+
+  // "Nada novo" (fim da sync) pode vir como 200 OU 400 -> produtos: null,
+  // preservando o cursor consultado (a resposta vazia traz pontoDeSincronizacao 0).
+  if (ehNadaNovo(body)) {
+    return {
+      pontoDeSincronizacao: ponto,
+      produtos: null,
+      errors: null,
+      message: null,
+    };
+  }
+
+  if (!res.ok) throw new Error(`produtos ${res.status}: ${texto}`);
+
+  return body as ListaDeProdutosDto;
 }
