@@ -568,6 +568,7 @@ tela in-app de guia de instalação do PWA (iPhone/Safari).
 | `…_drop_products_cost.sql`              | remove `products.cost` (Hiper não fornece custo; catálogo read-only via sync)                                                                                    |
 | `…_catalogo_source_id_sync_control.sql` | `products.source_id` (chave de upsert) + tabela `sync_control` (cursor da sync, RLS trancada)                                                                    |
 | `…_storage_imagens_avatar.sql`          | bucket público `imagens` (Storage, webp-only, 5MiB) + `admins.avatar_url`; sem policy em `storage.objects` (leitura pública, escrita via service_role)           |
+| `…_loja_item_imagem_pos.sql`            | `loja_items.imagem_pos_x/y` (smallint 0-100, null=centro) p/ recorte da imagem; expostos na view `loja_items_admin`                                              |
 
 Banco hospedado (Supabase free tier). Migrations aplicadas via `supabase db push`
 (projeto linkado por `supabase link`). Para recriar o schema do zero: clonar o repo,
