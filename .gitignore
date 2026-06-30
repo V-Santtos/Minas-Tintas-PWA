@@ -5,9 +5,6 @@ GSAP/
 # Configurações locais do Claude Code
 .claude/
 
-# Notas internas de sessão
-sessao-atual.md
-
 # Next.js — dependências e builds (cada app tem seu próprio .gitignore também)
 **/node_modules/
 **/.next/
