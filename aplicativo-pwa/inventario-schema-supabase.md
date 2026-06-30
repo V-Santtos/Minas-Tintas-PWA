@@ -505,9 +505,14 @@ clientes do pintor, e painters/clients/products no payload de pedidos).
 
 **Decisões adiadas (conscientes):**
 
-1. **Imagens via Supabase Storage:** item da lojinha e foto do admin gravam tudo **menos imagem**
-   (base64 não serve em coluna `text`; bloco próprio de Storage — bucket + URL na coluna `imagem`).
-   O recorte (`imgPos`) também espera esse bloco.
+1. **Imagens via Supabase Storage — FEITO.** Bucket público `imagens` (webp-only, 5MiB). Item da
+   lojinha grava a URL em `loja_items.imagem`; avatar do admin em `admins.avatar_url`. Pipeline:
+   cliente encolhe pra WebP (`prepararImagemWebp`, canvas — fura o limite de 1MB do body de server
+   action) → action `uploadImagem` (gate de admin) → `subirImagemWebp` (sharp: auto-orient/resize/
+   webp q80, server-only) → `service_role` sobe no bucket → URL pública na coluna. Sem policy em
+   `storage.objects` (leitura pública; escrita só service_role). **Resíduos adiados:** (a) recorte/
+   reposição (`imgPos`) — o drag existe na UI mas não persiste (falta coluna); v1 exibe cover
+   centralizado. (b) limpeza de órfãos — trocar/remover foto não apaga o arquivo antigo no bucket.
 
 **`rules.ts` × `settings.bonus_percent`:** tanto o **crédito autoritativo** (`aprovar_pedido` /
 `criar_pedido_admin`) quanto o **preview** do pintor (`A liberar`, carrinho, detalhe) leem

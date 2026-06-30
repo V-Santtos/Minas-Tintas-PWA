@@ -164,8 +164,7 @@ lojinha + multiplicador padrão, gestão de resgate (entregar/recusar), CRUD de 
 editar/resetar/ativar pintor, editar `bonus_percent`, conta do admin (nome + senha; e-mail read-only).
 Pintor novo via `POST /api/pintores`; reset de senha via `PATCH`.
 
-**Não entrou na 3b (adiado consciente):** imagens (item da lojinha + foto do admin) via **Supabase
-Storage** — bloco próprio.
+**Não entrou na 3b (adiado consciente):**
 _Auth/SMTP:_ troca de **e-mail** do admin e **recuperação por e-mail** (e-mail do admin é read-only
 hoje); troca de **telefone** do pintor (troca de credencial: `painters.telefone` + o e-mail sintético
 do `auth.users` juntos).
@@ -279,6 +278,13 @@ Troca de telefone do pintor pelo admin; recuperação por e-mail (SMTP).
   Migration `…_drop_products_cost.sql`; drop seguro por expand/contract (código sem `cost` deployado
   **antes** do `db push`). Seed de `products` ajustado (sem `cost`). **Decisão travada:** catálogo sem
   `cost` enquanto o Hiper não fornecer; pontos do item de estoque = preço × multiplicador.
+- **Imagens via Supabase Storage entregues:** bucket público `imagens` (webp-only, 5MiB). Foto do
+  item da lojinha (`loja_items.imagem`) e avatar do admin (`admins.avatar_url`) gravam a **URL
+  pública** na coluna. Downscale no cliente pra WebP (`prepararImagemWebp` via canvas — fura o limite
+  de 1MB do body de server action) → action `uploadImagem` (gate de admin) → `subirImagemWebp` (sharp,
+  server-only) → `service_role` sobe no bucket. Sem policy em `storage.objects` (leitura pública;
+  escrita só service_role). `sharp` em `serverExternalPackages`. **Resíduos:** `imgPos` não persiste
+  (drag cosmético, falta coluna) e órfãos no bucket (troca/remoção não apaga o antigo).
 
 ### Integração do catálogo (Hiper)
 
