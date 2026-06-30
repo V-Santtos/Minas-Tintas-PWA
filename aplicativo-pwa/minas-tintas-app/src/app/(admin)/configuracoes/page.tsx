@@ -15,7 +15,13 @@ import {
 import { useAdmin } from "@/lib/admin-context";
 import { createClient } from "@/utils/supabase/client";
 import { saveSettings } from "@/lib/settings-actions";
-import { saveAdminNome, sincronizarCatalogoAction } from "./actions";
+import {
+  saveAdminNome,
+  sincronizarCatalogoAction,
+  saveAdminAvatar,
+} from "./actions";
+import { uploadImagem } from "@/lib/storage-actions";
+import { prepararImagemWebp } from "@/lib/image-client";
 
 function PasswordInput({
   value,
@@ -85,6 +91,8 @@ export default function ConfiguracoesPage() {
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState("");
   const [syncErro, setSyncErro] = useState("");
+
+  const [photoDirty, setPhotoDirty] = useState(false);
 
   async function syncCatalogo() {
     setSyncErro("");
@@ -171,20 +179,49 @@ export default function ConfiguracoesPage() {
   function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
-    const rd = new FileReader();
-    rd.onload = (ev) =>
-      setProfile({ ...profile, photo: ev.target?.result as string });
-    rd.readAsDataURL(f);
+    prepararImagemWebp(f, 512)
+      .then((dataUrl) => {
+        setProfile({ ...profile, photo: dataUrl });
+        setPhotoDirty(true);
+      })
+      .catch(() => setDadosErro("Não foi possível processar a imagem."));
   }
 
   async function saveDados() {
     setDadosErro("");
+
+    // foto só entra se mexeu: data: nova → upload; null → limpa; http → não toca.
+    let novoPhoto = profile.photo;
+    if (photoDirty) {
+      let avatarUrl: string | null = null;
+      if (profile.photo?.startsWith("data:")) {
+        const up = await uploadImagem(profile.photo, "admin");
+        if (!up.ok) {
+          setDadosErro(up.error);
+          return;
+        }
+        avatarUrl = up.url;
+      }
+      const av = await saveAdminAvatar(avatarUrl);
+      if (!av.ok) {
+        setDadosErro(av.error);
+        return;
+      }
+      novoPhoto = avatarUrl;
+    }
+
     const res = await saveAdminNome(nome);
     if (!res.ok) {
       setDadosErro(res.error);
       return;
     }
-    setProfile({ ...profile, name: nome.trim() || profile.name });
+
+    setProfile({
+      ...profile,
+      name: nome.trim() || profile.name,
+      photo: novoPhoto,
+    });
+    setPhotoDirty(false);
     setSavedDados(true);
     setTimeout(() => setSavedDados(false), 2500);
   }
@@ -358,7 +395,10 @@ export default function ConfiguracoesPage() {
                 </button>
                 {profile.photo && (
                   <button
-                    onClick={() => setProfile({ ...profile, photo: null })}
+                    onClick={() => {
+                      setProfile({ ...profile, photo: null });
+                      setPhotoDirty(true);
+                    }}
                     style={{
                       display: "flex",
                       alignItems: "center",

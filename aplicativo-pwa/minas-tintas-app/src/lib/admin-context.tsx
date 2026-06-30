@@ -12,13 +12,15 @@ const AdminContext = createContext<{
 export function AdminProvider({
   children,
   initialName = "Admin",
+  initialPhoto = null,
 }: {
   children: React.ReactNode;
   initialName?: string;
+  initialPhoto?: string | null;
 }) {
   const [profile, setProfile] = useState<AdminProfile>({
     name: initialName,
-    photo: null,
+    photo: initialPhoto,
   });
   return (
     <AdminContext.Provider value={{ profile, setProfile }}>

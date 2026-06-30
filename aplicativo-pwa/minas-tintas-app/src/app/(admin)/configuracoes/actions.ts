@@ -58,3 +58,21 @@ export async function sincronizarCatalogoAction(): Promise<SyncCatalogoResult> {
     return { ok: false, error: msg };
   }
 }
+export async function saveAdminAvatar(
+  url: string | null,
+): Promise<SaveAdminResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Não autenticado." };
+
+  const { error } = await supabase
+    .from("admins")
+    .update({ avatar_url: url })
+    .eq("auth_user_id", user.id);
+  if (error) return { ok: false, error: "Não foi possível salvar a foto." };
+
+  revalidatePath("/configuracoes");
+  return { ok: true };
+}

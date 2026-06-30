@@ -16,7 +16,7 @@ export default async function AdminLayout({
 
   const { data: admin } = await supabase
     .from("admins")
-    .select("auth_user_id, nome")
+    .select("auth_user_id, nome, avatar_url")
     .eq("auth_user_id", user.id)
     .maybeSingle();
 
@@ -32,6 +32,7 @@ export default async function AdminLayout({
       <RealtimeRefresh />
       <AdminShell
         adminName={admin.nome ?? "Admin"}
+        adminAvatar={admin.avatar_url ?? null}
         pendingOrders={pendingOrders ?? 0}
       >
         {children}
