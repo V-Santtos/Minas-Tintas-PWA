@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, CircleCheck, Gift, Tag, ChevronRight } from "lucide-react";
 
@@ -51,8 +52,41 @@ function Group({ items, router }: { items: Notif[]; router: ReturnType<typeof us
   );
 }
 
+// Stub: nome do brinde sorteado (mesmo flag do modal). Vira derivado do
+// resgate de boas-vindas quando as regras forem pro banco.
+const BRINDE_NOMES: Record<string, string> = {
+  bone: "Boné Minas Tintas",
+  pincel: 'Pincel Condor 2"',
+};
+
 export default function NotificacoesPage() {
   const router = useRouter();
+
+  const [brinde, setBrinde] = useState<string | null>(null);
+  useEffect(() => {
+    // Override de preview: /notificacoes?brinde=pincel (ou bone)
+    const q = new URLSearchParams(window.location.search).get("brinde");
+    if (q === "bone" || q === "pincel") {
+      setBrinde(q);
+      return;
+    }
+    setBrinde(localStorage.getItem("mt_brinde_sorteio"));
+  }, []);
+
+  const brindeNotif: Notif | null = brinde
+    ? {
+        iconBg: "#FDECEC",
+        icon: Gift,
+        iconColor: "#CC0000",
+        title: "Brinde de boas-vindas",
+        text: `Seu ${BRINDE_NOMES[brinde] ?? "brinde"} está reservado na lojinha para retirada na loja.`,
+        time: "agora",
+        href: "/loja",
+      }
+    : null;
+
+  const hoje = brindeNotif ? [brindeNotif, ...HOJE] : HOJE;
+
   return (
     <>
       <div className="topbar">
@@ -64,7 +98,7 @@ export default function NotificacoesPage() {
       </div>
       <div style={{ padding: "0 16px 88px" }}>
         <div className="eyebrow-label" style={{ margin: "4px 0 10px" }}>HOJE</div>
-        <Group items={HOJE} router={router} />
+        <Group items={hoje} router={router} />
         <div className="eyebrow-label" style={{ margin: "4px 0 10px" }}>ONTEM</div>
         <Group items={ONTEM} router={router} />
       </div>

@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -13,6 +14,7 @@ import {
   Package,
 } from "lucide-react";
 import { usePintor } from "@/lib/pintor-store";
+import BrindeModal from "@/components/BrindeModal";
 
 const QUICK_ICONS: Record<string, typeof Package> = {
   layers: Layers,
@@ -47,6 +49,10 @@ export default function HomePage() {
 
   return (
     <>
+      <Suspense fallback={null}>
+        <BrindeModal />
+      </Suspense>
+
       {/* Topbar */}
       <div
         className="topbar"
