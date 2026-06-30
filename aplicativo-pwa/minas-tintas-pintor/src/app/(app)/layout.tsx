@@ -80,6 +80,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       .select(
         "id, name, valor_base, stock, categoria, imagem, imagem_pos_x, imagem_pos_y, descricao, custo_pts, promo, resgate_unico",
       )
+      .eq("active", true)
+      .eq("is_brinde", false)
       .order("custo_pts"),
     supabase
       .from("settings")
