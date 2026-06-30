@@ -32,6 +32,8 @@ import {
 import { type Reward, type Resgate, type CatalogItem } from "@/lib/mock";
 import { saveLojaItem, entregarResgate, recusarResgate } from "./actions";
 import { saveSettings } from "@/lib/settings-actions";
+import { uploadImagem } from "@/lib/storage-actions";
+import { prepararImagemWebp } from "@/lib/image-client";
 
 const ICON_MAP: Record<
   string,
@@ -200,6 +202,18 @@ export default function LojinhaClient({
     if (!editId || !editReward || saving) return;
     setSaving(true);
     setSaveError("");
+    let imagemUrl: string | null | undefined;
+    if (editPhoto === null) {
+      imagemUrl = null; // removida
+    } else if (editPhoto.startsWith("data:")) {
+      const up = await uploadImagem(editPhoto, "loja");
+      if (!up.ok) {
+        setSaving(false);
+        setSaveError(up.error);
+        return;
+      }
+      imagemUrl = up.url;
+    } // senão = URL existente inalterada → fica undefined (não mexe)
     const res = await saveLojaItem({
       id: editId,
       name: editName.trim() || editReward.name,
@@ -208,6 +222,7 @@ export default function LojinhaClient({
       stock: Math.max(0, parseInt(editStock) || 0),
       descricao: editDesc,
       resgateUnico: editUnico,
+      imagemUrl,
     });
     setSaving(false);
     if (!res.ok) {
@@ -221,23 +236,22 @@ export default function LojinhaClient({
   function handleEditUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
-    const rd = new FileReader();
-    rd.onload = (ev) => {
-      setEditPhoto(ev.target?.result as string);
-      setEditPhotoPos({ x: 50, y: 50 });
-    };
-    rd.readAsDataURL(f);
+    prepararImagemWebp(f)
+      .then((dataUrl) => {
+        setEditPhoto(dataUrl);
+        setEditPhotoPos({ x: 50, y: 50 });
+      })
+      .catch(() => setSaveError("Não foi possível processar a imagem."));
   }
-
   function handleAddUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
-    const rd = new FileReader();
-    rd.onload = (ev) => {
-      setAddPhoto(ev.target?.result as string);
-      setAddPhotoPos({ x: 50, y: 50 });
-    };
-    rd.readAsDataURL(f);
+    prepararImagemWebp(f)
+      .then((dataUrl) => {
+        setAddPhoto(dataUrl);
+        setAddPhotoPos({ x: 50, y: 50 });
+      })
+      .catch(() => setSaveError("Não foi possível processar a imagem."));
   }
 
   function selectCatalog(c: CatalogItem) {
@@ -252,6 +266,16 @@ export default function LojinhaClient({
     if (!addSearch.trim() || !parseFloat(addCusto) || saving) return;
     setSaving(true);
     setSaveError("");
+    let imagemUrl: string | undefined;
+    if (addPhoto?.startsWith("data:")) {
+      const up = await uploadImagem(addPhoto, "loja");
+      if (!up.ok) {
+        setSaving(false);
+        setSaveError(up.error);
+        return;
+      }
+      imagemUrl = up.url;
+    }
     const res = await saveLojaItem({
       name: addSearch.trim(),
       valorBase: parseFloat(addCusto),
@@ -259,6 +283,7 @@ export default function LojinhaClient({
       stock: parseInt(addStock) || 0,
       descricao: addDesc,
       resgateUnico: addUnico,
+      imagemUrl,
     });
     setSaving(false);
     if (!res.ok) {

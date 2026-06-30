@@ -11,6 +11,7 @@ export type LojaItemInput = {
   stock: number;
   resgateUnico: boolean;
   descricao?: string;
+  imagemUrl?: string | null; // undefined = não mexe · string = grava · null = limpa
 };
 
 export type SaveLojaResult = { ok: true } | { ok: false; error: string };
@@ -26,7 +27,7 @@ export async function saveLojaItem(
 
   const mult_delta = input.mod === 0 ? null : input.mod;
 
-  const row = {
+  const row: Record<string, unknown> = {
     name: input.name.trim(),
     valor_base: input.valorBase,
     mult_delta,
@@ -34,6 +35,7 @@ export async function saveLojaItem(
     descricao: input.descricao?.trim() || null,
     resgate_unico: input.resgateUnico,
   };
+  if (input.imagemUrl !== undefined) row.imagem = input.imagemUrl;
 
   const { error } = input.id
     ? await supabase.from("loja_items").update(row).eq("id", input.id)
