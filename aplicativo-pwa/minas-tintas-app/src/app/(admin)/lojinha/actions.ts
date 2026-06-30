@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
+import { apagarImagemPorUrl } from "@/lib/storage";
 
 export type LojaItemInput = {
   id?: string;
@@ -41,11 +42,25 @@ export async function saveLojaItem(
     row.imagem_pos_x = input.imagemPos ? Math.round(input.imagemPos.x) : null;
     row.imagem_pos_y = input.imagemPos ? Math.round(input.imagemPos.y) : null;
   }
+  let oldImagem: string | null = null;
+  if (input.id && input.imagemUrl !== undefined) {
+    const { data: cur } = await supabase
+      .from("loja_items")
+      .select("imagem")
+      .eq("id", input.id)
+      .maybeSingle();
+    oldImagem = cur?.imagem ?? null;
+  }
+
   const { error } = input.id
     ? await supabase.from("loja_items").update(row).eq("id", input.id)
     : await supabase.from("loja_items").insert(row);
-
   if (error) return { ok: false, error: "Não foi possível salvar o item." };
+
+  // trocou ou removeu → apaga a antiga (best-effort)
+  if (oldImagem && oldImagem !== input.imagemUrl) {
+    await apagarImagemPorUrl(oldImagem);
+  }
 
   revalidatePath("/lojinha");
   return { ok: true };

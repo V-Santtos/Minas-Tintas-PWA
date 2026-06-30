@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import { sincronizarCatalogo, type SyncResult } from "@/lib/hiper/sync";
+import { apagarImagemPorUrl } from "@/lib/storage";
 
 export type SaveAdminResult = { ok: true } | { ok: false; error: string };
 
@@ -67,11 +68,20 @@ export async function saveAdminAvatar(
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Não autenticado." };
 
+  const { data: cur } = await supabase
+    .from("admins")
+    .select("avatar_url")
+    .eq("auth_user_id", user.id)
+    .maybeSingle();
+  const old = cur?.avatar_url ?? null;
+
   const { error } = await supabase
     .from("admins")
     .update({ avatar_url: url })
     .eq("auth_user_id", user.id);
   if (error) return { ok: false, error: "Não foi possível salvar a foto." };
+
+  if (old && old !== url) await apagarImagemPorUrl(old);
 
   revalidatePath("/configuracoes");
   return { ok: true };

@@ -4,6 +4,7 @@ import { createAdminClient } from "@/utils/supabase/admin";
 
 const BUCKET = "imagens";
 const MAX_INPUT_BYTES = 8 * 1024 * 1024; // guard do INPUT (antes do sharp)
+const PUBLIC_MARKER = "/object/public/imagens/";
 
 export type Prefixo = "loja" | "admin";
 const MAX_DIM: Record<Prefixo, number> = { loja: 1024, admin: 512 };
@@ -35,4 +36,23 @@ export async function subirImagemWebp(
   if (error) throw new Error(`upload: ${error.message}`);
 
   return supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+}
+
+// Best-effort: apaga o arquivo do bucket a partir da URL pública. Só age em URLs
+// do nosso bucket (o marker protege valores legados tipo /assets/...). Nunca
+// derruba a operação principal — órfão é tolerável, falha de delete não.
+export async function apagarImagemPorUrl(
+  url: string | null | undefined,
+): Promise<void> {
+  if (!url) return;
+  const i = url.indexOf(PUBLIC_MARKER);
+  if (i === -1) return; // não é do bucket 'imagens' → ignora
+  const path = url.slice(i + PUBLIC_MARKER.length);
+  if (!path) return;
+  try {
+    const supabase = createAdminClient();
+    await supabase.storage.from(BUCKET).remove([path]);
+  } catch {
+    // silencioso de propósito
+  }
 }

@@ -283,8 +283,7 @@ Troca de telefone do pintor pelo admin; recuperação por e-mail (SMTP).
   pública** na coluna. Downscale no cliente pra WebP (`prepararImagemWebp` via canvas — fura o limite
   de 1MB do body de server action) → action `uploadImagem` (gate de admin) → `subirImagemWebp` (sharp,
   server-only) → `service_role` sobe no bucket. Sem policy em `storage.objects` (leitura pública;
-  escrita só service_role). `sharp` em `serverExternalPackages`. **Resíduos:** `imgPos` não persiste
-  (drag cosmético, falta coluna) e órfãos no bucket (troca/remoção não apaga o antigo).
+  escrita só service_role). `sharp` em `serverExternalPackages`.
 
 ### Integração do catálogo (Hiper)
 
