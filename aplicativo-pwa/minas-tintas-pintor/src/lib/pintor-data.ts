@@ -366,6 +366,7 @@ export type LojaProduct = {
   jaResgatado: boolean;
   icon: string;
   img: string;
+  imgPos?: { x: number; y: number };
   name: string;
   desc: string;
 };

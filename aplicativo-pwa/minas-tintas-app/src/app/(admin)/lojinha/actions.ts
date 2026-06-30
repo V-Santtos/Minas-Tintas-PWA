@@ -12,6 +12,7 @@ export type LojaItemInput = {
   resgateUnico: boolean;
   descricao?: string;
   imagemUrl?: string | null; // undefined = não mexe · string = grava · null = limpa
+  imagemPos?: { x: number; y: number } | null; // undefined=não mexe · {x,y}=grava · null=centro
 };
 
 export type SaveLojaResult = { ok: true } | { ok: false; error: string };
@@ -36,7 +37,10 @@ export async function saveLojaItem(
     resgate_unico: input.resgateUnico,
   };
   if (input.imagemUrl !== undefined) row.imagem = input.imagemUrl;
-
+  if (input.imagemPos !== undefined) {
+    row.imagem_pos_x = input.imagemPos ? Math.round(input.imagemPos.x) : null;
+    row.imagem_pos_y = input.imagemPos ? Math.round(input.imagemPos.y) : null;
+  }
   const { error } = input.id
     ? await supabase.from("loja_items").update(row).eq("id", input.id)
     : await supabase.from("loja_items").insert(row);

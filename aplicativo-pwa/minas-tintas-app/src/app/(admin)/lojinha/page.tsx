@@ -26,7 +26,7 @@ export default async function LojinhaPage() {
     supabase
       .from("loja_items_admin")
       .select(
-        "id, name, valor_base, mult_delta, stock, imagem, descricao, resgate_unico",
+        "id, name, valor_base, mult_delta, stock, imagem, imagem_pos_x, imagem_pos_y, descricao, resgate_unico",
       )
       .order("custo_pts"),
     supabase
@@ -57,6 +57,10 @@ export default async function LojinhaPage() {
     resgateUnico: r.resgate_unico,
     icon: "",
     img: r.imagem ?? "",
+    imgPos:
+      r.imagem_pos_x != null
+        ? { x: r.imagem_pos_x, y: r.imagem_pos_y }
+        : undefined,
     desc: r.descricao ?? "",
   }));
 

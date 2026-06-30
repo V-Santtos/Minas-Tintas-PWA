@@ -203,16 +203,21 @@ export default function LojinhaClient({
     setSaving(true);
     setSaveError("");
     let imagemUrl: string | null | undefined;
+    let imagemPos: { x: number; y: number } | null | undefined;
     if (editPhoto === null) {
-      imagemUrl = null; // removida
-    } else if (editPhoto.startsWith("data:")) {
-      const up = await uploadImagem(editPhoto, "loja");
-      if (!up.ok) {
-        setSaving(false);
-        setSaveError(up.error);
-        return;
+      imagemUrl = null;
+      imagemPos = null;
+    } else {
+      imagemPos = editPhotoPos; // posição acompanha mesmo sem re-upload
+      if (editPhoto.startsWith("data:")) {
+        const up = await uploadImagem(editPhoto, "loja");
+        if (!up.ok) {
+          setSaving(false);
+          setSaveError(up.error);
+          return;
+        }
+        imagemUrl = up.url;
       }
-      imagemUrl = up.url;
     } // senão = URL existente inalterada → fica undefined (não mexe)
     const res = await saveLojaItem({
       id: editId,
@@ -223,6 +228,7 @@ export default function LojinhaClient({
       descricao: editDesc,
       resgateUnico: editUnico,
       imagemUrl,
+      imagemPos,
     });
     setSaving(false);
     if (!res.ok) {
@@ -267,6 +273,7 @@ export default function LojinhaClient({
     setSaving(true);
     setSaveError("");
     let imagemUrl: string | undefined;
+    let imagemPos: { x: number; y: number } | undefined;
     if (addPhoto?.startsWith("data:")) {
       const up = await uploadImagem(addPhoto, "loja");
       if (!up.ok) {
@@ -275,6 +282,7 @@ export default function LojinhaClient({
         return;
       }
       imagemUrl = up.url;
+      imagemPos = addPhotoPos;
     }
     const res = await saveLojaItem({
       name: addSearch.trim(),
@@ -284,6 +292,7 @@ export default function LojinhaClient({
       descricao: addDesc,
       resgateUnico: addUnico,
       imagemUrl,
+      imagemPos,
     });
     setSaving(false);
     if (!res.ok) {
@@ -773,6 +782,7 @@ export default function LojinhaClient({
                         width: "100%",
                         height: "100%",
                         objectFit: "cover",
+                        objectPosition: `${r.imgPos?.x ?? 50}% ${r.imgPos?.y ?? 50}%`,
                         filter: isHidden ? "grayscale(1)" : "none",
                       }}
                       onError={(e) => {

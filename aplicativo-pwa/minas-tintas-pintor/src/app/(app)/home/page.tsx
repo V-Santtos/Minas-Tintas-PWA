@@ -32,6 +32,7 @@ export default function HomePage() {
     .map((p) => ({
       icon: "",
       img: p.img || undefined,
+      imgPos: p.imgPos,
       name: p.name,
       pts: p.pts,
       promo: p.promo,
@@ -383,6 +384,7 @@ export default function HomePage() {
                     width: "100%",
                     height: "100%",
                     objectFit: "cover",
+                    objectPosition: `${p.imgPos?.x ?? 50}% ${p.imgPos?.y ?? 50}%`,
                     borderRadius: 9,
                   }}
                   alt={p.name}

@@ -195,8 +195,8 @@ export default function ResgatePage({
               style={{
                 width: "100%",
                 height: "100%",
-                objectFit: "contain",
-                padding: 12,
+                objectFit: "cover",
+                objectPosition: `${p.imgPos?.x ?? 50}% ${p.imgPos?.y ?? 50}%`,
               }}
               alt={p.name}
             />

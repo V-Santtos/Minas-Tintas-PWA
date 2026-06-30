@@ -78,7 +78,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     supabase
       .from("loja_items_admin")
       .select(
-        "id, name, valor_base, stock, categoria, imagem, descricao, custo_pts, promo, resgate_unico",
+        "id, name, valor_base, stock, categoria, imagem, imagem_pos_x, imagem_pos_y, descricao, custo_pts, promo, resgate_unico",
       )
       .order("custo_pts"),
     supabase
@@ -149,6 +149,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     stock: r.stock,
     icon: "",
     img: r.imagem ?? "",
+    imgPos:
+      r.imagem_pos_x != null
+        ? { x: r.imagem_pos_x, y: r.imagem_pos_y }
+        : undefined,
     name: r.name,
     desc: r.descricao ?? "",
     unico: r.resgate_unico,

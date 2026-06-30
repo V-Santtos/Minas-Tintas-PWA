@@ -465,6 +465,7 @@ export default function LojaPage() {
                       width: "100%",
                       height: "100%",
                       objectFit: "cover",
+                      objectPosition: `${p.imgPos?.x ?? 50}% ${p.imgPos?.y ?? 50}%`,
                       borderRadius: 9,
                     }}
                     alt={p.name}
