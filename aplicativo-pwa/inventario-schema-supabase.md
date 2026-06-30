@@ -510,9 +510,7 @@ clientes do pintor, e painters/clients/products no payload de pedidos).
    cliente encolhe pra WebP (`prepararImagemWebp`, canvas — fura o limite de 1MB do body de server
    action) → action `uploadImagem` (gate de admin) → `subirImagemWebp` (sharp: auto-orient/resize/
    webp q80, server-only) → `service_role` sobe no bucket → URL pública na coluna. Sem policy em
-   `storage.objects` (leitura pública; escrita só service_role). **Resíduos adiados:** (a) recorte/
-   reposição (`imgPos`) — o drag existe na UI mas não persiste (falta coluna); v1 exibe cover
-   centralizado. (b) limpeza de órfãos — trocar/remover foto não apaga o arquivo antigo no bucket.
+   `storage.objects` (leitura pública; escrita só service_role). **Resíduos:** órfãos no bucket (troca/remoção não apaga o antigo).
 
 **`rules.ts` × `settings.bonus_percent`:** tanto o **crédito autoritativo** (`aprovar_pedido` /
 `criar_pedido_admin`) quanto o **preview** do pintor (`A liberar`, carrinho, detalhe) leem
