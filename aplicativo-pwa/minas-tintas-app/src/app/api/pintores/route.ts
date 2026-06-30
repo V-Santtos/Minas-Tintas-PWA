@@ -73,6 +73,16 @@ export async function POST(request: Request) {
     .select()
     .single();
 
+  // 4.5. Concede o brinde de boas-vindas (best-effort: falha aqui nao deve
+  // impedir o cadastro do pintor — e idempotente, da pra reprocessar depois).
+  const { error: brindeError } = await adminClient.rpc(
+    "conceder_brinde_boas_vindas",
+    { p_painter_id: painter.id },
+  );
+  if (brindeError) {
+    console.error("Falha ao conceder brinde de boas-vindas:", brindeError);
+  }
+
   // 5. Se a etapa 4 falhar, desfaz a etapa 3 (sem usuário órfão)
   if (dbError) {
     await adminClient.auth.admin.deleteUser(created.user.id);
