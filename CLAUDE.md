@@ -283,7 +283,8 @@ Troca de telefone do pintor pelo admin; recuperação por e-mail (SMTP).
   pública** na coluna. Downscale no cliente pra WebP (`prepararImagemWebp` via canvas — fura o limite
   de 1MB do body de server action) → action `uploadImagem` (gate de admin) → `subirImagemWebp` (sharp,
   server-only) → `service_role` sobe no bucket. Sem policy em `storage.objects` (leitura pública;
-  escrita só service_role). `sharp` em `serverExternalPackages`.
+  escrita só service_role). `sharp` em `serverExternalPackages`. Troca/remoção de foto apaga o arquivo antigo (`apagarImagemPorUrl`, best-effort, guard por marker);
+  resíduo mínimo: upload novo órfão se o save seguinte falhar.
 
 ### Integração do catálogo (Hiper)
 
