@@ -1,5 +1,6 @@
 # Projeto pessoal não relacionado
 hawkstreet-site/
+GSAP/
 
 # Configurações locais do Claude Code
 .claude/
@@ -17,6 +18,7 @@ sessao-atual.md
 
 # Env files — senhas e tokens
 **/.env*
+env.local_*
 
 # Vercel
 **/.vercel
