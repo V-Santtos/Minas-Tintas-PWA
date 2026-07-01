@@ -75,17 +75,20 @@ function imgSrc(img: string | null | undefined): string | null {
 
 export default function LojinhaClient({
   rewards: rewardsProp,
+  allRewards: allRewardsProp,
   resgates: resgatesProp,
   globalMult: globalMultProp,
   catalog,
 }: {
   rewards: Reward[];
+  allRewards: Reward[];
   resgates: Resgate[];
   globalMult: number;
   catalog: CatalogItem[];
 }) {
   const router = useRouter();
   const rewards = rewardsProp; // server-derived; router.refresh() reSemeia
+  const allRewards = allRewardsProp;
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const resgates = resgatesProp; // server-derived; router.refresh() reSemeia
@@ -1104,7 +1107,7 @@ export default function LojinhaClient({
               </div>
             ) : (
               resgateList.map((re, i) => {
-                const item = rewards.find((x) => x.id === re.itemId);
+                const item = allRewards.find((x) => x.id === re.itemId);
                 if (!item) return null;
                 const src = imgSrc(item.img);
                 const IconComp = ICON_MAP[item.icon] || Package;

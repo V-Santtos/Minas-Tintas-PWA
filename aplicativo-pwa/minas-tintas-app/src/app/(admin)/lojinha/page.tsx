@@ -26,9 +26,8 @@ export default async function LojinhaPage() {
     supabase
       .from("loja_items_admin")
       .select(
-        "id, name, valor_base, mult_delta, stock, imagem, imagem_pos_x, imagem_pos_y, descricao, resgate_unico",
+        "id, name, valor_base, mult_delta, stock, imagem, imagem_pos_x, imagem_pos_y, descricao, resgate_unico, is_brinde",
       )
-      .eq("is_brinde", false)
       .order("custo_pts"),
     supabase
       .from("resgates_admin")
@@ -48,7 +47,7 @@ export default async function LojinhaPage() {
 
   // itemMod = mult_delta (já é o delta; 0 quando herda). O calcPts do client,
   // com globalMult = padrao, faz valor_base × (padrao + delta).
-  const rewards: Reward[] = (itemRows ?? []).map((r) => ({
+  const allRewards: Reward[] = (itemRows ?? []).map((r) => ({
     id: r.id,
     name: r.name,
     custo: Number(r.valor_base),
@@ -64,7 +63,7 @@ export default async function LojinhaPage() {
         : undefined,
     desc: r.descricao ?? "",
   }));
-
+  const rewards = allRewards.filter((_, i) => !itemRows![i].is_brinde);
   const resgates: Resgate[] = (resgateRows ?? []).map((r) => ({
     id: r.id,
     pintorName: r.painter_nome,
@@ -87,6 +86,7 @@ export default async function LojinhaPage() {
   return (
     <LojinhaClient
       rewards={rewards}
+      allRewards={allRewards}
       resgates={resgates}
       globalMult={padrao}
       catalog={catalog}
