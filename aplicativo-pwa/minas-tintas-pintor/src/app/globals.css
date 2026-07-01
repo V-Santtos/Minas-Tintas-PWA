@@ -164,6 +164,13 @@
    Componentes compartilhados portados do protótipo validado.
    ============================================================ */
 
+/* Spinner de carregamento (botões em estado "carregando") */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Viewport mobile-first: limita a largura num invólucro central */
 .pintor-app {
   display: flex;

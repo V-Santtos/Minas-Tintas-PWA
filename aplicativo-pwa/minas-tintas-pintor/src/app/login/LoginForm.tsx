@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Phone, Lock, Eye, EyeOff } from "lucide-react";
+import { Phone, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import MockStatusBar from "@/components/MockStatusBar"; // [MOCKUP DESKTOP] remover ao publicar
 import { createClient } from "@/utils/supabase/client";
 
@@ -39,6 +39,7 @@ export default function LoginForm({ staleSession }: { staleSession: boolean }) {
   const [showSenha, setShowSenha] = useState(false);
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   // Chegou no login com sessão válida mas SEM "Lembrar-me" → encerra a sessão
   // pendente. É o que faz o desmarcado pedir login de novo no próximo acesso.
@@ -49,7 +50,9 @@ export default function LoginForm({ staleSession }: { staleSession: boolean }) {
 
   async function doLogin(e: React.FormEvent) {
     e.preventDefault();
+    if (loading) return; // evita duplo envio
     setError("");
+    setLoading(true);
 
     const tel = phone.replace(/\D/g, "");
     const emailLogin = `${tel}@pintor.local`;
@@ -61,10 +64,13 @@ export default function LoginForm({ staleSession }: { staleSession: boolean }) {
     });
     if (error) {
       setError("Telefone ou senha inválidos.");
+      setLoading(false);
       return;
     }
 
     setRememberCookie(remember);
+    // Mantém o loading ligado durante o redirect (o botão segue girando até
+    // a próxima tela pintar) — não reseta aqui.
     router.push("/home");
   }
 
@@ -270,6 +276,8 @@ export default function LoginForm({ staleSession }: { staleSession: boolean }) {
           <button
             type="submit"
             className="btn btn-full"
+            disabled={loading}
+            aria-busy={loading}
             style={{
               fontSize: 16,
               padding: 16,
@@ -278,9 +286,19 @@ export default function LoginForm({ staleSession }: { staleSession: boolean }) {
               color: "#fff",
               border: 0,
               boxShadow: "0 4px 14px rgba(204,0,0,.3)",
+              cursor: loading ? "default" : "pointer",
             }}
           >
-            Entrar
+            {loading ? (
+              <Loader2
+                size={20}
+                strokeWidth={2.5}
+                style={{ animation: "spin 1s linear infinite" }}
+                aria-label="Entrando…"
+              />
+            ) : (
+              "Entrar"
+            )}
           </button>
         </form>
       </div>
