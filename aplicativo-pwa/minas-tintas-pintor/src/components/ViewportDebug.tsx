@@ -16,7 +16,9 @@ export default function ViewportDebug() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (new URLSearchParams(window.location.search).get("debug") !== "1") return;
+    // [TEMPORÁRIO] sempre ligado p/ capturar a abertura fria no iPhone —
+    // o standalone não tem barra de URL, então ?debug=1 nunca chega aqui.
+    // if (new URLSearchParams(window.location.search).get("debug") !== "1") return;
     setOn(true);
 
     const read = () => {
