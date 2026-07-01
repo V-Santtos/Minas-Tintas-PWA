@@ -9,6 +9,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { usePintor } from "@/lib/pintor-store";
+import { createClient } from "@/utils/supabase/client";
 
 export default function PerfilPage() {
   const router = useRouter();
@@ -40,6 +41,11 @@ export default function PerfilPage() {
       href: "/perfil/configuracoes",
     },
   ] as const;
+
+  async function sair() {
+    await createClient().auth.signOut();
+    router.replace("/login");
+  }
 
   return (
     <>
@@ -88,7 +94,7 @@ export default function PerfilPage() {
 
       <div style={{ padding: "4px 16px 100px", textAlign: "center" }}>
         <button
-          onClick={() => router.push("/login")}
+          onClick={sair}
           style={{
             background: "transparent",
             border: 0,
