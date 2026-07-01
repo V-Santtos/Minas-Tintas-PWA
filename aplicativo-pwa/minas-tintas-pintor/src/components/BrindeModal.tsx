@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Gift, Store, X } from "lucide-react";
 import { usePintor } from "@/lib/pintor-store";
@@ -49,6 +50,29 @@ export default function BrindeModal() {
   const [open, setOpen] = useState(false); // controla o mount
   const [shown, setShown] = useState(false); // controla a animação de entrada
   const persistOnClose = useRef(true); // preview não marca "já viu"
+  const [frameEl, setFrameEl] = useState<HTMLElement | null>(null);
+
+  // Alvo do portal: .pintor-app (mesma "moldura" do sheet de resgate). Tira o
+  // modal do .pintor-scroll, onde o -webkit-overflow-scrolling: touch prende
+  // fixed e bagunça o compositing — sintoma: a bottom-nav treme/desloca ao abrir.
+  useEffect(() => {
+    setFrameEl(document.querySelector<HTMLElement>(".pintor-app"));
+  }, []);
+
+  // Trava o scroll de fundo enquanto o modal está aberto. Sem isso, o toque no
+  // overlay pode "vazar" um pouco de bounce elástico (iOS) pro .pintor-scroll
+  // por trás, e a bottom-nav (fixed, mesmo contexto) sofre o solavanco até o
+  // primeiro toque assentar o scroll — o sintoma que você viu.
+  useEffect(() => {
+    if (!open) return;
+    const scrollEl = document.querySelector<HTMLElement>(".pintor-scroll");
+    if (!scrollEl) return;
+    const prev = scrollEl.style.overflow;
+    scrollEl.style.overflow = "hidden";
+    return () => {
+      scrollEl.style.overflow = prev;
+    };
+  }, [open]);
 
   // Decide na montagem: mostra ou não, e qual brinde.
   useEffect(() => {
@@ -94,10 +118,10 @@ export default function BrindeModal() {
     router.push("/loja");
   }
 
-  if (!open || !pick) return null;
+  if (!open || !pick || !frameEl) return null;
   const brindeInfo = BRINDES[pick];
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
@@ -268,6 +292,7 @@ export default function BrindeModal() {
           Agora não
         </button>
       </div>
-    </div>
+    </div>,
+    frameEl,
   );
 }
