@@ -28,6 +28,7 @@ export default async function LojinhaPage() {
       .select(
         "id, name, valor_base, mult_delta, stock, imagem, imagem_pos_x, imagem_pos_y, descricao, resgate_unico",
       )
+      .eq("is_brinde", false)
       .order("custo_pts"),
     supabase
       .from("resgates_admin")
