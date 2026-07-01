@@ -12,6 +12,7 @@ import { BONUS_PERCENT } from "@/lib/rules";
 import BottomNav from "@/components/BottomNav";
 import MockStatusBar from "@/components/MockStatusBar"; // [MOCKUP DESKTOP] remover ao publicar
 import RealtimeRefresh from "@/components/RealtimeRefresh";
+import ViewportDebug from "@/components/ViewportDebug"; // [DEBUG] liga com ?debug=1
 
 const MES = [
   "jan",
@@ -447,6 +448,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         <MockStatusBar />
         <div className="pintor-scroll">{children}</div>
         <BottomNav />
+        <ViewportDebug />
       </div>
     </PintorProvider>
   );
