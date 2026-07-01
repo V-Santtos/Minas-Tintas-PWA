@@ -256,6 +256,20 @@ Troca de telefone do pintor pelo admin; recuperação por e-mail (SMTP).
   quebrou porque nunca pediu a coluna). Em renames futuros: subir o código compatível **antes** do
   `db push`, ou a view expor os dois nomes por um deploy (expand/contract). Relevante pro catálogo
   via API mais à frente.
+- **Bottom-nav no iPhone (launch frio) resolvida — decisão travada.** No iOS standalone o
+  viewport/`100dvh` nascem defasados no launch (medido: 793 numa tela de 852) e a nav nascia
+  "empurrada" até um gesto real reconciliar. Fix: `IosVh.tsx` publica `--app-vh = screen.height`
+  (px físico) e `html.ios-standalone .pintor-app` usa `min-height: var(--app-vh, 100dvh)`.
+  **Travado:** moldura com `transform: translateZ(0)` + altura em px medido (nunca dvh puro no
+  standalone); visual da nav é o compacto do baseline `c8095bb` (78px, sem `env()` somado — os
+  calc(env) foram rejeitados visualmente). Scroll programático NÃO reconcilia o viewport
+  (testado). Detalhe completo e histórico da saga em `sessao-atual.md`.
+- **Lição (deploy): ✓ do GitHub não prova o que o domínio serve.** Um Instant Rollback no Vercel
+  congelou produção numa versão quebrada por horas — commits novos buildavam mas não eram
+  promovidos, e os fixes foram "testados" contra o build velho (4 dias perdidos). Antes de
+  debugar "regressão" em produção: provar o build servido (`GET /sw.js` → grep de assinatura nos
+  chunks; CSS público; `?dpl=` do HTML). Navegador do dev é servido pelo service worker — nunca é
+  teste limpo de deploy.
 - **Lojinha: quantidade no resgate + item de resgate único** entregue. `resgates.quantidade` (1 linha
   cobre N unidades; `pontos_congelados` = total) e `loja_items.resgate_unico`. A RPC `resgatar_item`
   passou a `(item, qtd default 1)`: baixa `qtd` de estoque, debita `qtd × custo`, grava 1 resgate;
