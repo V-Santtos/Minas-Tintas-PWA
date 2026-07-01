@@ -91,7 +91,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     supabase
       .from("resgates_admin")
       .select(
-        "id, loja_item_id, item_nome, pontos_congelados, status, created_at",
+        "id, loja_item_id, item_nome, pontos_congelados, status, created_at, entregue_em",
       )
       .in("status", ["pendente_retirada", "entregue"])
       .order("created_at", { ascending: false }),
@@ -281,7 +281,20 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       });
     }
   }
-
+  // Resgate entregue: o admin confirmou a entrega (fato = status 'entregue' + entregue_em).
+  for (const r of resgateRows ?? []) {
+    if (r.status !== "entregue" || !r.entregue_em) continue;
+    if (r.loja_item_id && BRINDE_ITEM_IDS[r.loja_item_id]) continue;
+    feedRaw.push({
+      id: `resgate-entregue-${r.id}`,
+      kind: "resgate",
+      title: "Resgate entregue",
+      text: `${r.item_nome ?? "Item"} foi entregue. Aproveite!`,
+      href: "/loja",
+      at: r.entregue_em,
+      ts: new Date(r.entregue_em).getTime(),
+    });
+  }
   // Promoções na lojinha (mult_delta < 0 → promo). Sem data de evento própria;
   // usamos "agora" só para ordenação (aparecem no topo enquanto ativas).
   if (prefPromocoes) {
