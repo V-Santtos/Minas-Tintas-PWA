@@ -465,7 +465,9 @@ export default function PintoresClient({
       {/* Modal — Cadastrar pintor */}
       {modalOpen && (
         <div
-          onClick={closeModal}
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) closeModal();
+          }}
           style={{
             position: "fixed",
             inset: 0,
@@ -478,7 +480,6 @@ export default function PintoresClient({
           }}
         >
           <div
-            onClick={(e) => e.stopPropagation()}
             style={{
               background: "var(--card)",
               borderRadius: 16,

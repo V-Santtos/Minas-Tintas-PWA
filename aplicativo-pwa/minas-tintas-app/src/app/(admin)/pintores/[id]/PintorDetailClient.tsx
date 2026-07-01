@@ -743,7 +743,9 @@ export default function PintorDetailClient({
       {/* Modal — Editar cadastro */}
       {editOpen && (
         <div
-          onClick={() => setEditOpen(false)}
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setEditOpen(false);
+          }}
           style={{
             position: "fixed",
             inset: 0,
@@ -756,7 +758,6 @@ export default function PintorDetailClient({
           }}
         >
           <div
-            onClick={(e) => e.stopPropagation()}
             style={{
               background: "var(--card)",
               borderRadius: 16,

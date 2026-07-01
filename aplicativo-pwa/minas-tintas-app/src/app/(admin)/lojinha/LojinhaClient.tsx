@@ -1308,8 +1308,13 @@ export default function LojinhaClient({
 
       {/* ══ MODAL: Multiplicadores ══ */}
       {multOpen && (
-        <div style={modalOverlay} onClick={() => setMultOpen(false)}>
-          <div style={modalPanel} onClick={(e) => e.stopPropagation()}>
+        <div
+          style={modalOverlay}
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setMultOpen(false);
+          }}
+        >
+          <div style={modalPanel}>
             <div style={modalHead}>
               <span
                 style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)" }}
@@ -1749,11 +1754,13 @@ export default function LojinhaClient({
 
       {/* ══ MODAL: Adicionar item ══ */}
       {addOpen && (
-        <div style={modalOverlay} onClick={closeAdd}>
-          <div
-            style={{ ...modalPanel, maxWidth: 480 }}
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div
+          style={modalOverlay}
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) closeAdd();
+          }}
+        >
+          <div style={{ ...modalPanel, maxWidth: 480 }}>
             <div style={modalHead}>
               <span
                 style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)" }}
