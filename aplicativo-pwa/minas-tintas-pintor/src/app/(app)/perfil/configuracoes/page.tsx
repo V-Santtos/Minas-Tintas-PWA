@@ -287,6 +287,7 @@ export default function ConfiguracoesPage() {
             type="button"
             className="profile-row"
             style={{ gridTemplateColumns: "36px 1fr auto" }}
+            disabled
           >
             <div className="profile-icon">
               <MessageCircle size={18} strokeWidth={1.75} color="var(--ink)" />
@@ -309,6 +310,7 @@ export default function ConfiguracoesPage() {
             type="button"
             className="profile-row"
             style={{ gridTemplateColumns: "36px 1fr auto" }}
+            disabled
           >
             <div className="profile-icon">
               <HelpCircle size={18} strokeWidth={1.75} color="var(--ink)" />
