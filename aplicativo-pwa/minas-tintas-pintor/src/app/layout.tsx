@@ -1,4 +1,5 @@
 ﻿import type { Metadata, Viewport } from "next";
+import ViewportKick from "@/components/ViewportKick";
 import {
   Inter,
   Plus_Jakarta_Sans,
@@ -79,7 +80,10 @@ export default function RootLayout({
       className={`${inter.variable} ${playfair.variable} ${jakarta.variable} ${bebas.variable} ${leckerli.variable}`}
       suppressHydrationWarning
     >
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        <ViewportKick />
+        {children}
+      </body>
     </html>
   );
 }

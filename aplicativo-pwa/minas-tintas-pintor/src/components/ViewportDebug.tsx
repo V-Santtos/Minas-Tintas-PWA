@@ -49,7 +49,7 @@ export default function ViewportDebug() {
       setTxt(
         [
           `modo: ${standalone ? "PWA-standalone" : "navegador"}`,
-          `innerH:${window.innerHeight}  scrollY:${Math.round(window.scrollY)}`,
+          `innerH:${window.innerHeight}  screenH:${screen.height}  scrollY:${Math.round(window.scrollY)}`,
           `visualVP: h=${r(vv?.height)} top=${r(vv?.offsetTop)}`,
           `docClientH:${document.documentElement.clientHeight}`,
           `safe-bottom:${sab}`,
