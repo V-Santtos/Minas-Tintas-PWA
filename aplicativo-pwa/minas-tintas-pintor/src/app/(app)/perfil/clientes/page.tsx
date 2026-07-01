@@ -13,6 +13,7 @@ import {
 import { ADDRESS_TYPES } from "@/lib/pintor-data";
 import { usePintor } from "@/lib/pintor-store";
 import { vincularCliente } from "@/lib/clientes-actions";
+import { fmtCpf, fmtCnpj, isValidDocumento } from "@/lib/documento";
 
 type ClientKind = "pessoa" | "empresa";
 type ViewMode = "form" | "list";
@@ -46,46 +47,6 @@ function fmtPhone(raw: string): string {
     v.slice(3, 7) +
     "-" +
     v.slice(7)
-  );
-}
-
-function fmtCpf(raw: string): string {
-  const v = raw.replace(/\D/g, "").slice(0, 11);
-  if (v.length <= 3) return v;
-  if (v.length <= 6) return v.slice(0, 3) + "." + v.slice(3);
-  if (v.length <= 9)
-    return v.slice(0, 3) + "." + v.slice(3, 6) + "." + v.slice(6);
-  return (
-    v.slice(0, 3) + "." + v.slice(3, 6) + "." + v.slice(6, 9) + "-" + v.slice(9)
-  );
-}
-
-function fmtCnpj(raw: string): string {
-  const v = raw.replace(/\D/g, "").slice(0, 14);
-  if (v.length <= 2) return v;
-  if (v.length <= 5) return v.slice(0, 2) + "." + v.slice(2);
-  if (v.length <= 8)
-    return v.slice(0, 2) + "." + v.slice(2, 5) + "." + v.slice(5);
-  if (v.length <= 12)
-    return (
-      v.slice(0, 2) +
-      "." +
-      v.slice(2, 5) +
-      "." +
-      v.slice(5, 8) +
-      "/" +
-      v.slice(8)
-    );
-  return (
-    v.slice(0, 2) +
-    "." +
-    v.slice(2, 5) +
-    "." +
-    v.slice(5, 8) +
-    "/" +
-    v.slice(8, 12) +
-    "-" +
-    v.slice(12)
   );
 }
 
@@ -198,18 +159,18 @@ export default function ClientesPage() {
 
   async function submit() {
     const missing: string[] = [];
-    const docDigits = documentValue.replace(/\D/g, "");
     if (!name.trim()) missing.push("name");
     if (!phone.trim()) missing.push("phone");
-    if (docDigits.length !== (type === "empresa" ? 14 : 11))
-      missing.push("document");
+    if (!isValidDocumento(documentValue, type)) missing.push("document");
     if (!isEditing && cep.replace(/\D/g, "").length !== 8) missing.push("cep");
     if (!isEditing && !address.trim()) missing.push("address");
     if (!isEditing && !neighborhood.trim()) missing.push("neighborhood");
     if (!city.trim()) missing.push("city");
     if (missing.length) {
       setErrFields(missing);
-      setError("Preencha os campos obrigatórios para cadastrar o cliente.");
+      setError(
+        "Preencha corretamente os campos obrigatórios para cadastrar o cliente.",
+      );
       setSuccess("");
       return;
     }
@@ -619,7 +580,9 @@ export default function ClientesPage() {
                           ? "var(--success-tint)"
                           : "var(--paper-deep)",
                         border: `1px solid ${client.linked ? "#C6DCC0" : "var(--line)"}`,
-                        color: client.linked ? "var(--success)" : "var(--muted)",
+                        color: client.linked
+                          ? "var(--success)"
+                          : "var(--muted)",
                       }}
                     >
                       {client.linked ? (

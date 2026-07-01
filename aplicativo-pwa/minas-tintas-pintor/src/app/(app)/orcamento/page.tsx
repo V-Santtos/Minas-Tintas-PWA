@@ -29,6 +29,7 @@ import {
 import { usePintor } from "@/lib/pintor-store";
 import { ADDRESS_TYPES, brl } from "@/lib/pintor-data";
 import { enviarOrcamento } from "@/lib/orcamento-actions";
+import { fmtCpf, fmtCnpj, isValidDocumento } from "@/lib/documento";
 
 const PAYMENT_OPTS = [
   { value: "Vai pagar na loja", icon: Store },
@@ -54,45 +55,6 @@ function fmtPhone(raw: string): string {
     v.slice(3, 7) +
     "-" +
     v.slice(7)
-  );
-}
-function fmtCpf(raw: string): string {
-  const v = raw.replace(/\D/g, "").slice(0, 11);
-  if (v.length <= 3) return v;
-  if (v.length <= 6) return v.slice(0, 3) + "." + v.slice(3);
-  if (v.length <= 9)
-    return v.slice(0, 3) + "." + v.slice(3, 6) + "." + v.slice(6);
-  return (
-    v.slice(0, 3) + "." + v.slice(3, 6) + "." + v.slice(6, 9) + "-" + v.slice(9)
-  );
-}
-
-function fmtCnpj(raw: string): string {
-  const v = raw.replace(/\D/g, "").slice(0, 14);
-  if (v.length <= 2) return v;
-  if (v.length <= 5) return v.slice(0, 2) + "." + v.slice(2);
-  if (v.length <= 8)
-    return v.slice(0, 2) + "." + v.slice(2, 5) + "." + v.slice(5);
-  if (v.length <= 12)
-    return (
-      v.slice(0, 2) +
-      "." +
-      v.slice(2, 5) +
-      "." +
-      v.slice(5, 8) +
-      "/" +
-      v.slice(8)
-    );
-  return (
-    v.slice(0, 2) +
-    "." +
-    v.slice(2, 5) +
-    "." +
-    v.slice(5, 8) +
-    "/" +
-    v.slice(8, 12) +
-    "-" +
-    v.slice(12)
   );
 }
 
@@ -283,15 +245,16 @@ export default function OrcamentoPage() {
     const missing: string[] = [];
     if (!nc.name.trim()) missing.push("name");
     if (!nc.phone.trim()) missing.push("phone");
-    if (nc.cpf.replace(/\D/g, "").length !== (nc.type === "empresa" ? 14 : 11))
-      missing.push("cpf");
+    if (!isValidDocumento(nc.cpf, nc.type)) missing.push("cpf");
     if (nc.cep.replace(/\D/g, "").length !== 8) missing.push("cep");
     if (!nc.address.trim()) missing.push("address");
     if (!nc.neighborhood.trim()) missing.push("neighborhood");
     if (!nc.city.trim()) missing.push("city");
     if (missing.length) {
       setNcErr(missing);
-      setNcMsg("Preencha os campos obrigatórios para cadastrar o cliente.");
+      setNcMsg(
+        "Preencha corretamente os campos obrigatórios para cadastrar o cliente.",
+      );
       return;
     }
     setNcErr([]);

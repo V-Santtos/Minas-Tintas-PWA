@@ -4,24 +4,11 @@ import { useState, useEffect, type FormEvent } from "react";
 import { X, User, Building2, Loader2 } from "lucide-react";
 import { type Client } from "@/lib/mock";
 import { saveClient } from "@/app/(admin)/dashboard/actions";
-
-function maskCPF(value: string) {
-  const d = value.replace(/\D/g, "").slice(0, 11);
-  if (d.length <= 3) return d;
-  if (d.length <= 6) return `${d.slice(0, 3)}.${d.slice(3)}`;
-  if (d.length <= 9) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`;
-  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
-}
-
-function maskCNPJ(value: string) {
-  const d = value.replace(/\D/g, "").slice(0, 14);
-  if (d.length <= 2) return d;
-  if (d.length <= 5) return `${d.slice(0, 2)}.${d.slice(2)}`;
-  if (d.length <= 8) return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5)}`;
-  if (d.length <= 12)
-    return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8)}`;
-  return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}`;
-}
+import {
+  fmtCpf as maskCPF,
+  fmtCnpj as maskCNPJ,
+  isValidDocumento,
+} from "@/lib/documento";
 
 function maskCEP(value: string) {
   const d = value.replace(/\D/g, "").slice(0, 8);
@@ -129,12 +116,10 @@ export function CadastrarClienteModal({
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const docDigits = fields.documento.replace(/\D/g, "");
-    const docLen = type === "empresa" ? 14 : 11;
     if (
       !fields.name.trim() ||
       !fields.phone.trim() ||
-      docDigits.length !== docLen
+      !isValidDocumento(fields.documento, type)
     ) {
       setError(`Preencha nome, telefone e ${docLabel} corretamente.`);
       return;

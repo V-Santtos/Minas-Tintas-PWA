@@ -153,10 +153,9 @@ commit;
 --   delete from orders;
 --   delete from painter_clients;
 --   delete from painter_settings;
---   delete from loja_items;
---   delete from products;
+--   delete from loja_items where is_brinde = false;  -- preserva os 2 brindes (…c1 bone / …c2 pincel)
 --   delete from clients;
---   delete from painters;          -- remove os 4 pintores de teste
+--   delete from painters;
 -- commit;
 --
 -- Depois, no painel do Supabase (Auth -> Users), apague os 4 logins de teste
