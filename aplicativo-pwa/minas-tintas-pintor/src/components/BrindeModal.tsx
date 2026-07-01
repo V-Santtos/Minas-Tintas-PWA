@@ -85,6 +85,21 @@ export default function BrindeModal() {
     return () => clearTimeout(t);
   }, [open]);
 
+  // Trava o scroll de fundo enquanto o modal está aberto (belt-and-suspenders):
+  // sem rolar/rubber-bandar o .pintor-scroll, nada desloca a bottom-nav no iPhone
+  // e o fundo não rola atrás do modal. overflow:hidden no scroller interno não
+  // zera o scrollTop → sem salto ao abrir/fechar. Restaura o valor ao fechar.
+  useEffect(() => {
+    if (!open) return;
+    const scrollEl = document.querySelector<HTMLElement>(".pintor-scroll");
+    if (!scrollEl) return;
+    const prev = scrollEl.style.overflow;
+    scrollEl.style.overflow = "hidden";
+    return () => {
+      scrollEl.style.overflow = prev;
+    };
+  }, [open]);
+
   // Carimba "já viu" no banco. void: não trava a animação esperando a rede;
   // se falhar, o pior caso é o modal reaparecer no próximo carregamento.
   async function marcarVisto() {
