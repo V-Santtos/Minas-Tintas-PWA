@@ -85,18 +85,20 @@ export default function HomePage() {
           }}
         >
           <Bell size={18} strokeWidth={1.75} color="var(--ink)" />
-          <span
-            style={{
-              position: "absolute",
-              right: 9,
-              top: 9,
-              width: 7,
-              height: 7,
-              borderRadius: "50%",
-              background: "var(--brand)",
-              boxShadow: "0 0 0 2px var(--card)",
-            }}
-          />
+          {data.notifNaoLidas && (
+            <span
+              style={{
+                position: "absolute",
+                right: 9,
+                top: 9,
+                width: 7,
+                height: 7,
+                borderRadius: "50%",
+                background: "var(--brand)",
+                boxShadow: "0 0 0 2px var(--card)",
+              }}
+            />
+          )}
         </Link>
       </div>
 

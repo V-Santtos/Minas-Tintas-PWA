@@ -5,6 +5,7 @@ import {
   PintorProvider,
   type PintorReadData,
   type PendingRedemption,
+  type NotifItem,
 } from "@/lib/pintor-store";
 import type { Order, OrderItem, LojaProduct } from "@/lib/pintor-data";
 import { BONUS_PERCENT } from "@/lib/rules";
@@ -111,7 +112,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     supabase
       .from("painter_settings")
       .select(
-        "notif_pedidos, notif_pontos, notif_resgates, notif_promocoes, brinde_visto_em",
+        "notif_pedidos, notif_pontos, notif_resgates, notif_promocoes, brinde_visto_em, notif_visto_em",
       )
       .eq("painter_id", painter.id)
       .maybeSingle(),
@@ -225,6 +226,103 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     };
   });
 
+  // ── Feed de notificações (T6a) ──────────────────────────────────────────
+  // DERIVADO dos fatos que já buscamos — nada de tabela de notificações.
+  // Cada tipo respeita a preferência do pintor (notifPrefs). O brinde entra
+  // enquanto pendente de retirada; os demais vêm de orders/resgates/promos.
+  const prefPedidos = prefsRow?.notif_pedidos ?? true;
+  const prefResgates = prefsRow?.notif_resgates ?? true;
+  const prefPromocoes = prefsRow?.notif_promocoes ?? false;
+
+  const feedRaw: NotifItem[] = [];
+
+  // Pedidos: aprovado (com os pts reais do ledger) e recusado.
+  if (prefPedidos) {
+    for (const r of orderRows ?? []) {
+      const num = String(r.numero).padStart(4, "0");
+      if (r.status === "aprovado") {
+        const pts = Number(r.bonus_creditado) || 0;
+        feedRaw.push({
+          id: `pedido-aprovado-${r.id}`,
+          kind: "pedido_aprovado",
+          title: "Pedido aprovado",
+          text: `Pedido #${num}${r.client_nome ? ` de ${r.client_nome}` : ""} aprovado.${pts ? ` ${pts} pts adicionados ao seu saldo.` : ""}`,
+          href: `/pedidos/${num}`,
+          at: r.created_at,
+          ts: new Date(r.created_at).getTime(),
+        });
+      } else if (r.status === "recusado") {
+        feedRaw.push({
+          id: `pedido-recusado-${r.id}`,
+          kind: "pedido_recusado",
+          title: "Pedido recusado",
+          text: `Pedido #${num}${r.client_nome ? ` de ${r.client_nome}` : ""} não foi aprovado.`,
+          href: `/pedidos/${num}`,
+          at: r.created_at,
+          ts: new Date(r.created_at).getTime(),
+        });
+      }
+    }
+  }
+
+  // Resgates pendentes de retirada (exceto o brinde, que tem card próprio).
+  if (prefResgates) {
+    for (const r of resgateRows ?? []) {
+      if (r.status !== "pendente_retirada") continue;
+      if (r.loja_item_id && BRINDE_ITEM_IDS[r.loja_item_id]) continue;
+      feedRaw.push({
+        id: `resgate-${r.id}`,
+        kind: "resgate",
+        title: "Resgate disponível",
+        text: `${r.item_nome ?? "Item"} reservado para retirada na loja.`,
+        href: "/loja",
+        at: r.created_at,
+        ts: new Date(r.created_at).getTime(),
+      });
+    }
+  }
+
+  // Promoções na lojinha (mult_delta < 0 → promo). Sem data de evento própria;
+  // usamos "agora" só para ordenação (aparecem no topo enquanto ativas).
+  if (prefPromocoes) {
+    const agoraIso = new Date().toISOString();
+    for (const r of lojaRows ?? []) {
+      if (!r.promo) continue;
+      feedRaw.push({
+        id: `promo-${r.id}`,
+        kind: "promo",
+        title: "Promoção na lojinha",
+        text: `${r.name} com menos pontos por tempo limitado.`,
+        href: "/loja",
+        at: agoraIso,
+        ts: Date.now(),
+      });
+    }
+  }
+
+  // Brinde de boas-vindas: entra enquanto pendente de retirada.
+  if (brinde?.pendente) {
+    const NOME = { bone: "Boné Minas Tintas", pincel: 'Pincel Condor 2"' };
+    const at = brindeRow?.created_at ?? new Date().toISOString();
+    feedRaw.push({
+      id: `brinde-${brindeRow?.id ?? "novo"}`,
+      kind: "brinde",
+      title: "Brinde de boas-vindas",
+      text: `Seu ${NOME[brinde.tipo]} está reservado na lojinha para retirada na loja.`,
+      href: "/loja",
+      at,
+      ts: new Date(at).getTime(),
+    });
+  }
+
+  const feed = feedRaw.sort((a, b) => b.ts - a.ts);
+
+  // Não-lido: existe evento com created_at mais novo que o último "visto".
+  const vistoTs = prefsRow?.notif_visto_em
+    ? new Date(prefsRow.notif_visto_em).getTime()
+    : 0;
+  const notifNaoLidas = feed.some((n) => n.ts > vistoTs);
+
   // vínculo é derivado: cliente está vinculado se o pintor tem ao menos um pedido
   // APROVADO com ele. Sem isso (só cadastro/agenda ou pedido pendente) = pendente.
   const approvedClientIds = new Set(
@@ -278,6 +376,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       promocoes: prefsRow?.notif_promocoes ?? false,
     },
     brinde,
+    feed,
+    notifNaoLidas,
   };
 
   return (

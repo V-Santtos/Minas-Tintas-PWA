@@ -66,6 +66,21 @@ export type PintorReadData = {
     pendente: boolean; // resgate ainda não entregue
     visto: boolean; // pintor já fechou o modal
   } | null;
+  feed: NotifItem[];
+  notifNaoLidas: boolean;
+};
+
+// Item do feed de notificações — DERIVADO dos fatos (orders/resgates/promos/brinde),
+// não há tabela de notificações. `at` é o created_at do fato de origem (ISO), usado
+// pra ordenar e agrupar por dia; `ts` é o epoch pra comparar com "visto até quando".
+export type NotifItem = {
+  id: string;
+  kind: "pedido_aprovado" | "pedido_recusado" | "resgate" | "promo" | "brinde";
+  title: string;
+  text: string;
+  href: string;
+  at: string; // ISO do fato de origem
+  ts: number; // epoch ms (ordenação + não-lido)
 };
 
 export type PendingRedemption = {
@@ -89,6 +104,8 @@ type Store = {
   saldo: number;
   pendingRedemptions: PendingRedemption[];
   brinde: PintorReadData["brinde"];
+  feed: NotifItem[];
+  notifNaoLidas: boolean;
   data: PintorReadData;
   cart: Record<string, number>;
   addCart: (id: string, delta: number) => void;
@@ -160,6 +177,8 @@ export function PintorProvider({
     saldo: data.saldo,
     pendingRedemptions: data.pendingRedemptions,
     brinde: data.brinde,
+    feed: data.feed,
+    notifNaoLidas: data.notifNaoLidas,
     cart,
     addCart,
     clearCart,

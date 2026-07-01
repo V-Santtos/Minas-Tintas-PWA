@@ -1,90 +1,84 @@
 ﻿"use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   ChevronLeft,
   CircleCheck,
+  CircleX,
   Gift,
+  Store,
   Tag,
   ChevronRight,
 } from "lucide-react";
-import { usePintor } from "@/lib/pintor-store";
+import { usePintor, type NotifItem } from "@/lib/pintor-store";
+import { createClient } from "@/utils/supabase/client";
 
-type Notif = {
-  iconBg: string;
-  icon: typeof CircleCheck;
-  iconColor: string;
-  title: string;
-  text: string;
-  time: string;
-  href: string;
+// Aparência por tipo de notificação (o conteúdo vem derivado do payload).
+const LOOK: Record<
+  NotifItem["kind"],
+  { iconBg: string; icon: typeof CircleCheck; iconColor: string }
+> = {
+  pedido_aprovado: {
+    iconBg: "#E8F5E9",
+    icon: CircleCheck,
+    iconColor: "#4F7A4A",
+  },
+  pedido_recusado: { iconBg: "#FDECEC", icon: CircleX, iconColor: "#CC0000" },
+  resgate: { iconBg: "#FFF8E1", icon: Store, iconColor: "#B5751F" },
+  promo: { iconBg: "#FEF0E7", icon: Tag, iconColor: "#CC0000" },
+  brinde: { iconBg: "#FDECEC", icon: Gift, iconColor: "#CC0000" },
 };
 
-const HOJE: Notif[] = [
-  {
-    iconBg: "#E8F5E9",
-    icon: CircleCheck,
-    iconColor: "#4F7A4A",
-    title: "Pedido aprovado",
-    text: "Pedido #0479 de Fernanda Costa aprovado. 23 pts adicionados ao seu saldo.",
-    time: "há 18 min",
-    href: "/pedidos/0479",
-  },
-  {
-    iconBg: "#E8F5E9",
-    icon: CircleCheck,
-    iconColor: "#4F7A4A",
-    title: "Pedido aprovado",
-    text: "Pedido #0472 de Silvana Ramos aprovado. 31 pts adicionados ao seu saldo.",
-    time: "há 1 h",
-    href: "/pedidos/0472",
-  },
-];
+// Rótulo de tempo relativo, curto. Base é o "hoje" do cliente.
+function tempoRelativo(iso: string): string {
+  const then = new Date(iso).getTime();
+  const diffMin = Math.round((Date.now() - then) / 60000);
+  if (diffMin < 1) return "agora";
+  if (diffMin < 60) return `há ${diffMin} min`;
+  const diffH = Math.round(diffMin / 60);
+  if (diffH < 24) return `há ${diffH} h`;
+  const d = new Date(iso);
+  return d
+    .toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
+    .replace(".", "");
+}
 
-const ONTEM: Notif[] = [
-  {
-    iconBg: "#FFF8E1",
-    icon: Gift,
-    iconColor: "#B5751F",
-    title: "Resgate disponível",
-    text: "Kit pincéis Atlas reservado para retirada na loja.",
-    time: "ontem, 16:40",
-    href: "/loja",
-  },
-  {
-    iconBg: "#FEF0E7",
-    icon: Tag,
-    iconColor: "#CC0000",
-    title: "Promoção na lojinha",
-    text: "Rolo de lã Tigre com 20% a menos em pontos. Só até domingo.",
-    time: "ontem, 09:00",
-    href: "/loja",
-  },
-  {
-    iconBg: "#E8F5E9",
-    icon: CircleCheck,
-    iconColor: "#4F7A4A",
-    title: "Pedido aprovado",
-    text: "Pedido #0475 aprovado. 8 pts adicionados ao seu saldo.",
-    time: "ontem, 11:05",
-    href: "/pedidos/0475",
-  },
-];
+// Agrupa por Hoje / Ontem / Antes, mantendo a ordem (feed já vem do mais novo).
+function agrupar(feed: NotifItem[]) {
+  const hoje: NotifItem[] = [];
+  const ontem: NotifItem[] = [];
+  const antes: NotifItem[] = [];
+  const now = new Date();
+  const startHoje = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+  ).getTime();
+  const startOntem = startHoje - 86400000;
+  for (const n of feed) {
+    if (n.ts >= startHoje) hoje.push(n);
+    else if (n.ts >= startOntem) ontem.push(n);
+    else antes.push(n);
+  }
+  return { hoje, ontem, antes };
+}
 
 function Group({
   items,
   router,
 }: {
-  items: Notif[];
+  items: NotifItem[];
   router: ReturnType<typeof useRouter>;
 }) {
   return (
     <div className="card" style={{ overflow: "hidden", marginBottom: 16 }}>
       {items.map((n, i) => {
-        const Ico = n.icon;
+        const look = LOOK[n.kind];
+        const Ico = look.icon;
         return (
           <div
-            key={n.title + i}
+            key={n.id}
             onClick={() => router.push(n.href)}
             style={{
               display: "grid",
@@ -102,13 +96,13 @@ function Group({
                 width: 36,
                 height: 36,
                 borderRadius: 10,
-                background: n.iconBg,
+                background: look.iconBg,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <Ico size={18} strokeWidth={1.8} color={n.iconColor} />
+              <Ico size={18} strokeWidth={1.8} color={look.iconColor} />
             </div>
             <div>
               <div
@@ -129,7 +123,7 @@ function Group({
               <div
                 style={{ fontSize: 11, color: "var(--muted)", marginTop: 5 }}
               >
-                {n.time}
+                {tempoRelativo(n.at)}
               </div>
             </div>
             <ChevronRight
@@ -144,41 +138,18 @@ function Group({
   );
 }
 
-const NOMES: Record<"bone" | "pincel", string> = {
-  bone: "Boné Minas Tintas",
-  pincel: 'Pincel Condor 2"',
-};
-
 export default function NotificacoesPage() {
   const router = useRouter();
-  const { brinde } = usePintor();
+  const { feed } = usePintor();
 
-  // Card de brinde: fica enquanto o resgate estiver pendente de retirada
-  // (lembrete de ir buscar). Preview: /notificacoes?brinde=bone|pincel.
-  const preview =
-    typeof window !== "undefined"
-      ? new URLSearchParams(window.location.search).get("brinde")
-      : null;
-  const brindeTipo: "bone" | "pincel" | null =
-    preview === "bone" || preview === "pincel"
-      ? preview
-      : brinde?.pendente
-        ? brinde.tipo
-        : null;
+  // Ao abrir, carimba "visto até agora" no banco (apaga a bolinha do sininho).
+  // void: não trava a UI esperando a rede; o refresh seguinte reflete o novo marco.
+  useEffect(() => {
+    const supabase = createClient();
+    void supabase.rpc("marcar_notif_visto");
+  }, []);
 
-  const brindeNotif: Notif | null = brindeTipo
-    ? {
-        iconBg: "#FDECEC",
-        icon: Gift,
-        iconColor: "#CC0000",
-        title: "Brinde de boas-vindas",
-        text: `Seu ${NOMES[brindeTipo]} está reservado na lojinha para retirada na loja.`,
-        time: "agora",
-        href: "/loja",
-      }
-    : null;
-
-  const hoje = brindeNotif ? [brindeNotif, ...HOJE] : HOJE;
+  const { hoje, ontem, antes } = agrupar(feed);
 
   return (
     <>
@@ -190,14 +161,43 @@ export default function NotificacoesPage() {
         <div className="page-title">Notificações</div>
       </div>
       <div style={{ padding: "0 16px 88px" }}>
-        <div className="eyebrow-label" style={{ margin: "4px 0 10px" }}>
-          HOJE
-        </div>
-        <Group items={hoje} router={router} />
-        <div className="eyebrow-label" style={{ margin: "4px 0 10px" }}>
-          ONTEM
-        </div>
-        <Group items={ONTEM} router={router} />
+        {feed.length === 0 && (
+          <div
+            className="card"
+            style={{
+              padding: "28px 20px",
+              textAlign: "center",
+              color: "var(--muted)",
+              fontSize: 13,
+            }}
+          >
+            Nenhuma novidade por aqui ainda.
+          </div>
+        )}
+        {hoje.length > 0 && (
+          <>
+            <div className="eyebrow-label" style={{ margin: "4px 0 10px" }}>
+              HOJE
+            </div>
+            <Group items={hoje} router={router} />
+          </>
+        )}
+        {ontem.length > 0 && (
+          <>
+            <div className="eyebrow-label" style={{ margin: "4px 0 10px" }}>
+              ONTEM
+            </div>
+            <Group items={ontem} router={router} />
+          </>
+        )}
+        {antes.length > 0 && (
+          <>
+            <div className="eyebrow-label" style={{ margin: "4px 0 10px" }}>
+              ANTERIORES
+            </div>
+            <Group items={antes} router={router} />
+          </>
+        )}
       </div>
     </>
   );
