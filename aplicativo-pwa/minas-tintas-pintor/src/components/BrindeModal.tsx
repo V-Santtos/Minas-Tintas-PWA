@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Gift, Store, X } from "lucide-react";
 import { usePintor } from "@/lib/pintor-store";
@@ -50,6 +51,15 @@ export default function BrindeModal() {
   const [shown, setShown] = useState(false); // controla a animação de entrada
   const persistOnClose = useRef(true); // preview não marca "já viu"
 
+  // Alvo do portal: .pintor-app (a "moldura"), mesma técnica do sheet de
+  // resgate. Tira o modal do .pintor-scroll, onde o -webkit-overflow-scrolling:
+  // touch prende position:fixed no iOS/WebKit e desloca a bottom-nav ao abrir
+  // (sintoma só no iPhone; Android/Blink ignora essa propriedade).
+  const [frameEl, setFrameEl] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    setFrameEl(document.querySelector<HTMLElement>(".pintor-app"));
+  }, []);
+
   // Decide na montagem: mostra ou não, e qual brinde.
   useEffect(() => {
     const override = params.get("brinde"); // atalho de preview
@@ -94,10 +104,10 @@ export default function BrindeModal() {
     router.push("/loja");
   }
 
-  if (!open || !pick) return null;
+  if (!open || !pick || !frameEl) return null;
   const brindeInfo = BRINDES[pick];
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
@@ -268,6 +278,7 @@ export default function BrindeModal() {
           Agora não
         </button>
       </div>
-    </div>
+    </div>,
+    frameEl,
   );
 }
