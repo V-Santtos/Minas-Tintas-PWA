@@ -216,7 +216,8 @@
 .topbar { padding: 8px 20px 14px; }
 .eyebrow-label { font-size: 10.5px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
 .page-title { font-family: var(--font-jakarta); font-weight: 800; font-size: 26px; line-height: 1.1; letter-spacing: -0.03em; color: var(--ink); }
-.back-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; background: transparent; border: 0; padding: 0 6px 0 0; margin: -2px 0 6px -4px; font-size: 13.5px; font-weight: 500; color: var(--muted); cursor: pointer; }
+.back-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; background: transparent; border: 0; padding: 0 6px 0 0; margin: -2px 0 6px -4px; font-size: 13.5px; font-weight: 500; color: var(--muted); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: opacity 120ms; }
+.back-btn:active { opacity: 0.5; }
 .back-btn svg { width: 22px; height: 22px; flex-shrink: 0; }
 .icon-back-btn { width: 34px; height: 34px; margin-left: -8px; background: transparent; border: 0; padding: 0; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--ink); border-radius: 999px; }
 .icon-back-btn:active { background: var(--paper-deep); }
@@ -257,7 +258,8 @@
 .product-name { font-weight: 600; font-size: 13.5px; color: var(--ink); line-height: 1.25; }
 .product-meta { font-size: 11.5px; color: var(--muted); margin-top: 3px; }
 .qty-ctrl { display: inline-flex; align-items: center; gap: 5px; background: var(--paper-deep); border-radius: 10px; padding: 4px 6px; }
-.qty-btn { background: transparent; border: 0; padding: 4px; cursor: pointer; color: var(--ink); display: flex; align-items: center; }
+.qty-btn { background: transparent; border: 0; padding: 4px; cursor: pointer; color: var(--ink); display: flex; align-items: center; -webkit-tap-highlight-color: transparent; transition: transform 100ms; }
+.qty-btn:active { transform: scale(0.82); }
 .qty-val { min-width: 18px; text-align: center; font-variant-numeric: tabular-nums; font-weight: 600; font-size: 13px; }
 .add-btn { background: var(--ink); color: var(--paper); border: 0; border-radius: 10px; padding: 8px 12px; font-size: 12.5px; font-weight: 600; cursor: pointer; white-space: nowrap; }
 
@@ -286,12 +288,18 @@
 .btn-ghost:hover { background: var(--paper-deep); }
 .btn-full { width: 100%; }
 
+/* Feedback de toque universal — aplicar em botões estilizados por style inline
+   (que não herdam o :active das classes acima). Só afeta o instante do toque. */
+.tap { -webkit-tap-highlight-color: transparent; transition: transform 100ms, opacity 100ms; }
+.tap:active { transform: scale(0.96); }
+
 /* Perfil */
 .profile-row { display: grid; grid-template-columns: 36px 1fr auto; gap: 12px; padding: 14px 16px; align-items: center; border-bottom: 1px solid var(--line); cursor: pointer; transition: background 120ms; width: 100%; text-align: left; background: transparent; }
 .profile-row:last-child { border-bottom: 0; }
 .profile-row:active { background: var(--paper-deep); }
 .profile-icon { width: 36px; height: 36px; border-radius: 10px; background: var(--paper-deep); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; }
-.period-btn { padding: 6px 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); font-family: var(--font-body); font-size: 12px; font-weight: 600; color: var(--muted); cursor: pointer; transition: background 140ms, border-color 140ms, color 140ms; }
+.period-btn { padding: 6px 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); font-family: var(--font-body); font-size: 12px; font-weight: 600; color: var(--muted); cursor: pointer; transition: background 140ms, border-color 140ms, color 140ms, transform 100ms; -webkit-tap-highlight-color: transparent; }
+.period-btn:active { transform: scale(0.96); }
 .period-btn.active { background: var(--ink); border-color: var(--ink); color: var(--paper); }
 
 @keyframes pillPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
@@ -320,7 +328,8 @@
   padding: 0 4px 8px;
   z-index: 40;
 }
-.nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 7px 4px 3px; border: none; background: transparent; cursor: pointer; color: var(--muted); font-size: 10px; font-weight: 500; border-radius: 12px; transition: color 140ms; text-decoration: none; }
+.nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 7px 4px 3px; border: none; background: transparent; cursor: pointer; color: var(--muted); font-size: 10px; font-weight: 500; border-radius: 12px; transition: color 140ms, transform 120ms; text-decoration: none; -webkit-tap-highlight-color: transparent; }
+.nav-item:active { transform: scale(0.92); }
 .nav-item.active { color: var(--ink); }
 .nav-dot { width: 4px; height: 4px; border-radius: 50%; background: transparent; transition: background 140ms; }
 .nav-item.active .nav-dot { background: var(--brand); }

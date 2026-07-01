@@ -245,6 +245,7 @@ export default function PedidoDetailPage({
             Editar orçamento
           </button>
           <button
+            className="tap"
             onClick={() => {
               if (
                 confirm(
@@ -272,6 +273,7 @@ export default function PedidoDetailPage({
       {o.status === "pendente" && (
         <div style={{ padding: "0 16px 24px" }}>
           <button
+            className="tap"
             onClick={handleCancel}
             disabled={cancelling}
             style={{

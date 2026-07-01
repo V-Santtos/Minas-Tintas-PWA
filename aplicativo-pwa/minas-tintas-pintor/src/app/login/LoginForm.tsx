@@ -193,6 +193,7 @@ export default function LoginForm({ staleSession }: { staleSession: boolean }) {
               />
               <button
                 type="button"
+                className="tap"
                 onClick={() => setShowSenha((s) => !s)}
                 style={{
                   background: "transparent",

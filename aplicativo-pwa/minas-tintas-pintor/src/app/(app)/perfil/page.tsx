@@ -94,6 +94,7 @@ export default function PerfilPage() {
 
       <div style={{ padding: "4px 16px 100px", textAlign: "center" }}>
         <button
+          className="tap"
           onClick={sair}
           style={{
             background: "transparent",

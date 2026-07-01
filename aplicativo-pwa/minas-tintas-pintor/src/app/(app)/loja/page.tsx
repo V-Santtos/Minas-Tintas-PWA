@@ -259,6 +259,7 @@ export default function LojaPage() {
               </div>
               <button
                 type="button"
+                className="tap"
                 onClick={() => handleCancelar(item.id)}
                 style={{
                   border: "1px solid var(--line-strong)",
@@ -287,6 +288,7 @@ export default function LojaPage() {
         {/* Categoria */}
         <div style={{ position: "relative", flexShrink: 0 }}>
           <button
+            className="tap"
             onClick={() => setOpenMenu((m) => (m === "cat" ? null : "cat"))}
             style={{
               display: "inline-flex",
@@ -343,6 +345,7 @@ export default function LojaPage() {
         {/* Ordenação */}
         <div style={{ position: "relative", flexShrink: 0 }}>
           <button
+            className="tap"
             onClick={() => setOpenMenu((m) => (m === "sort" ? null : "sort"))}
             style={{
               display: "inline-flex",

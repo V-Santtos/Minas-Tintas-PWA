@@ -144,6 +144,7 @@ export default function BrindeModal() {
       >
         {/* Fechar */}
         <button
+          className="tap"
           onClick={close}
           aria-label="Fechar"
           style={{

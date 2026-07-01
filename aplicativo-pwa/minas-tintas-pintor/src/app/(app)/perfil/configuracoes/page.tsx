@@ -124,6 +124,7 @@ export default function ConfiguracoesPage() {
                 <button
                   key={item.key}
                   type="button"
+                  className="tap"
                   onClick={() => toggle(item.key)}
                   style={{
                     border: "1px solid var(--line)",

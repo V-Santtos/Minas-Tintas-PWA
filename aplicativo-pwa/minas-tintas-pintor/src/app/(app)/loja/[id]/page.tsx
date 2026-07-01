@@ -1,6 +1,8 @@
 ﻿"use client";
 
 import { use, useState, useRef, useEffect } from "react";
+import type { TouchEvent } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import {
   ChevronLeft,
@@ -45,6 +47,10 @@ export default function ResgatePage({
   const [displayNum, setDisplayNum] = useState(0);
   const [erro, setErro] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [dragY, setDragY] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const [frameEl, setFrameEl] = useState<HTMLElement | null>(null);
+  const dragStartY = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
@@ -54,6 +60,14 @@ export default function ResgatePage({
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       timers.forEach(clearTimeout);
     };
+  }, []);
+
+  // Alvo do portal do toast: a "moldura" do app (.pintor-app). No desktop ela é
+  // o containing block (transform) do frame; no mobile é a tela toda. Portalar
+  // pra cá tira o sheet do .pintor-scroll (onde ficava atrás da bottom-nav) sem
+  // vazar pro body real (que no preview desktop é a janela inteira).
+  useEffect(() => {
+    setFrameEl(document.querySelector<HTMLElement>(".pintor-app"));
   }, []);
 
   const p = data.loja.find((x) => x.id === id);
@@ -95,6 +109,46 @@ export default function ResgatePage({
     rafRef.current = requestAnimationFrame(tick);
   }
 
+  // Fecha o sheet: desce a folha e, ao fim da animação, desmonta + volta pra /loja.
+  // Reusado pelo auto-dismiss (timer) e pelo swipe-to-dismiss (arrastar a folha).
+  function closeSheet() {
+    timersRef.current.forEach(clearTimeout);
+    timersRef.current = [];
+    setSheetIn(false);
+    const t = setTimeout(() => {
+      setToastOpen(false);
+      router.refresh(); // reSemeia saldo/pendentes do servidor
+      router.push("/loja");
+    }, 430);
+    timersRef.current.push(t);
+  }
+
+  function onSheetTouchStart(e: TouchEvent) {
+    // pausa o fechamento automático enquanto o dedo está na folha
+    timersRef.current.forEach(clearTimeout);
+    timersRef.current = [];
+    dragStartY.current = e.touches[0].clientY;
+    setDragging(true);
+  }
+
+  function onSheetTouchMove(e: TouchEvent) {
+    if (dragStartY.current == null) return;
+    const dy = e.touches[0].clientY - dragStartY.current;
+    if (dy > 0) setDragY(dy); // só acompanha arrasto pra baixo
+  }
+
+  function onSheetTouchEnd() {
+    const dy = dragY;
+    dragStartY.current = null;
+    setDragging(false);
+    if (dy > 90) {
+      closeSheet(); // passou do limiar → fecha
+    } else {
+      setDragY(0); // volta ao lugar
+      timersRef.current.push(setTimeout(closeSheet, 3000)); // re-arma o auto-dismiss
+    }
+  }
+
   async function confirmarResgate() {
     if (submitting) return;
     setErro("");
@@ -120,18 +174,7 @@ export default function ResgatePage({
       }, 480),
     );
 
-    timersRef.current.push(
-      setTimeout(() => {
-        setSheetIn(false);
-        timersRef.current.push(
-          setTimeout(() => {
-            setToastOpen(false);
-            router.refresh(); // reSemeia saldo/pendentes do servidor
-            router.push("/loja");
-          }, 430),
-        );
-      }, 3600),
-    );
+    timersRef.current.push(setTimeout(closeSheet, 3600));
   }
 
   const stockLabel =
@@ -296,6 +339,7 @@ export default function ResgatePage({
             </span>
             <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
               <button
+                className="tap"
                 onClick={() => setQtd((q) => Math.max(1, q - 1))}
                 disabled={qtdEfetiva <= 1}
                 style={{
@@ -325,6 +369,7 @@ export default function ResgatePage({
                 {qtdEfetiva}
               </span>
               <button
+                className="tap"
                 onClick={() => setQtd((q) => Math.min(maxQtd, q + 1))}
                 disabled={qtdEfetiva >= maxQtd}
                 style={{
@@ -386,9 +431,13 @@ export default function ResgatePage({
         </button>
       </div>
 
-      {/* Toast de sucesso */}
-      {toastOpen && (
-        <div
+      {/* Toast de sucesso — portal pro .pintor-app (a "moldura"): sai do
+          .pintor-scroll (onde ficava preso atrás da bottom-nav) mas continua
+          dentro do frame no preview desktop. z-index 200 > nav (40). */}
+      {toastOpen &&
+        frameEl &&
+        createPortal(
+          <div
           style={{
             position: "fixed",
             inset: 0,
@@ -407,6 +456,9 @@ export default function ResgatePage({
             }}
           />
           <div
+            onTouchStart={onSheetTouchStart}
+            onTouchMove={onSheetTouchMove}
+            onTouchEnd={onSheetTouchEnd}
             style={{
               position: "absolute",
               bottom: 0,
@@ -415,8 +467,11 @@ export default function ResgatePage({
               background: "var(--card)",
               borderRadius: "28px 28px 0 0",
               padding: "24px 24px 44px",
-              transform: sheetIn ? "translateY(0)" : "translateY(100%)",
-              transition: "transform 420ms cubic-bezier(0.2,0.7,0.2,1)",
+              transform: sheetIn ? `translateY(${dragY}px)` : "translateY(100%)",
+              transition: dragging
+                ? "none"
+                : "transform 420ms cubic-bezier(0.2,0.7,0.2,1)",
+              touchAction: "none",
             }}
           >
             <div
@@ -497,8 +552,9 @@ export default function ResgatePage({
               </div>
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+          frameEl,
+        )}
     </>
   );
 }

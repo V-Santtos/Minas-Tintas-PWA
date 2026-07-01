@@ -652,6 +652,7 @@ export default function OrcamentoPage() {
                 </div>
               </div>
               <button
+                className="tap"
                 onClick={clearClient}
                 style={{
                   background: "transparent",
@@ -747,6 +748,7 @@ export default function OrcamentoPage() {
                 NOVO CLIENTE
               </div>
               <button
+                className="tap"
                 onClick={() => setMode("search")}
                 style={{
                   background: "transparent",
@@ -771,6 +773,7 @@ export default function OrcamentoPage() {
             >
               <button
                 type="button"
+                className="tap"
                 onClick={() => setNc({ ...nc, type: "pessoa", cpf: "" })}
                 style={{
                   height: 40,
@@ -793,6 +796,7 @@ export default function OrcamentoPage() {
               </button>
               <button
                 type="button"
+                className="tap"
                 onClick={() => setNc({ ...nc, type: "empresa", cpf: "" })}
                 style={{
                   height: 40,
@@ -1147,6 +1151,7 @@ export default function OrcamentoPage() {
                         R$ {brl(p.price * qty)}
                       </span>
                       <button
+                        className="tap"
                         onClick={() => addCart(id, -qty)}
                         style={{
                           background: "transparent",

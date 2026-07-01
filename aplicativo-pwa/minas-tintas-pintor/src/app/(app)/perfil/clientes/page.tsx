@@ -290,6 +290,7 @@ export default function ClientesPage() {
       >
         <button
           type="button"
+          className="tap"
           onClick={openCreateForm}
           style={segmentButton(view === "form")}
         >
@@ -297,6 +298,7 @@ export default function ClientesPage() {
         </button>
         <button
           type="button"
+          className="tap"
           onClick={() => setView("list")}
           style={segmentButton(view === "list")}
         >
@@ -355,6 +357,7 @@ export default function ClientesPage() {
           >
             <button
               type="button"
+              className="tap"
               onClick={() => changeType("pessoa")}
               style={segmentButton(type === "pessoa")}
             >
@@ -362,6 +365,7 @@ export default function ClientesPage() {
             </button>
             <button
               type="button"
+              className="tap"
               onClick={() => changeType("empresa")}
               style={segmentButton(type === "empresa")}
             >
@@ -472,6 +476,7 @@ export default function ClientesPage() {
           {isEditing && (
             <button
               type="button"
+              className="tap"
               onClick={() => {
                 clearForm();
                 setView("list");
