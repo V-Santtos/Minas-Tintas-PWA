@@ -3,28 +3,22 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Gift, Store, X } from "lucide-react";
+import { usePintor } from "@/lib/pintor-store";
+import { createClient } from "@/utils/supabase/client";
 
 // ──────────────────────────────────────────────────────────────────────────
-// Pop-up de brinde de boas-vindas (PASSO 1 — só front-end).
+// Pop-up de brinde de boas-vindas.
 //
-// Cada pintor recebe UM brinde (boné OU pincel, sorteado). Por enquanto o
-// "tem brinde?" e o "qual brinde?" são STUB no cliente (localStorage), pra a
-// gente ver/validar o comportamento no localhost sem tocar no banco.
+// Cada pintor recebe UM brinde (boné OU pincel), sorteado no BANCO na criação
+// do pintor (RPC conceder_brinde_boas_vindas) — aqui só ANUNCIAMOS. O "tem
+// brinde?" e o "qual brinde?" vêm do payload (brinde derivado do resgate de
+// boas-vindas); o "já viu" é a coluna painter_settings.brinde_visto_em,
+// carimbada pela RPC marcar_brinde_visto ao fechar.
 //
-// Quando as regras forem pro Supabase, troca-se este stub pela leitura real
-// do payload (resgate de boas-vindas pendente + flag "já viu") — o resto da UI
-// fica igual.
-//
-// Preview no localhost (não consome o "já viu"):
+// Preview no localhost (não marca visto):
 //   /home?brinde=bone     → força mostrar o boné
 //   /home?brinde=pincel   → força mostrar o pincel
-//   /home?brinde=reset    → limpa o "já viu" e recarrega o sorteio
 // ──────────────────────────────────────────────────────────────────────────
-
-const SEEN_KEY = "mt_brinde_visto"; // stub do flag "já viu" (vira coluna no banco)
-const PICK_KEY = "mt_brinde_sorteio"; // stub do sorteio (vira o resgate concedido)
-const BADGE_KEY = "mt_brinde_loja_badge"; // stub: aviso de brinde pendente na Lojinha
-const BADGE_EVENT = "mt-brinde-badge"; // sincroniza a bolinha com o BottomNav sem reload
 
 type BrindeKey = "bone" | "pincel";
 
@@ -49,22 +43,18 @@ const BRINDES: Record<
 export default function BrindeModal() {
   const router = useRouter();
   const params = useSearchParams();
+  const { brinde } = usePintor();
 
   const [pick, setPick] = useState<BrindeKey | null>(null);
   const [open, setOpen] = useState(false); // controla o mount
   const [shown, setShown] = useState(false); // controla a animação de entrada
-  const persistOnClose = useRef(true); // preview não grava "já viu"
+  const persistOnClose = useRef(true); // preview não marca "já viu"
 
   // Decide na montagem: mostra ou não, e qual brinde.
   useEffect(() => {
     const override = params.get("brinde"); // atalho de preview
 
-    if (override === "reset") {
-      localStorage.removeItem(SEEN_KEY);
-      localStorage.removeItem(PICK_KEY);
-    }
-
-    // Preview forçado: mostra o brinde pedido, sem consumir o "já viu".
+    // Preview forçado: mostra o brinde pedido, sem marcar visto.
     if (override === "bone" || override === "pincel") {
       persistOnClose.current = false;
       setPick(override);
@@ -72,18 +62,12 @@ export default function BrindeModal() {
       return;
     }
 
-    // Fluxo normal: só mostra se ainda não viu.
-    if (localStorage.getItem(SEEN_KEY)) return;
-
-    // Sorteio do brinde (persistido pra reabrir igual durante o stub).
-    let chosen = localStorage.getItem(PICK_KEY) as BrindeKey | null;
-    if (chosen !== "bone" && chosen !== "pincel") {
-      chosen = Math.random() < 0.5 ? "bone" : "pincel";
-      localStorage.setItem(PICK_KEY, chosen);
-    }
-    setPick(chosen);
+    // Fluxo real: só mostra se há brinde e ainda não foi visto.
+    if (!brinde || brinde.visto) return;
+    persistOnClose.current = true;
+    setPick(brinde.tipo);
     setOpen(true);
-  }, [params]);
+  }, [params, brinde]);
 
   // Entrada animada (deixa a home pintar antes).
   useEffect(() => {
@@ -92,27 +76,26 @@ export default function BrindeModal() {
     return () => clearTimeout(t);
   }, [open]);
 
+  // Carimba "já viu" no banco. void: não trava a animação esperando a rede;
+  // se falhar, o pior caso é o modal reaparecer no próximo carregamento.
+  async function marcarVisto() {
+    const supabase = createClient();
+    await supabase.rpc("marcar_brinde_visto");
+  }
+
   function close() {
-    if (persistOnClose.current) {
-      localStorage.setItem(SEEN_KEY, "1");
-      localStorage.setItem(BADGE_KEY, "1"); // saiu sem ver → bolinha na Lojinha
-      window.dispatchEvent(new Event(BADGE_EVENT));
-    }
+    if (persistOnClose.current) void marcarVisto();
     setShown(false);
     setTimeout(() => setOpen(false), 380); // espera a saída animar
   }
 
   function irParaLoja() {
-    if (persistOnClose.current) {
-      localStorage.setItem(SEEN_KEY, "1");
-      localStorage.removeItem(BADGE_KEY); // foi ver → sem bolinha
-      window.dispatchEvent(new Event(BADGE_EVENT));
-    }
+    if (persistOnClose.current) void marcarVisto();
     router.push("/loja");
   }
 
   if (!open || !pick) return null;
-  const brinde = BRINDES[pick];
+  const brindeInfo = BRINDES[pick];
 
   return (
     <div
@@ -220,7 +203,7 @@ export default function BrindeModal() {
             width: "100%",
             height: 184,
             borderRadius: 18,
-            background: brinde.bg,
+            background: brindeInfo.bg,
             border: "1px solid var(--line)",
             display: "flex",
             alignItems: "center",
@@ -231,8 +214,8 @@ export default function BrindeModal() {
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={brinde.img}
-            alt={brinde.name}
+            src={brindeInfo.img}
+            alt={brindeInfo.name}
             style={{
               width: "100%",
               height: "100%",
@@ -251,10 +234,12 @@ export default function BrindeModal() {
             marginBottom: 2,
           }}
         >
-          {brinde.name}
+          {brindeInfo.name}
         </div>
-        <div style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 18 }}>
-          {brinde.tag}
+        <div
+          style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 18 }}
+        >
+          {brindeInfo.tag}
         </div>
 
         <div

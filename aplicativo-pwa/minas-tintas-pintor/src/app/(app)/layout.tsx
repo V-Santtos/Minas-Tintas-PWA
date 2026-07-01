@@ -110,7 +110,9 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       .order("name"),
     supabase
       .from("painter_settings")
-      .select("notif_pedidos, notif_pontos, notif_resgates, notif_promocoes")
+      .select(
+        "notif_pedidos, notif_pontos, notif_resgates, notif_promocoes, brinde_visto_em",
+      )
       .eq("painter_id", painter.id)
       .maybeSingle(),
   ]);
@@ -171,6 +173,23 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       requestedAt: fmtData(r.created_at),
       status: "pendente",
     }));
+
+  // Brinde de boas-vindas: o resgate cujo item é um dos dois itens-brinde.
+  // is_brinde fica no banco; aqui reconhecemos pelos IDs fixos da migration.
+  const BRINDE_ITEM_IDS: Record<string, "bone" | "pincel"> = {
+    "00000000-0000-0000-0000-0000000000c1": "bone",
+    "00000000-0000-0000-0000-0000000000c2": "pincel",
+  };
+  const brindeRow = (resgateRows ?? []).find(
+    (r) => r.loja_item_id && BRINDE_ITEM_IDS[r.loja_item_id],
+  );
+  const brinde = brindeRow
+    ? {
+        tipo: BRINDE_ITEM_IDS[brindeRow.loja_item_id!],
+        pendente: brindeRow.status === "pendente_retirada",
+        visto: prefsRow?.brinde_visto_em != null,
+      }
+    : null;
 
   const catalog = (prodRows ?? []).map((pr) => ({
     id: pr.id,
@@ -258,6 +277,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       resgates: prefsRow?.notif_resgates ?? true,
       promocoes: prefsRow?.notif_promocoes ?? false,
     },
+    brinde,
   };
 
   return (

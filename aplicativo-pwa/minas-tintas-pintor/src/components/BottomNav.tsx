@@ -2,46 +2,30 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 import { Home, FilePlus2, Receipt, Store, User } from "lucide-react";
+import { usePintor } from "@/lib/pintor-store";
 
 const ITEMS = [
-  { href: "/home", label: "Início", icon: Home, match: ["/home", "/notificacoes"] },
+  {
+    href: "/home",
+    label: "Início",
+    icon: Home,
+    match: ["/home", "/notificacoes"],
+  },
   { href: "/orcamento", label: "Novo", icon: FilePlus2, match: ["/orcamento"] },
   { href: "/pedidos", label: "Pedidos", icon: Receipt, match: ["/pedidos"] },
   { href: "/loja", label: "Lojinha", icon: Store, match: ["/loja"] },
   { href: "/perfil", label: "Perfil", icon: User, match: ["/perfil"] },
 ];
 
-// Stub: a bolinha na Lojinha sinaliza "brinde pendente que o pintor ainda não foi
-// ver". O BrindeModal liga/desliga este flag; entrar na /loja "consome" o aviso.
-// Quando as regras forem pro banco, troca-se a fonte por "tem resgate pendente".
-const BADGE_KEY = "mt_brinde_loja_badge";
-const BADGE_EVENT = "mt-brinde-badge";
-
 export default function BottomNav() {
   const pathname = usePathname();
-  const [lojaBadge, setLojaBadge] = useState(false);
+  const { brinde } = usePintor();
 
-  // Lê o flag e mantém em sincronia com o modal (evento) e outras abas (storage).
-  useEffect(() => {
-    const read = () => setLojaBadge(!!localStorage.getItem(BADGE_KEY));
-    read();
-    window.addEventListener(BADGE_EVENT, read);
-    window.addEventListener("storage", read);
-    return () => {
-      window.removeEventListener(BADGE_EVENT, read);
-      window.removeEventListener("storage", read);
-    };
-  }, []);
-
-  // Entrar na lojinha apaga o aviso.
-  useEffect(() => {
-    if (pathname.startsWith("/loja")) {
-      localStorage.removeItem(BADGE_KEY);
-      setLojaBadge(false);
-    }
-  }, [pathname]);
+  // Bolinha na Lojinha: brinde pendente que o pintor ainda não anunciou (viu).
+  // Some quando ele vê o modal (marcar_brinde_visto) e o payload atualiza — o
+  // brinde continua pendente de retirada, mas o aviso já cumpriu o papel.
+  const lojaBadge = !!brinde?.pendente && !brinde.visto;
 
   return (
     <nav className="bottom-nav">
@@ -50,7 +34,11 @@ export default function BottomNav() {
         const showBadge =
           href === "/loja" && lojaBadge && !pathname.startsWith("/loja");
         return (
-          <Link key={href} href={href} className={`nav-item${active ? " active" : ""}`}>
+          <Link
+            key={href}
+            href={href}
+            className={`nav-item${active ? " active" : ""}`}
+          >
             <span style={{ position: "relative", display: "inline-flex" }}>
               <Icon size={22} strokeWidth={1.75} />
               {showBadge && (

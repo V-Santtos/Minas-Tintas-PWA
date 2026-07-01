@@ -285,6 +285,27 @@ Troca de telefone do pintor pelo admin; recuperação por e-mail (SMTP).
   server-only) → `service_role` sobe no bucket. Sem policy em `storage.objects` (leitura pública;
   escrita só service_role). `sharp` em `serverExternalPackages`. Troca/remoção de foto apaga o arquivo antigo (`apagarImagemPorUrl`, best-effort, guard por marker);
   resíduo mínimo: upload novo órfão se o save seguinte falhar.
+- **Brinde de boas-vindas entregue.** Cada pintor novo ganha **um** brinde (boné **ou** pincel),
+  concedido **no banco** na criação do pintor — não mais sorteado no navegador. Modelagem: os dois
+  itens-brinde são `loja_items` com `is_brinde = true` (IDs fixos `…c1` boné / `…c2` pincel), fora
+  da grade normal da lojinha (a query do pintor filtra `is_brinde = false` **e** `active = true` —
+  o `active` faltava e itens inativos apareciam). Boné tem 10 fixos; pincel é ilimitado (`stock`
+  virou nulável = ilimitado). RPC `conceder_brinde_boas_vindas(painter)` (**service_role**,
+  idempotente, `FOR UPDATE` no boné): enquanto há boné sorteia boné/pincel, quando esgota todos
+  pegam pincel; cria `resgates` **grátis** (`pontos_congelados = 0`), sem linha no ledger. Chamada
+  pelo `POST /api/pintores` **após** o insert do pintor e **depois** do gate de erro (best-effort:
+  falha não bloqueia o cadastro; a RPC é idempotente, dá pra reprocessar). Cancelamentos (pintor e
+  admin) passaram a **não** lançar `devolucao` quando `pontos_congelados = 0` (o check `valor <> 0`
+  proíbe). O "já viu o modal" virou coluna `painter_settings.brinde_visto_em` (RPC
+  `marcar_brinde_visto`, padrão do `salvar_notif_prefs`) — antes era stub de `localStorage`. Front
+  do pintor migrado dos stubs pros dados reais: o `layout` deriva um objeto `brinde` de
+  `resgateRows` (resgate cujo item é `…c1`/`…c2`) + `brinde_visto_em` e injeta no contexto;
+  `BrindeModal` (mostra se `brinde && !visto`, fecha chamando a RPC), `BottomNav` (bolinha =
+  pendente e não visto) e `notificacoes` (card enquanto pendente de retirada) leem do contexto.
+  Atalhos de preview (`?brinde=bone|pincel`) mantidos. **Decisões travadas:** modelo A (`loja_items`
+  - flag, não tabela `brindes` própria) — migrar pra tabela só se virar programa gerenciável;
+    concessão no cadastro (1º login só anuncia); só pintores novos (não retroativo); bolinha some ao
+    ver o modal, card do sininho fica enquanto pendente de retirada.
 
 ### Integração do catálogo (Hiper)
 

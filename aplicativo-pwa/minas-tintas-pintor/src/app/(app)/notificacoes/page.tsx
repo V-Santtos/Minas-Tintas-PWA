@@ -1,8 +1,14 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, CircleCheck, Gift, Tag, ChevronRight } from "lucide-react";
+import {
+  ChevronLeft,
+  CircleCheck,
+  Gift,
+  Tag,
+  ChevronRight,
+} from "lucide-react";
+import { usePintor } from "@/lib/pintor-store";
 
 type Notif = {
   iconBg: string;
@@ -15,17 +21,63 @@ type Notif = {
 };
 
 const HOJE: Notif[] = [
-  { iconBg: "#E8F5E9", icon: CircleCheck, iconColor: "#4F7A4A", title: "Pedido aprovado", text: "Pedido #0479 de Fernanda Costa aprovado. 23 pts adicionados ao seu saldo.", time: "há 18 min", href: "/pedidos/0479" },
-  { iconBg: "#E8F5E9", icon: CircleCheck, iconColor: "#4F7A4A", title: "Pedido aprovado", text: "Pedido #0472 de Silvana Ramos aprovado. 31 pts adicionados ao seu saldo.", time: "há 1 h", href: "/pedidos/0472" },
+  {
+    iconBg: "#E8F5E9",
+    icon: CircleCheck,
+    iconColor: "#4F7A4A",
+    title: "Pedido aprovado",
+    text: "Pedido #0479 de Fernanda Costa aprovado. 23 pts adicionados ao seu saldo.",
+    time: "há 18 min",
+    href: "/pedidos/0479",
+  },
+  {
+    iconBg: "#E8F5E9",
+    icon: CircleCheck,
+    iconColor: "#4F7A4A",
+    title: "Pedido aprovado",
+    text: "Pedido #0472 de Silvana Ramos aprovado. 31 pts adicionados ao seu saldo.",
+    time: "há 1 h",
+    href: "/pedidos/0472",
+  },
 ];
 
 const ONTEM: Notif[] = [
-  { iconBg: "#FFF8E1", icon: Gift, iconColor: "#B5751F", title: "Resgate disponível", text: "Kit pincéis Atlas reservado para retirada na loja.", time: "ontem, 16:40", href: "/loja" },
-  { iconBg: "#FEF0E7", icon: Tag, iconColor: "#CC0000", title: "Promoção na lojinha", text: "Rolo de lã Tigre com 20% a menos em pontos. Só até domingo.", time: "ontem, 09:00", href: "/loja" },
-  { iconBg: "#E8F5E9", icon: CircleCheck, iconColor: "#4F7A4A", title: "Pedido aprovado", text: "Pedido #0475 aprovado. 8 pts adicionados ao seu saldo.", time: "ontem, 11:05", href: "/pedidos/0475" },
+  {
+    iconBg: "#FFF8E1",
+    icon: Gift,
+    iconColor: "#B5751F",
+    title: "Resgate disponível",
+    text: "Kit pincéis Atlas reservado para retirada na loja.",
+    time: "ontem, 16:40",
+    href: "/loja",
+  },
+  {
+    iconBg: "#FEF0E7",
+    icon: Tag,
+    iconColor: "#CC0000",
+    title: "Promoção na lojinha",
+    text: "Rolo de lã Tigre com 20% a menos em pontos. Só até domingo.",
+    time: "ontem, 09:00",
+    href: "/loja",
+  },
+  {
+    iconBg: "#E8F5E9",
+    icon: CircleCheck,
+    iconColor: "#4F7A4A",
+    title: "Pedido aprovado",
+    text: "Pedido #0475 aprovado. 8 pts adicionados ao seu saldo.",
+    time: "ontem, 11:05",
+    href: "/pedidos/0475",
+  },
 ];
 
-function Group({ items, router }: { items: Notif[]; router: ReturnType<typeof useRouter> }) {
+function Group({
+  items,
+  router,
+}: {
+  items: Notif[];
+  router: ReturnType<typeof useRouter>;
+}) {
   return (
     <div className="card" style={{ overflow: "hidden", marginBottom: 16 }}>
       {items.map((n, i) => {
@@ -34,17 +86,57 @@ function Group({ items, router }: { items: Notif[]; router: ReturnType<typeof us
           <div
             key={n.title + i}
             onClick={() => router.push(n.href)}
-            style={{ display: "grid", gridTemplateColumns: "36px 1fr auto", gap: 12, padding: "14px 16px", borderBottom: i < items.length - 1 ? "1px solid var(--line)" : "none", alignItems: "start", cursor: "pointer" }}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "36px 1fr auto",
+              gap: 12,
+              padding: "14px 16px",
+              borderBottom:
+                i < items.length - 1 ? "1px solid var(--line)" : "none",
+              alignItems: "start",
+              cursor: "pointer",
+            }}
           >
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: n.iconBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                background: n.iconBg,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
               <Ico size={18} strokeWidth={1.8} color={n.iconColor} />
             </div>
             <div>
-              <div style={{ fontWeight: 700, fontSize: 13.5, color: "var(--ink)" }}>{n.title}</div>
-              <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.45, marginTop: 2 }}>{n.text}</div>
-              <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 5 }}>{n.time}</div>
+              <div
+                style={{ fontWeight: 700, fontSize: 13.5, color: "var(--ink)" }}
+              >
+                {n.title}
+              </div>
+              <div
+                style={{
+                  fontSize: 12,
+                  color: "var(--muted)",
+                  lineHeight: 1.45,
+                  marginTop: 2,
+                }}
+              >
+                {n.text}
+              </div>
+              <div
+                style={{ fontSize: 11, color: "var(--muted)", marginTop: 5 }}
+              >
+                {n.time}
+              </div>
             </div>
-            <ChevronRight size={16} color="var(--muted)" style={{ marginTop: 2 }} />
+            <ChevronRight
+              size={16}
+              color="var(--muted)"
+              style={{ marginTop: 2 }}
+            />
           </div>
         );
       })}
@@ -52,34 +144,35 @@ function Group({ items, router }: { items: Notif[]; router: ReturnType<typeof us
   );
 }
 
-// Stub: nome do brinde sorteado (mesmo flag do modal). Vira derivado do
-// resgate de boas-vindas quando as regras forem pro banco.
-const BRINDE_NOMES: Record<string, string> = {
+const NOMES: Record<"bone" | "pincel", string> = {
   bone: "Boné Minas Tintas",
   pincel: 'Pincel Condor 2"',
 };
 
 export default function NotificacoesPage() {
   const router = useRouter();
+  const { brinde } = usePintor();
 
-  const [brinde, setBrinde] = useState<string | null>(null);
-  useEffect(() => {
-    // Override de preview: /notificacoes?brinde=pincel (ou bone)
-    const q = new URLSearchParams(window.location.search).get("brinde");
-    if (q === "bone" || q === "pincel") {
-      setBrinde(q);
-      return;
-    }
-    setBrinde(localStorage.getItem("mt_brinde_sorteio"));
-  }, []);
+  // Card de brinde: fica enquanto o resgate estiver pendente de retirada
+  // (lembrete de ir buscar). Preview: /notificacoes?brinde=bone|pincel.
+  const preview =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("brinde")
+      : null;
+  const brindeTipo: "bone" | "pincel" | null =
+    preview === "bone" || preview === "pincel"
+      ? preview
+      : brinde?.pendente
+        ? brinde.tipo
+        : null;
 
-  const brindeNotif: Notif | null = brinde
+  const brindeNotif: Notif | null = brindeTipo
     ? {
         iconBg: "#FDECEC",
         icon: Gift,
         iconColor: "#CC0000",
         title: "Brinde de boas-vindas",
-        text: `Seu ${BRINDE_NOMES[brinde] ?? "brinde"} está reservado na lojinha para retirada na loja.`,
+        text: `Seu ${NOMES[brindeTipo]} está reservado na lojinha para retirada na loja.`,
         time: "agora",
         href: "/loja",
       }
@@ -97,13 +190,15 @@ export default function NotificacoesPage() {
         <div className="page-title">Notificações</div>
       </div>
       <div style={{ padding: "0 16px 88px" }}>
-        <div className="eyebrow-label" style={{ margin: "4px 0 10px" }}>HOJE</div>
+        <div className="eyebrow-label" style={{ margin: "4px 0 10px" }}>
+          HOJE
+        </div>
         <Group items={hoje} router={router} />
-        <div className="eyebrow-label" style={{ margin: "4px 0 10px" }}>ONTEM</div>
+        <div className="eyebrow-label" style={{ margin: "4px 0 10px" }}>
+          ONTEM
+        </div>
         <Group items={ONTEM} router={router} />
       </div>
     </>
   );
 }
-
-

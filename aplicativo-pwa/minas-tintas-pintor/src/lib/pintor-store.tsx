@@ -61,6 +61,11 @@ export type PintorReadData = {
     resgates: boolean;
     promocoes: boolean;
   };
+  brinde: {
+    tipo: "bone" | "pincel";
+    pendente: boolean; // resgate ainda não entregue
+    visto: boolean; // pintor já fechou o modal
+  } | null;
 };
 
 export type PendingRedemption = {
@@ -83,7 +88,7 @@ export type SubmittedOrder = {
 type Store = {
   saldo: number;
   pendingRedemptions: PendingRedemption[];
-
+  brinde: PintorReadData["brinde"];
   data: PintorReadData;
   cart: Record<string, number>;
   addCart: (id: string, delta: number) => void;
@@ -154,6 +159,7 @@ export function PintorProvider({
     data,
     saldo: data.saldo,
     pendingRedemptions: data.pendingRedemptions,
+    brinde: data.brinde,
     cart,
     addCart,
     clearCart,
