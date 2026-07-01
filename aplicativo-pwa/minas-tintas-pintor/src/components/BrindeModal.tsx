@@ -91,6 +91,10 @@ export default function BrindeModal() {
   async function marcarVisto() {
     const supabase = createClient();
     await supabase.rpc("marcar_brinde_visto");
+    // reSemeia o payload do layout (ponto único de fetch) → brinde.visto vira
+    // true na sessão. Sem isso o layout fica congelado e o modal reabre ao
+    // remontar o /home na navegação interna. Mesmo padrão de marcar_notif_visto.
+    router.refresh();
   }
 
   function close() {
