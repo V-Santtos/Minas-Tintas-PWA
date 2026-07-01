@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ChevronLeft,
@@ -28,14 +28,22 @@ const LOOK: Record<
     iconColor: "#4F7A4A",
   },
   pedido_recusado: { iconBg: "#FDECEC", icon: CircleX, iconColor: "#CC0000" },
-  pedido_estornado: { iconBg: "#FDECEC", icon: RotateCcw, iconColor: "#CC0000" },
+  pedido_estornado: {
+    iconBg: "#FDECEC",
+    icon: RotateCcw,
+    iconColor: "#CC0000",
+  },
   resgate: { iconBg: "#FFF8E1", icon: Store, iconColor: "#B5751F" },
   resgate_entregue: {
     iconBg: "#E8F5E9",
     icon: PackageCheck,
     iconColor: "#4F7A4A",
   },
-  resgate_cancelado: { iconBg: "#FDECEC", icon: PackageX, iconColor: "#CC0000" },
+  resgate_cancelado: {
+    iconBg: "#FDECEC",
+    icon: PackageX,
+    iconColor: "#CC0000",
+  },
   promo: { iconBg: "#FEF0E7", icon: Tag, iconColor: "#CC0000" },
   brinde: { iconBg: "#FDECEC", icon: Gift, iconColor: "#CC0000" },
 };
@@ -77,15 +85,18 @@ function agrupar(feed: NotifItem[]) {
 function Group({
   items,
   router,
+  vistoTs,
 }: {
   items: NotifItem[];
   router: ReturnType<typeof useRouter>;
+  vistoTs: number;
 }) {
   return (
     <div className="card" style={{ overflow: "hidden", marginBottom: 16 }}>
       {items.map((n, i) => {
         const look = LOOK[n.kind];
         const Ico = look.icon;
+        const lida = n.ts <= vistoTs;
         return (
           <div
             key={n.id}
@@ -99,6 +110,7 @@ function Group({
                 i < items.length - 1 ? "1px solid var(--line)" : "none",
               alignItems: "start",
               cursor: "pointer",
+              opacity: lida ? 0.55 : 1,
             }}
           >
             <div
@@ -157,33 +169,95 @@ function buildSampleFeed(): NotifItem[] {
     ts: now - min * 60000,
   });
   return [
-    { id: "s-promo", kind: "promo", title: "Promoção na lojinha", text: "Fita crepe 48mm x 50m com menos pontos por tempo limitado.", href: "/loja", ...mk(1) },
-    { id: "s-resgate", kind: "resgate", title: "Resgate pendente", text: "Kit pincéis profissionais (3 peças) reservado para retirada na loja.", href: "/loja", ...mk(4) },
-    { id: "s-resgate-cancelado", kind: "resgate_cancelado", title: "Resgate cancelado pela loja", text: "Esmalte sintético acetinado 900ml – Preto: a loja cancelou seu resgate e os pontos voltaram ao saldo.", href: "/loja", ...mk(25) },
-    { id: "s-resgate-entregue", kind: "resgate_entregue", title: "Resgate entregue", text: "Rolo de lã antigota 23cm foi entregue. Aproveite!", href: "/loja", ...mk(120) },
-    { id: "s-brinde", kind: "brinde", title: "Brinde de boas-vindas", text: "Seu Boné Minas Tintas está reservado na lojinha para retirada na loja.", href: "/loja", ...mk(200) },
-    { id: "s-pedido-aprovado", kind: "pedido_aprovado", title: "Pedido aprovado", text: "Pedido #0056 de Tatiane Cardoso aprovado. 2042 pts adicionados ao seu saldo.", href: "/pedidos/0056", ...mk(300) },
-    { id: "s-pedido-recusado", kind: "pedido_recusado", title: "Pedido recusado", text: "Pedido #0057 de Fernando Souza não foi aprovado.", href: "/pedidos/0057", ...mk(360) },
-    { id: "s-pedido-estornado", kind: "pedido_estornado", title: "Pedido estornado", text: "Pedido #0055 de Tatiane Cardoso foi estornado. 2042 pts removidos do saldo (pagamento cancelado).", href: "/pedidos/0055", ...mk(420) },
+    {
+      id: "s-promo",
+      kind: "promo",
+      title: "Promoção na lojinha",
+      text: "Fita crepe 48mm x 50m com menos pontos por tempo limitado.",
+      href: "/loja",
+      ...mk(1),
+    },
+    {
+      id: "s-resgate",
+      kind: "resgate",
+      title: "Resgate pendente",
+      text: "Kit pincéis profissionais (3 peças) reservado para retirada na loja.",
+      href: "/loja",
+      ...mk(4),
+    },
+    {
+      id: "s-resgate-cancelado",
+      kind: "resgate_cancelado",
+      title: "Resgate cancelado pela loja",
+      text: "Esmalte sintético acetinado 900ml – Preto: a loja cancelou seu resgate e os pontos voltaram ao saldo.",
+      href: "/loja",
+      ...mk(25),
+    },
+    {
+      id: "s-resgate-entregue",
+      kind: "resgate_entregue",
+      title: "Resgate entregue",
+      text: "Rolo de lã antigota 23cm foi entregue. Aproveite!",
+      href: "/loja",
+      ...mk(120),
+    },
+    {
+      id: "s-brinde",
+      kind: "brinde",
+      title: "Brinde de boas-vindas",
+      text: "Seu Boné Minas Tintas está reservado na lojinha para retirada na loja.",
+      href: "/loja",
+      ...mk(200),
+    },
+    {
+      id: "s-pedido-aprovado",
+      kind: "pedido_aprovado",
+      title: "Pedido aprovado",
+      text: "Pedido #0056 de Tatiane Cardoso aprovado. 2042 pts adicionados ao seu saldo.",
+      href: "/pedidos/0056",
+      ...mk(300),
+    },
+    {
+      id: "s-pedido-recusado",
+      kind: "pedido_recusado",
+      title: "Pedido recusado",
+      text: "Pedido #0057 de Fernando Souza não foi aprovado.",
+      href: "/pedidos/0057",
+      ...mk(360),
+    },
+    {
+      id: "s-pedido-estornado",
+      kind: "pedido_estornado",
+      title: "Pedido estornado",
+      text: "Pedido #0055 de Tatiane Cardoso foi estornado. 2042 pts removidos do saldo (pagamento cancelado).",
+      href: "/pedidos/0055",
+      ...mk(420),
+    },
   ];
 }
 
 export default function NotificacoesPage() {
   const router = useRouter();
   const params = useSearchParams();
-  const { feed } = usePintor();
+  const { feed, notifVistoTs } = usePintor();
 
   // ?preview → mostra uma de cada notificação (design), sem tocar no feed real.
   const isPreview = params.get("preview") !== null;
   const feedShown = isPreview ? buildSampleFeed() : feed;
 
-  // Ao abrir, carimba "visto até agora" no banco (apaga a bolinha do sininho).
-  // void: não trava a UI esperando a rede; o refresh seguinte reflete o novo marco.
+  // Congela o corte "visto até quando" no instante em que a tela abriu. Não pode
+  // ler notifVistoTs ao vivo aqui: a RPC abaixo carimba "agora" no banco e o
+  // router.refresh() traria um notifVistoTs novo DURANTE a visita, escurecendo
+  // a lista inteira sozinha. O valor ao vivo continua servindo só pra bolinha (home).
+  const [vistoAoAbrir] = useState(() => (isPreview ? 0 : notifVistoTs));
+
+  // Ao abrir, carimba "visto até agora" no banco (apaga a bolinha do sininho) e
+  // força o layout a re-buscar, pra bolinha da home sumir sem precisar de outro evento.
   useEffect(() => {
     if (isPreview) return; // preview não carimba visto
     const supabase = createClient();
-    void supabase.rpc("marcar_notif_visto");
-  }, [isPreview]);
+    supabase.rpc("marcar_notif_visto").then(() => router.refresh());
+  }, [isPreview, router]);
 
   const { hoje, ontem, antes } = agrupar(feedShown);
 
@@ -215,7 +289,7 @@ export default function NotificacoesPage() {
             <div className="eyebrow-label" style={{ margin: "4px 0 10px" }}>
               HOJE
             </div>
-            <Group items={hoje} router={router} />
+            <Group items={hoje} router={router} vistoTs={vistoAoAbrir} />
           </>
         )}
         {ontem.length > 0 && (
@@ -223,7 +297,7 @@ export default function NotificacoesPage() {
             <div className="eyebrow-label" style={{ margin: "4px 0 10px" }}>
               ONTEM
             </div>
-            <Group items={ontem} router={router} />
+            <Group items={ontem} router={router} vistoTs={vistoAoAbrir} />
           </>
         )}
         {antes.length > 0 && (
@@ -231,7 +305,7 @@ export default function NotificacoesPage() {
             <div className="eyebrow-label" style={{ margin: "4px 0 10px" }}>
               ANTERIORES
             </div>
-            <Group items={antes} router={router} />
+            <Group items={antes} router={router} vistoTs={vistoAoAbrir} />
           </>
         )}
       </div>

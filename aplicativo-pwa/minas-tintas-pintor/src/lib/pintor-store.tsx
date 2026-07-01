@@ -68,6 +68,7 @@ export type PintorReadData = {
   } | null;
   feed: NotifItem[];
   notifNaoLidas: boolean;
+  notifVistoTs: number;
 };
 
 // Item do feed de notificações — DERIVADO dos fatos (orders/resgates/promos/brinde),
@@ -114,6 +115,7 @@ type Store = {
   brinde: PintorReadData["brinde"];
   feed: NotifItem[];
   notifNaoLidas: boolean;
+  notifVistoTs: number;
   data: PintorReadData;
   cart: Record<string, number>;
   addCart: (id: string, delta: number) => void;
@@ -187,6 +189,7 @@ export function PintorProvider({
     brinde: data.brinde,
     feed: data.feed,
     notifNaoLidas: data.notifNaoLidas,
+    notifVistoTs: data.notifVistoTs,
     cart,
     addCart,
     clearCart,
