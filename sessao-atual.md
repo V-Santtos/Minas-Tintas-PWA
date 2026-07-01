@@ -118,10 +118,30 @@ do scroll com `z-index: 40`). Sintoma: o saldo do sheet de resgate saía cortado
   portal de overlay vai pro `.pintor-app`, nunca pro `document.body` (senão vaza da moldura
   no preview desktop). Bônus: **barrinha vira swipe-to-dismiss** (arrastar a folha pra baixo
   fecha; `closeSheet` reusado pelo timer e pelo arrasto).
-- **PENDÊNCIA — `BrindeModal` tem o mesmo problema** (renderizado na home, dentro do scroll,
-  `fixed z-index 300`). Ficou **de fora de propósito** (foco era só o sheet do print). Quando
-  voltarmos: mesma correção (portal pro `.pintor-app`). Outros overlays escapam por posição
-  (toast de erro do orçamento em `bottom: 88`) ou não alcançam a barra (dropdowns de filtro).
+- **`BrindeModal` — ✅** mesma correção aplicada: `createPortal` pro `.pintor-app`. Sintoma era
+  só no **iPhone** (WebKit): ao abrir o pop-up a bottom-nav subia e "reassentava" ao arrastar —
+  assinatura do `fixed` preso no `-webkit-overflow-scrolling: touch` do scroll; Android/Blink
+  ignora a propriedade e não sofre. Era um fix que já existira (commit `a1088c1`) e fora
+  revertido sem querer na sequência de "teste de fix" até o `1a8c039`.
+- **Resíduo latente (mapeado, não corrigido):** o **orçamento** tem o mesmo padrão solto —
+  `.cart-bar` e o toast de `submitError` são `fixed` dentro do `.pintor-scroll` sem portal. Não
+  incomodou ainda; se aparecer o mesmo tranco lá no iPhone, a cura é idêntica (portal pro
+  `.pintor-app`). Dropdowns de filtro não alcançam a barra.
+
+## Ajustes pontuais desta sessão (pintor) — ✅
+
+- **Pop-up de brinde reaparecendo no `/home` — ✅** `marcarVisto` carimbava `brinde_visto_em` no
+  banco mas **não** fazia `router.refresh()`. Como o `(app)/layout.tsx` é o ponto único de fetch
+  e **não re-executa em navegação interna** (layout preservado pelo App Router), `brinde.visto`
+  ficava congelado em `false` na sessão → o `BrindeModal` reabria a cada remontagem do `/home`
+  (ex.: voltar da Loja), até um reload frio. Add `router.refresh()` após o RPC — mesmo padrão de
+  `marcar_notif_visto`. Agora o pop-up aparece **uma vez** no 1º login e não volta mais (fechar
+  ou "Ver na lojinha" encerram de vez), independente de o admin já ter liberado o brinde.
+- **Spin loader no botão Entrar (login) — ✅** ao enviar, "Entrar" vira um `Loader2` girando
+  (centralizado no mesmo botão, `.btn` já é flex-center), botão `disabled` durante o request
+  (anti duplo-envio), volta a "Entrar" em erro e segue girando no redirect de sucesso. Add
+  `@keyframes spin` no `globals.css` do pintor (o admin já tinha; mesma convenção `animation`
+  inline no ícone).
 
 ## Notificações in-app do pintor — clareza + tipos faltando — ✅ (código) / ⏳ (1 migration)
 
