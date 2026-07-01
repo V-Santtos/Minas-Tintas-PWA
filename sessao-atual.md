@@ -1,101 +1,77 @@
 # Sessão atual
 
-**Atualizado:** 2026-06-30
+**Atualizado:** 2026-07-01
 
 ---
 
-## Projeto ativo — Minas Tintas PWA · Brinde de boas-vindas **CONCLUÍDO**
+## Estado consolidado
 
 Repositório: `https://github.com/V-Santtos/Minas-Tintas-PWA`
-Apps Admin e Pintor já validados e publicados. A feature de **brinde de boas-vindas**
-ao app do Pintor está **completa** (banco + concessão + front real).
+Apps Admin e Pintor validados e publicados. Duas features fecharam nesta sessão:
 
-### A feature (resumo)
+- **Brinde de boas-vindas** (banco + concessão + front real) — **CONCLUÍDO**.
+- **Notificações do pintor: feed real + não-lido (T6a/T6b)** — **CONCLUÍDO**.
 
-- Cada **novo pintor** recebe **UM** brinde, **sorteado** entre dois:
-  **Boné Minas Tintas** ou **Pincel Condor 2"** (é um ou outro).
-- O sorteio acontece **no banco**, na **criação do pintor** pelo admin — o brinde
-  nasce como um **resgate pendente** (grátis) na lojinha. O 1º login só **anuncia**.
-- No 1º login, abre um **modal** celebratório. Ao fechar, uma **bolinha vermelha**
-  aparece na Lojinha (até ele ver) e uma **notificação** entra no sininho (enquanto
-  o brinde estiver pendente de retirada).
-- O admin valida a entrega quando o pintor retira na loja (fluxo de resgate normal).
-
-### Decisões travadas
-
-- **Modelagem:** modelo **A** — itens-brinde são `loja_items` com flag `is_brinde`
-  (reusa CRUD/imagem/estoque/FK do resgate), **não** tabela `brindes` própria. Migrar
-  pra tabela só **se** virar programa gerenciável (vários brindes, pesos, admin trocando).
-- **Kit?** Não — dois itens distintos; cada pintor recebe **um**.
-- **Quando concede:** na **criação do pintor** (resgate já nasce pendente); 1º login anuncia.
-- **Retroativo?** Só **novos** pintores.
-- **Estoque:** boné = **10 fixos**; pincel = **ilimitado** (`stock` nulável). Enquanto há
-  boné, sorteia; esgotou, todos recebem pincel.
-- **Persistência do "já viu":** coluna `painter_settings.brinde_visto_em` (não localStorage).
-- **Bolinha da Lojinha:** some ao **ver o modal** (não ao entrar na loja).
-- **Card do sininho:** fica enquanto o brinde estiver **pendente de retirada**.
+O que falta do sistema de notificações (T6c push, T6d avisos da loja) está registrado
+abaixo como bloco futuro.
 
 ---
 
-## 📋 TAREFAS
+## Brinde de boas-vindas — ✅
 
-Legenda: ✅ feito · ⏳ pendente · 🗄️ precisa de banco
+- Cada pintor novo ganha **um** brinde (boné **ou** pincel), sorteado **no banco** na
+  criação do pintor (RPC `conceder_brinde_boas_vindas`, service_role, idempotente, trava
+  de estoque no boné: 10 fixos, esgotou todos pegam pincel). Nasce como **resgate grátis**
+  pendente (`pontos_congelados = 0`, sem ledger).
+- Modelagem **A**: itens-brinde são `loja_items` com `is_brinde = true` (IDs fixos
+  `…c1` boné / `…c2` pincel), fora da grade da lojinha do pintor **e** do admin (ambas as
+  queries filtram `is_brinde = false`). O card de **resgates** do brinde continua no admin.
+- `stock` virou nulável (`null` = ilimitado, caso do pincel). `resgates.pontos_congelados`
+  aceita `>= 0`. Cancelamentos (pintor/admin) não lançam `devolucao` quando é grátis.
+- "Já viu o modal" = `painter_settings.brinde_visto_em` (RPC `marcar_brinde_visto`).
+- Front do pintor lê o objeto `brinde` do contexto (derivado no layout): `BrindeModal`
+  (mostra se `brinde && !visto`, fecha chamando a RPC), `BottomNav` (bolinha = pendente e
+  não visto), `notificacoes` (card enquanto pendente). Preview `?brinde=bone|pincel` na home.
 
-### T1 — Modal de brinde no 1º login · ✅
+## Notificações — feed real + não-lido (T6a/T6b) — ✅
 
-`BrindeModal.tsx` lê o objeto `brinde` do contexto (mostra se `brinde && !visto`);
-sorteio removido do front (vem do banco). Fechar chama a RPC `marcar_brinde_visto`.
+- **Feed derivado** dos fatos que o `layout` já busca (sem tabela de notificações):
+  pedidos aprovados (pts reais do ledger) e recusados, resgates pendentes, promoções
+  (`mult_delta < 0`) e o brinde. Cada tipo respeita `notifPrefs` (enfim com consumidor).
+- Tela `/notificacoes` renderiza o feed agrupado por **Hoje/Ontem/Anteriores** com tempo
+  relativo e estado vazio. Mock (HOJE/ONTEM hardcoded) removido.
+- **Não-lido:** `painter_settings.notif_visto_em` + RPC `marcar_notif_visto` (padrão do
+  brinde). Não-lido = evento com `created_at` > último visto. Bolinha do sininho na home
+  (antes fixa) passou a depender de `data.notifNaoLidas`; abrir a tela carimba o visto.
+- Casa com o Realtime: app aberto → evento novo → `router.refresh()` → bolinha acende só.
+- **Escopo:** funciona **com o app aberto**. App fechado = vê na próxima abertura (T6c cobre).
 
-### T2 — Bolinha vermelha na Lojinha · ✅
-
-`BottomNav.tsx`: `lojaBadge = brinde.pendente && !brinde.visto`, derivado do contexto
-(sem localStorage/eventos).
-
-### T3 — Notificação do brinde no sininho · ✅
-
-`notificacoes/page.tsx`: card de brinde derivado do contexto (fica enquanto pendente).
-O resto do feed do sininho ainda é mock (ver T6).
-
-### T4 — Itens-brinde no banco · ✅
-
-Migration `…_brinde_boas_vindas.sql`: boné (`…c1`) e pincel (`…c2`) inseridos com
-`is_brinde = true`, imagens em `/assets/`, boné com 10 fixos, pincel ilimitado.
-
-### T5 — Regras reais do brinde · ✅
-
-- `loja_items.is_brinde` (fora da grade do pintor) + `stock` nulável (ilimitado).
-- `resgates.pontos_congelados >= 0` (resgate grátis).
-- RPC `conceder_brinde_boas_vindas` (service_role, idempotente, sorteio com trava de
-  estoque no boné) chamada no `POST /api/pintores`.
-- Cancelamentos (pintor/admin) não lançam `devolucao` quando `pontos_congelados = 0`.
-- `painter_settings.brinde_visto_em` + RPC `marcar_brinde_visto`.
-- Front trocou os stubs de localStorage pelos dados reais (payload do `layout`).
-
-Tudo validado em sandbox PG16 (distribuição bone->pincel, idempotencia, ledger limpo,
-devolucao de estoque no cancelamento, upsert do visto, trava de identidade).
+**Decisões travadas (notificações):** feed é projeção derivada, não tabela; não-lido é um
+**marco temporal único** por pintor (não "lido por item" — o feed não tem id persistente).
 
 ---
 
-## No horizonte (próximo)
+## Próximo bloco — restante das notificações (T6c/T6d)
 
-### T6 — Sistema de notificação · ⏳ FRONT + 🗄️ BANCO
+Adiados conscientes; **não** bloqueiam o resto do projeto.
 
-Hoje o sininho ainda é **majoritariamente mock** (HOJE/ONTEM hardcoded; só o card de
-brinde é real). Dividido em:
+- **T6c — Push real (INFRA):** notificação no celular com o app **fechado** — service worker
+  - Web Push + permissão do navegador + tabela de `subscriptions`. Bloco pesado e
+    independente do feed. É o que falta pra "receber com o app fechado".
+- **T6d — Avisos livres da loja (BANCO):** comunicados escritos à mão pelo admin
+  ("Fechado dia 25") que **não** derivam de evento do domínio → exigem **tabela própria**
+  de notificações + tela no admin pra escrever. (O único caso que quebra o "derivar do fato".)
 
-- **T6a — Feed real (FRONT):** trocar o mock por feed **derivado** do payload que o
-  layout já busca — `orders` aprovados, `resgates` pendentes, `loja_items` em promoção
-  (`mult_delta < 0`), + o brinde (já real). Casa com "guardar o fato, derivar o rótulo".
-- **T6b — "Lido / não lido" (🗄️ BANCO):** não é derivável. Uma coluna timestamp por
-  pintor (`notif_visto_em`) + RPC pra carimbar controla a bolinha do sininho (hoje fixa).
-- **T6c — Push real (🗄️ INFRA):** notificação fora do app — service worker + Web Push +
-  tabela de `subscriptions`. Bloco pesado, independente do feed.
-- **T6d — Avisos livres da loja (🗄️ BANCO):** comunicados escritos à mão precisam de
-  tabela própria.
+---
 
-### Outras pendências registradas (ver CLAUDE.md)
+## Pendências gerais registradas (ver CLAUDE.md p/ detalhe)
 
-- Admin não distingue visualmente os itens-brinde na lista da lojinha (aparecem com
-  `custo_pts: 0`). Funcional; badge/filtro é melhoria futura.
-- Auditar o `seed.sql` ponta a ponta antes do go-live (pegar colunas defasadas num reset).
-- SMTP p/ recuperação de senha; troca de telefone do pintor; real-time de estoque (Hiper).
+- **Auditar o `seed.sql` ponta a ponta antes do go-live** — aplicar todas as migrations num
+  PG16 limpo + rodar o seed inteiro, pra pegar colunas defasadas que só aparecem num reset.
+  Baixa urgência; fazer antes do passo de seed do go-live.
+- Admin não distingue visualmente os brindes na lista da lojinha (agora escondidos de vez;
+  ponto resolvido). Restante: badge/UX é melhoria futura se algum dia forem reexpostos.
+- SMTP p/ recuperação de senha (fim do projeto); troca de telefone do pintor (troca de
+  credencial dupla); real-time de estoque via webhook Hiper (pós-produção, informativo).
+- Infra multi-cliente (Vercel Pro + Supabase cloud vs. multi-tenant vs. hybrid/VPS) —
+  interesse no hybrid/VPS; constraint = zero perda de dados (snapshots + pg_dump + WAL).

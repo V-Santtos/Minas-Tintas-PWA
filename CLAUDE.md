@@ -220,9 +220,8 @@ Troca de telefone do pintor pelo admin; recuperação por e-mail (SMTP).
   card da lista virou inerte (futuro: "ver detalhes"); `note` mapeia em `complemento` (convenção
   herdada do orçamento, não `observacoes`).
 - **Preferências de notificação do pintor** persistidas: tabela `painter_settings` + RPC
-  `salvar_notif_prefs`; os toggles de Configurações agora salvam por pintor. **Sem consumidor
-  ainda** — o sistema de notificação (push + feed in-app) não existe e é bloco próprio futuro;
-  as prefs ficam prontas pra quando ele for construído.
+  `salvar_notif_prefs`; os toggles de Configurações salvam por pintor. **Consumidas** pelo feed de
+  notificações (T6a) — cada tipo de card respeita o toggle correspondente.
 - **Preview de bônus do pintor** alinhado ao runtime: "A liberar" (home), bônus do carrinho e do
   pedido agora leem `settings.bonus_percent` via `data.bonusPercent`, batendo com o crédito do
   `aprovar_pedido`. `BONUS_PERCENT` fica só como fallback.
@@ -306,6 +305,24 @@ Troca de telefone do pintor pelo admin; recuperação por e-mail (SMTP).
   - flag, não tabela `brindes` própria) — migrar pra tabela só se virar programa gerenciável;
     concessão no cadastro (1º login só anuncia); só pintores novos (não retroativo); bolinha some ao
     ver o modal, card do sininho fica enquanto pendente de retirada.
+- **Notificações do pintor — feed real + não-lido (T6a/T6b) entregue.** A tela `/notificacoes`
+  deixou de ser mock: o feed é **derivado** dos fatos que o `layout` já busca (mesmo princípio
+  "guardar o fato, derivar o rótulo" — **não** há tabela de notificações). Entram como cards:
+  pedidos **aprovados** (com os pts reais do ledger) e **recusados**, **resgates** pendentes de
+  retirada, **promoções** da lojinha (`mult_delta < 0` → `promo`) e o **brinde** (enquanto pendente).
+  Cada tipo respeita a preferência do pintor (`notifPrefs`, que enfim ganharam consumidor). O feed é
+  ordenado por data do fato e agrupado em Hoje/Ontem/Anteriores, com tempo relativo. **Não-lido
+  (bolinha do sininho):** coluna `painter_settings.notif_visto_em` + RPC `marcar_notif_visto`
+  (padrão do `brinde_visto_em`); não-lido = existe evento com `created_at` mais novo que o último
+  "visto". A bolinha da home (antes fixa no código) passou a depender de `data.notifNaoLidas`; abrir
+  a tela carimba o visto e apaga a bolinha no refresh seguinte. **Casa com o Realtime:** com o app
+  aberto, evento novo → `router.refresh()` → card novo → bolinha acende sozinha. **Escopo:** vale
+  **com o app aberto** (o pintor abre e vê); se o app está fechado, ele só vê na próxima abertura.
+  **Falta (T6c/T6d, adiados conscientes):** _T6c_ push real com o app fechado (service worker +
+  Web Push + tabela de `subscriptions`) — bloco de infra, independente; _T6d_ avisos livres da loja
+  (comunicados escritos à mão que **não** derivam de evento → exigem tabela própria + tela no admin).
+  Um "lido por item" também não existe: o não-lido é um marco temporal único (não dá pra marcar card
+  a card, porque o feed é projeção, não tabela).
 
 ### Integração do catálogo (Hiper)
 
