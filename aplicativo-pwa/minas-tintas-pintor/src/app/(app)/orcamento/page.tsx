@@ -238,7 +238,7 @@ export default function OrcamentoPage() {
     return data.catalog.filter(
       (p) =>
         p.name.toLowerCase().includes(q) ||
-        p.brand.toLowerCase().includes(q) ||
+        (p.brand ?? "").toLowerCase().includes(q) ||
         p.code.toLowerCase().includes(q),
     );
   }, [prodQ]);
@@ -561,8 +561,8 @@ export default function OrcamentoPage() {
                               gap: 4,
                             }}
                           >
-                            <Info size={11} strokeWidth={2.5} /> Vínculo pendente
-                            — efetiva após a aprovação
+                            <Info size={11} strokeWidth={2.5} /> Vínculo
+                            pendente — efetiva após a aprovação
                           </div>
                         )}
                       </div>

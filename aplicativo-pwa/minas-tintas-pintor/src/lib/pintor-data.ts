@@ -22,7 +22,7 @@ export type CatalogItem = {
   id: string;
   code: string;
   name: string;
-  brand: string;
+  brand: string | null;
   price: number;
   icon: string;
 };

@@ -81,7 +81,7 @@ export default async function PedidosPage() {
     id: p.id,
     code: p.code,
     name: p.name,
-    brand: p.brand,
+    brand: p.brand ?? "",
     price: Number(p.price),
     stock: p.stock,
   }));

@@ -196,7 +196,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     id: pr.id,
     code: pr.code,
     name: pr.name,
-    brand: pr.brand,
+    brand: pr.brand ?? "",
     price: Number(pr.price),
     icon: "",
   }));
