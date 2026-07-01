@@ -180,17 +180,30 @@
   margin: 0 auto;
   background: var(--paper);
   position: relative;
-  /* NÃO adicionar transform/filter/perspective/will-change/contain AQUI.
-     Qualquer um torna o .pintor-app o containing block dos position:fixed
-     internos (bottom-nav, modais, sheets): eles deixam de se ancorar na viewport
-     e passam a se ancorar NESTA caixa min-height:100dvh. No iOS/WebKit essa caixa
-     é resolvida defasada na entrada (transição SPA login->home): a nav sobe e
-     deixa a faixa creme embaixo, "assentando" só no 1º scroll — é o "salto da
-     bottom-nav" (Android/Blink não sofre). Com a nav fixed SEM ancestral
-     transformado, o iOS a mantém colada na viewport nativamente — estado estável
-     e original. O preview desktop tem seu próprio translateZ no
-     @media (min-width:900px), onde a moldura é de altura FIXA (min(844px,...)),
-     por isso lá é estável mesmo com transform. Já mordeu 2x: não reintroduza. */
+  /* NÃO adicionar transform/filter/perspective/will-change/contain AQUI (na
+     regra BASE). Qualquer um torna o .pintor-app o containing block dos
+     position:fixed internos (bottom-nav, modais, sheets), que passam a se
+     ancorar NESTA caixa min-height:100dvh — e no iOS/WebKit dvh/viewport
+     nascem DEFASADOS (launch frio: innerHeight 793 numa tela de 852; idem na
+     transição SPA login->home): a nav sobe e deixa a faixa creme embaixo,
+     assentando só no 1º gesto real. Já mordeu 2x.
+     A EXCEÇÃO DELIBERADA é a regra html.ios-standalone logo abaixo: lá o
+     transform volta DE PROPÓSITO, mas pareado com altura em PX MEDIDA do
+     hardware (--app-vh = screen.height, via ViewportKick), que nunca nasce
+     defasada — a nav cola no fundo físico desde o 1º paint mesmo com o
+     viewport mentindo. transform + dvh = bug; transform + px medido = fix.
+     O preview desktop tem seu próprio translateZ no @media (min-width:900px),
+     onde a moldura é de altura FIXA (min(844px,...)) — estável igual. */
+}
+
+/* iOS standalone (classe posta pelo ViewportKick): o launch nasce com o
+   viewport curto (sem a altura da status bar) e fixed ancorados nele ficam
+   "empurrados" até um gesto real reconciliar — scroll programático NÃO cura
+   (testado no aparelho). Solução: ancorar os fixed nesta caixa com a altura
+   REAL da tela (--app-vh, px medido), imune ao viewport natimorto. */
+html.ios-standalone .pintor-app {
+  transform: translateZ(0);
+  min-height: var(--app-vh, 100dvh);
 }
 .pintor-scroll {
   flex: 1;

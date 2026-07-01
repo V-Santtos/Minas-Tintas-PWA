@@ -52,7 +52,11 @@ export default function ViewportDebug() {
           `innerH:${window.innerHeight}  screenH:${screen.height}  scrollY:${Math.round(window.scrollY)}`,
           `visualVP: h=${r(vv?.height)} top=${r(vv?.offsetTop)}`,
           `docClientH:${document.documentElement.clientHeight}`,
-          `safe-bottom:${sab}`,
+          `safe-bottom:${sab}  --app-vh:${
+            getComputedStyle(document.documentElement)
+              .getPropertyValue("--app-vh")
+              .trim() || "—"
+          }`,
           `app: top=${r(app?.top)} bot=${r(app?.bottom)} h=${r(app?.height)}`,
           `NAV: top=${r(nav?.top)} bot=${r(nav?.bottom)}`,
           `>> BURACO nav->fundo: ${gap}px <<`,
