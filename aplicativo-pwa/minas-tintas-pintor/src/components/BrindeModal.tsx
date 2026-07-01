@@ -85,23 +85,6 @@ export default function BrindeModal() {
     return () => clearTimeout(t);
   }, [open]);
 
-  // Trava o scroll de fundo enquanto o modal está aberto. É o que de fato
-  // corrige a bottom-nav no iPhone: sem isso, o overscroll elástico (rubber-
-  // band) do .pintor-scroll (-webkit-overflow-scrolling: touch) desloca pra
-  // cima os elementos fixed (nav + backdrop) e deixa a faixa branca embaixo,
-  // só "assentando" quando um scroll repinta. Com overflow:hidden o scroll não
-  // rubber-banda, então nada é deslocado. Restaura o valor anterior ao fechar.
-  useEffect(() => {
-    if (!open) return;
-    const scrollEl = document.querySelector<HTMLElement>(".pintor-scroll");
-    if (!scrollEl) return;
-    const prev = scrollEl.style.overflow;
-    scrollEl.style.overflow = "hidden";
-    return () => {
-      scrollEl.style.overflow = prev;
-    };
-  }, [open]);
-
   // Carimba "já viu" no banco. void: não trava a animação esperando a rede;
   // se falhar, o pior caso é o modal reaparecer no próximo carregamento.
   async function marcarVisto() {

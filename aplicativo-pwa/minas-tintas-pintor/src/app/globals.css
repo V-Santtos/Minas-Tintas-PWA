@@ -180,11 +180,19 @@
   margin: 0 auto;
   background: var(--paper);
   position: relative;
+  /* Containing block dos position:fixed internos (bottom-nav, modais, sheets).
+     Sem isto, no iOS os fixed se ancoram no layout-viewport instável e sofrem
+     solavanco (a nav sobe, faixa branca embaixo) que só "assenta" ao rolar.
+     Com o transform eles se ancoram nesta moldura estável — é por isso que o
+     preview desktop, que já tinha este transform, nunca teve o bug. */
+  transform: translateZ(0);
 }
 .pintor-scroll {
   flex: 1;
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  /* SEM -webkit-overflow-scrolling: touch — prop legada (iOS <13) que cria uma
+     camada de scroll própria; ela desloca os fixed irmãos e quebra sob o
+     transform do .pintor-app. iOS moderno tem momentum nativo sem ela. */
   padding-top: env(safe-area-inset-top);
   padding-bottom: 92px; /* espaço para a bottom-nav */
   scrollbar-width: none; /* Firefox — esconde a barra de rolagem (scroll segue por roda/touch) */
