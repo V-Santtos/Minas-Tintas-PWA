@@ -61,6 +61,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     { data: txRows },
     { data: prodRows },
     { data: prefsRow },
+    { data: resgatesCanceladosRows },
   ] = await Promise.all([
     supabase
       .from("painter_stats")
@@ -116,6 +117,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       )
       .eq("painter_id", painter.id)
       .maybeSingle(),
+    supabase
+      .from("resgates_admin")
+      .select("id, item_nome, created_at, cancelado_em")
+      .eq("status", "cancelado")
+      .eq("cancelado_por", "admin")
+      .order("cancelado_em", { ascending: false }),
   ]);
 
   const padrao = Number(cfg?.multiplicador_padrao ?? 3);
@@ -202,6 +209,9 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   }));
 
   const numeroByOrder = new Map((orderRows ?? []).map((r) => [r.id, r.numero]));
+  const clienteByOrder = new Map(
+    (orderRows ?? []).map((r) => [r.id, r.client_nome]),
+  );
   const TIPO_LABEL: Record<string, string> = {
     bonus: "Bônus",
     resgate: "Resgate",
@@ -265,6 +275,26 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     }
   }
 
+  // Pedido estornado: aprovação revertida pela loja (pagamento caiu, etc.). O bônus
+  // creditado é retirado. Evento crítico (perda de pontos) → sempre notifica, sem
+  // toggle. Deriva da transação 'estorno' (usa o created_at do estorno).
+  for (const t of txRows ?? []) {
+    if (t.tipo !== "estorno" || !t.order_id) continue;
+    const numero = numeroByOrder.get(t.order_id);
+    const num = numero ? String(numero).padStart(4, "0") : "";
+    const cliente = clienteByOrder.get(t.order_id);
+    const pts = Math.abs(Number(t.valor));
+    feedRaw.push({
+      id: `pedido-estornado-${t.id}`,
+      kind: "pedido_estornado",
+      title: "Pedido estornado",
+      text: `Pedido #${num}${cliente ? ` de ${cliente}` : ""} foi estornado. ${pts} pts removidos do saldo${t.motivo ? ` (${t.motivo})` : ""}.`,
+      href: `/pedidos/${num}`,
+      at: t.created_at,
+      ts: new Date(t.created_at).getTime(),
+    });
+  }
+
   // Resgates pendentes de retirada (exceto o brinde, que tem card próprio).
   if (prefResgates) {
     for (const r of resgateRows ?? []) {
@@ -273,7 +303,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       feedRaw.push({
         id: `resgate-${r.id}`,
         kind: "resgate",
-        title: "Resgate disponível",
+        title: "Resgate pendente",
         text: `${r.item_nome ?? "Item"} reservado para retirada na loja.`,
         href: "/loja",
         at: r.created_at,
@@ -287,7 +317,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     if (r.loja_item_id && BRINDE_ITEM_IDS[r.loja_item_id]) continue;
     feedRaw.push({
       id: `resgate-entregue-${r.id}`,
-      kind: "resgate",
+      kind: "resgate_entregue",
       title: "Resgate entregue",
       text: `${r.item_nome ?? "Item"} foi entregue. Aproveite!`,
       href: "/loja",
@@ -295,6 +325,22 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       ts: new Date(r.entregue_em).getTime(),
     });
   }
+  // Resgate cancelado PELA LOJA (admin): o pintor tinha um item reservado e a loja
+  // cancelou. Auto-cancelamento do pintor é silencioso (cancelado_por distingue).
+  // Evento que ele não provocou → sempre notifica, sem toggle.
+  for (const r of resgatesCanceladosRows ?? []) {
+    const at = r.cancelado_em ?? r.created_at;
+    feedRaw.push({
+      id: `resgate-cancelado-${r.id}`,
+      kind: "resgate_cancelado",
+      title: "Resgate cancelado pela loja",
+      text: `${r.item_nome ?? "Item"}: a loja cancelou seu resgate e os pontos voltaram ao saldo.`,
+      href: "/loja",
+      at,
+      ts: new Date(at).getTime(),
+    });
+  }
+
   // Promoções na lojinha (mult_delta < 0 → promo). Sem data de evento própria;
   // usamos "agora" só para ordenação (aparecem no topo enquanto ativas).
   if (prefPromocoes) {

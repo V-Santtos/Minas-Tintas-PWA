@@ -1,13 +1,16 @@
 ﻿"use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ChevronLeft,
   CircleCheck,
   CircleX,
   Gift,
   Store,
+  PackageCheck,
+  PackageX,
+  RotateCcw,
   Tag,
   ChevronRight,
 } from "lucide-react";
@@ -25,7 +28,14 @@ const LOOK: Record<
     iconColor: "#4F7A4A",
   },
   pedido_recusado: { iconBg: "#FDECEC", icon: CircleX, iconColor: "#CC0000" },
+  pedido_estornado: { iconBg: "#FDECEC", icon: RotateCcw, iconColor: "#CC0000" },
   resgate: { iconBg: "#FFF8E1", icon: Store, iconColor: "#B5751F" },
+  resgate_entregue: {
+    iconBg: "#E8F5E9",
+    icon: PackageCheck,
+    iconColor: "#4F7A4A",
+  },
+  resgate_cancelado: { iconBg: "#FDECEC", icon: PackageX, iconColor: "#CC0000" },
   promo: { iconBg: "#FEF0E7", icon: Tag, iconColor: "#CC0000" },
   brinde: { iconBg: "#FDECEC", icon: Gift, iconColor: "#CC0000" },
 };
@@ -138,18 +148,44 @@ function Group({
   );
 }
 
+// Preview (?preview): UMA notificação de cada tipo, pra visualizar todas de uma vez
+// (design). Não vai pro banco nem pro feed real — só renderiza quando o param existe.
+function buildSampleFeed(): NotifItem[] {
+  const now = Date.now();
+  const mk = (min: number) => ({
+    at: new Date(now - min * 60000).toISOString(),
+    ts: now - min * 60000,
+  });
+  return [
+    { id: "s-promo", kind: "promo", title: "Promoção na lojinha", text: "Fita crepe 48mm x 50m com menos pontos por tempo limitado.", href: "/loja", ...mk(1) },
+    { id: "s-resgate", kind: "resgate", title: "Resgate pendente", text: "Kit pincéis profissionais (3 peças) reservado para retirada na loja.", href: "/loja", ...mk(4) },
+    { id: "s-resgate-cancelado", kind: "resgate_cancelado", title: "Resgate cancelado pela loja", text: "Esmalte sintético acetinado 900ml – Preto: a loja cancelou seu resgate e os pontos voltaram ao saldo.", href: "/loja", ...mk(25) },
+    { id: "s-resgate-entregue", kind: "resgate_entregue", title: "Resgate entregue", text: "Rolo de lã antigota 23cm foi entregue. Aproveite!", href: "/loja", ...mk(120) },
+    { id: "s-brinde", kind: "brinde", title: "Brinde de boas-vindas", text: "Seu Boné Minas Tintas está reservado na lojinha para retirada na loja.", href: "/loja", ...mk(200) },
+    { id: "s-pedido-aprovado", kind: "pedido_aprovado", title: "Pedido aprovado", text: "Pedido #0056 de Tatiane Cardoso aprovado. 2042 pts adicionados ao seu saldo.", href: "/pedidos/0056", ...mk(300) },
+    { id: "s-pedido-recusado", kind: "pedido_recusado", title: "Pedido recusado", text: "Pedido #0057 de Fernando Souza não foi aprovado.", href: "/pedidos/0057", ...mk(360) },
+    { id: "s-pedido-estornado", kind: "pedido_estornado", title: "Pedido estornado", text: "Pedido #0055 de Tatiane Cardoso foi estornado. 2042 pts removidos do saldo (pagamento cancelado).", href: "/pedidos/0055", ...mk(420) },
+  ];
+}
+
 export default function NotificacoesPage() {
   const router = useRouter();
+  const params = useSearchParams();
   const { feed } = usePintor();
+
+  // ?preview → mostra uma de cada notificação (design), sem tocar no feed real.
+  const isPreview = params.get("preview") !== null;
+  const feedShown = isPreview ? buildSampleFeed() : feed;
 
   // Ao abrir, carimba "visto até agora" no banco (apaga a bolinha do sininho).
   // void: não trava a UI esperando a rede; o refresh seguinte reflete o novo marco.
   useEffect(() => {
+    if (isPreview) return; // preview não carimba visto
     const supabase = createClient();
     void supabase.rpc("marcar_notif_visto");
-  }, []);
+  }, [isPreview]);
 
-  const { hoje, ontem, antes } = agrupar(feed);
+  const { hoje, ontem, antes } = agrupar(feedShown);
 
   return (
     <>
@@ -161,7 +197,7 @@ export default function NotificacoesPage() {
         <div className="page-title">Notificações</div>
       </div>
       <div style={{ padding: "0 16px 88px" }}>
-        {feed.length === 0 && (
+        {feedShown.length === 0 && (
           <div
             className="card"
             style={{

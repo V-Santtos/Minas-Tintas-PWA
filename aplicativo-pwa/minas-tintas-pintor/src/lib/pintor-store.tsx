@@ -75,7 +75,15 @@ export type PintorReadData = {
 // pra ordenar e agrupar por dia; `ts` é o epoch pra comparar com "visto até quando".
 export type NotifItem = {
   id: string;
-  kind: "pedido_aprovado" | "pedido_recusado" | "resgate" | "promo" | "brinde";
+  kind:
+    | "pedido_aprovado"
+    | "pedido_recusado"
+    | "pedido_estornado"
+    | "resgate"
+    | "resgate_entregue"
+    | "resgate_cancelado"
+    | "promo"
+    | "brinde";
   title: string;
   text: string;
   href: string;
