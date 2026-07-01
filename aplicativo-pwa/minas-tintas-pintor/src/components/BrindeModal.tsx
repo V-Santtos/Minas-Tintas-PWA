@@ -59,21 +59,6 @@ export default function BrindeModal() {
     setFrameEl(document.querySelector<HTMLElement>(".pintor-app"));
   }, []);
 
-  // Trava o scroll de fundo enquanto o modal está aberto. Sem isso, o toque no
-  // overlay pode "vazar" um pouco de bounce elástico (iOS) pro .pintor-scroll
-  // por trás, e a bottom-nav (fixed, mesmo contexto) sofre o solavanco até o
-  // primeiro toque assentar o scroll — o sintoma que você viu.
-  useEffect(() => {
-    if (!open) return;
-    const scrollEl = document.querySelector<HTMLElement>(".pintor-scroll");
-    if (!scrollEl) return;
-    const prev = scrollEl.style.overflow;
-    scrollEl.style.overflow = "hidden";
-    return () => {
-      scrollEl.style.overflow = prev;
-    };
-  }, [open]);
-
   // Decide na montagem: mostra ou não, e qual brinde.
   useEffect(() => {
     const override = params.get("brinde"); // atalho de preview
