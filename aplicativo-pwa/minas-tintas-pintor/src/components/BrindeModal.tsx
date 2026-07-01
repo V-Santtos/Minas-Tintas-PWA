@@ -52,9 +52,8 @@ export default function BrindeModal() {
   const persistOnClose = useRef(true); // preview não marca "já viu"
 
   // Alvo do portal: .pintor-app (a "moldura"), mesma técnica do sheet de
-  // resgate. Tira o modal do .pintor-scroll, onde o -webkit-overflow-scrolling:
-  // touch prende position:fixed no iOS/WebKit e desloca a bottom-nav ao abrir
-  // (sintoma só no iPhone; Android/Blink ignora essa propriedade).
+  // resgate. Tira o modal de dentro do .pintor-scroll (evita clipping do
+  // overlay atrás da nav e mantém a moldura no preview desktop).
   const [frameEl, setFrameEl] = useState<HTMLElement | null>(null);
   useEffect(() => {
     setFrameEl(document.querySelector<HTMLElement>(".pintor-app"));
@@ -84,6 +83,23 @@ export default function BrindeModal() {
     if (!open) return;
     const t = setTimeout(() => setShown(true), 450);
     return () => clearTimeout(t);
+  }, [open]);
+
+  // Trava o scroll de fundo enquanto o modal está aberto. É o que de fato
+  // corrige a bottom-nav no iPhone: sem isso, o overscroll elástico (rubber-
+  // band) do .pintor-scroll (-webkit-overflow-scrolling: touch) desloca pra
+  // cima os elementos fixed (nav + backdrop) e deixa a faixa branca embaixo,
+  // só "assentando" quando um scroll repinta. Com overflow:hidden o scroll não
+  // rubber-banda, então nada é deslocado. Restaura o valor anterior ao fechar.
+  useEffect(() => {
+    if (!open) return;
+    const scrollEl = document.querySelector<HTMLElement>(".pintor-scroll");
+    if (!scrollEl) return;
+    const prev = scrollEl.style.overflow;
+    scrollEl.style.overflow = "hidden";
+    return () => {
+      scrollEl.style.overflow = prev;
+    };
   }, [open]);
 
   // Carimba "já viu" no banco. void: não trava a animação esperando a rede;
