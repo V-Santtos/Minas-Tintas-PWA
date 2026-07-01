@@ -187,6 +187,15 @@
      preview desktop, que já tinha este transform, nunca teve o bug. */
   transform: translateZ(0);
 }
+/* iOS standalone (classe posta pelo IosVh): no launch frio o iOS entrega o
+   viewport/100dvh DEFASADOS (793 numa tela de 852 — medido) e a moldura nasce
+   curta: nav empurrada + faixa embaixo até um gesto real reconciliar. Aqui a
+   altura vem de --app-vh (= screen.height, px físico que nunca nasce errado):
+   a moldura já nasce do tamanho da tela e a nav cola no fundo desde o 1º
+   paint. Único delta em relação ao baseline: a FONTE da altura. */
+html.ios-standalone .pintor-app {
+  min-height: var(--app-vh, 100dvh);
+}
 .pintor-scroll {
   flex: 1;
   overflow-y: auto;

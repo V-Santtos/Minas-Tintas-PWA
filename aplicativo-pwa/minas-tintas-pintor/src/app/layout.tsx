@@ -7,6 +7,7 @@ import {
   Leckerli_One,
 } from "next/font/google";
 import "./globals.css";
+import IosVh from "@/components/IosVh";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -79,7 +80,10 @@ export default function RootLayout({
       className={`${inter.variable} ${playfair.variable} ${jakarta.variable} ${bebas.variable} ${leckerli.variable}`}
       suppressHydrationWarning
     >
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        <IosVh />
+        {children}
+      </body>
     </html>
   );
 }
