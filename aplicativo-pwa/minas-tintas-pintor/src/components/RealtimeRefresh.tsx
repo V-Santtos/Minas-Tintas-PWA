@@ -43,6 +43,11 @@ export default function RealtimeRefresh() {
           { event: "*", schema: "public", table: "resgates" },
           refresh,
         )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "loja_items" },
+          refresh,
+        )
         .subscribe();
     });
 

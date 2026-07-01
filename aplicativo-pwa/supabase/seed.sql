@@ -134,15 +134,17 @@ insert into point_transactions (painter_id, valor, tipo, order_id, resgate_id, m
   -- Pintor Sintetico
   ('85b0f493-d414-43fd-ad7c-e6c9452695e7',   5, 'bonus',   '00000000-0000-0000-0000-00000000aa06', null, null, null);
 
-commit;
-
 -- ============================================================
 -- CLEAN SLATE (descomente e rode como service_role ANTES de entrar dado
--- real). Zera TODOS os dados de teste por tabela inteira — nao por uuid do
--- seed — porque os pintores de teste acumularam dados criados pelo app
--- (uuids aleatorios) alem do seed. Mantem `settings` (config global) e
--- `admins`. A ordem respeita as FKs; a trigger de imutabilidade do ledger
--- e desabilitada so durante o delete. Validado em sandbox PG16.
+-- real). Zera os dados de TESTE por tabela inteira — não por uuid do seed —
+-- porque os pintores de teste acumulam dados criados pelo próprio app (uuids
+-- aleatórios) além do que está aqui. Mantém `settings` (config global),
+-- `admins`, `products` (catálogo real, vem da sync do Hiper) e os 2 itens de
+-- brinde de boas-vindas (`is_brinde = true`, IDs fixos …c1/…c2) — não é pra
+-- perder o catálogo nem reseedar os brindes na mão depois. A ordem respeita
+-- as FKs; a trigger de imutabilidade do ledger é desabilitada só durante o
+-- delete. Validado em sandbox PG16 (2026-07-01), migrations até
+-- 20260701150000 inclusive.
 -- ------------------------------------------------------------
 -- begin;
 --   alter table point_transactions disable trigger trg_ledger_imutavel;
@@ -154,15 +156,15 @@ commit;
 --   delete from painter_clients;
 --   delete from painter_settings;
 --   delete from loja_items where is_brinde = false;  -- preserva os 2 brindes (…c1 bone / …c2 pincel)
+--   update loja_items set stock = 10 where id = '00000000-0000-0000-0000-0000000000c1';  -- reseta estoque do bone
 --   delete from clients;
 --   delete from painters;
 -- commit;
 --
--- Depois, no painel do Supabase (Auth -> Users), apague os 4 logins de teste
--- (o painel limpa sessions/identities junto; NAO use delete from auth.users cru):
---   teste@pintor.com          Pintor Teste          94f21de4-f8dd-4c91-9014-92f5946f483e
---   33988881111@pintor.local  Pintor Sintetico      85b0f493-d414-43fd-ad7c-e6c9452695e7
---   33977772222@pintor.local  Pintor ComEmail       cae0462c-e0af-4ca8-a962-2c76b52a1883
---   33944445555@pintor.local  Pintor Teste - ADMIN  b5289b82-4b50-431e-8d89-a9d26cb6238b
--- ============================================================
+-- Depois, no painel do Supabase (Auth -> Users), apague TODOS os logins de
+-- pintor (o painel limpa sessions/identities junto; NAO use delete from
+-- auth.users cru). Não confie numa lista fixa de UUIDs aqui — os pintores de
+-- teste podem ter se multiplicado além do seed original via cadastro pelo
+-- admin ao longo dos testes; confira ao vivo no painel. NÃO apague o login
+-- do admin (e-mail real, não é `@pintor.local`).
 -- ============================================================
