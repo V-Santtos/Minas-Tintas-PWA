@@ -4,6 +4,23 @@
 
 ---
 
+## ⚠️ INSTRUÇÕES DE BANCO — rodar no Supabase (Claude não aplica direto)
+
+Claude versiona a migration no repo; **o dev roda no banco hospedado** (`supabase db push` ou o SQL
+pelo dashboard). Pendente desta sessão:
+
+1. **`20260701150000_resgate_cancelado_por.sql`** — adiciona `resgates.cancelado_por` (enum
+   `resgate_origin`), atualiza os RPCs `cancelar_resgate`/`cancelar_resgate_admin` (gravam quem
+   cancelou) e a view `resgates_admin` (expõe a coluna). **Bloqueia** a notificação "Resgate
+   cancelado pela loja": sem ela, a query degrada pra vazio (não quebra o app), mas a notificação
+   não aparece. **Aditiva**, não altera dado existente. Rodar **antes** de depender do recurso.
+
+> Regra geral: migrations aditivas (coluna com default, `create or replace`, RPC nova) são seguras
+> num banco populado; rename/drop são breaking → expand/contract (subir código compatível antes do
+> `db push`). Conferir também se as migrations anteriores (brinde, notif_visto) já foram aplicadas.
+
+---
+
 ## Estado consolidado
 
 Repositório: `https://github.com/V-Santtos/Minas-Tintas-PWA`
@@ -63,6 +80,82 @@ Adiados conscientes; **não** bloqueiam o resto do projeto.
   de notificações + tela no admin pra escrever. (O único caso que quebra o "derivar do fato".)
 
 ---
+
+## Interações de toque (mobile / pintor) — em andamento
+
+Objetivo: todo elemento tocável reconhecer o toque na hora (feedback `:active`),
+pra matar a sensação de "não clicou" + o multi-clique durante o round-trip da ação.
+Descoberto no botão **Cancelar** do resgate pendente (loja) — não tinha feedback nenhum.
+
+- **Categoria A — ✅** classes que só tinham estado *selecionado*, sem press: `.back-btn`
+  (opacity), `.qty-btn`/`.period-btn`/`.nav-item` (scale). Fix único no `globals.css`.
+- **Categoria B — ✅** 21 botões estilizados por `style` inline (não herdavam `:active`
+  de classe): criada a utilitária `.tap` (`scale(0.96)` + reset de tap-highlight) e
+  aplicada em Cancelar, filtros, steppers, segmentos Pessoa/Empresa, Sair, toggles,
+  fechar modal, etc. Card de cliente inerte (sem `onClick`) deixado de fora.
+- **Categoria C — decisão: adiada, não é fix necessário agora.** São tocáveis
+  **não-`<button>`** (`<div onClick>`: pickClient, openNewClientForm; `.pill` de filtro;
+  `.dd-option` de menu; opção de pagamento). O *resultado* do toque já dá feedback
+  visual (item destaca, menu fecha, form abre) → não sofrem do problema "botão morto".
+  Dois resíduos separados, se um dia quisermos: (1) `:active` sutil em `.pill`/`.dd-option`
+  por consistência (trivial); (2) **a11y** — os `<div onClick>` não são botões reais
+  (sem foco/teclado/`role`); bloco próprio, mais delicado que feedback visual.
+
+**PENDÊNCIA (ADM, fora de foco agora):** auditar o **admin** pelo mesmo padrão
+(botões inline sem `:active`). Admin é desktop/hover → menos crítico, mas a mesma
+inconsistência inline provavelmente existe. Lapidar quando voltarmos ao admin.
+
+## Overlays acima da bottom-nav (mobile) — em andamento
+
+Overlays (`fixed`) renderizados dentro do `.pintor-scroll` ficam **atrás da bottom-nav**
+(no mobile o `-webkit-overflow-scrolling: touch` do scroll prende o `fixed`; a nav é irmã
+do scroll com `z-index: 40`). Sintoma: o saldo do sheet de resgate saía cortado pela barra.
+
+- **Sheet de sucesso do resgate (`loja/[id]`) — ✅** via `createPortal` para **`.pintor-app`**
+  (a "moldura"), não pro `body`. `.pintor-app` é "a tela do app" nos dois contextos: no
+  desktop é o frame (com `transform` que contém os `fixed`); no mobile é a tela cheia. Assim
+  o mesmo código serve preview desktop **e** PWA real, sem `if desktop`. **Lição travada:**
+  portal de overlay vai pro `.pintor-app`, nunca pro `document.body` (senão vaza da moldura
+  no preview desktop). Bônus: **barrinha vira swipe-to-dismiss** (arrastar a folha pra baixo
+  fecha; `closeSheet` reusado pelo timer e pelo arrasto).
+- **PENDÊNCIA — `BrindeModal` tem o mesmo problema** (renderizado na home, dentro do scroll,
+  `fixed z-index 300`). Ficou **de fora de propósito** (foco era só o sheet do print). Quando
+  voltarmos: mesma correção (portal pro `.pintor-app`). Outros overlays escapam por posição
+  (toast de erro do orçamento em `bottom: 88`) ou não alcançam a barra (dropdowns de filtro).
+
+## Notificações in-app do pintor — clareza + tipos faltando — ✅ (código) / ⏳ (1 migration)
+
+Feed derivado (sem tabela; `layout.tsx` monta, `notificacoes/page.tsx` renderiza via `LOOK[kind]`,
+`pintor-store.tsx` tem o tipo `NotifItem.kind`). Trabalho desta sessão:
+
+**Clareza (existentes):**
+- "Resgate **disponível**" → "Resgate **pendente**" (alinha com "RESGATES PENDENTES" da Loja).
+- Novo `kind: "resgate_entregue"` (`PackageCheck` **verde**), distinto do pendente (`Store` âmbar).
+
+**Tipos que faltavam:**
+- **"Pedido estornado"** (`RotateCcw` vermelho) — aprovação revertida, pontos removidos. Deriva de
+  `point_transactions` tipo `estorno`. **Sem toggle** (evento crítico). **Sem DB.**
+- **"Resgate cancelado pela loja"** (`PackageX` vermelho) — só quando o **admin** cancela
+  (auto-cancelamento do pintor é silencioso). **Sem toggle. EXIGE migration** (abaixo).
+
+**Decisões travadas:**
+- **Orçamento cancelado NÃO notifica:** a loja nunca cancela orçamento (ela recusa/estorna, já
+  cobertos); `cancelar_orcamento` é só do próprio pintor → silêncio.
+- **Não multiplicar toggles** ([[feedback-notificacoes-sem-toggle]]): eventos críticos são só o
+  evento. Toggle "Pontos creditados" (`notif_pontos`) **voltou a ser ghost** (a "Pontos
+  devolvidos"/"creditados" foi criada e **removida** — devolução = cancelamento de resgate, já
+  coberto por "Resgate cancelado"; ajuste manual não existe). **Pendência:** decidir se remove o
+  toggle da tela de Configurações.
+- Brinde: **Modelo A** travado (só "reservado", some ao entregar; sem "Brinde entregue").
+
+**Preview:** `/notificacoes?preview` mostra UMA de cada (8 tipos) — ferramenta de design, inócua em
+prod (só liga com o param). `buildSampleFeed()` em `notificacoes/page.tsx`.
+
+**⏳ MIGRATION A RODAR (bloqueia o "Resgate cancelado"):**
+`20260701150000_resgate_cancelado_por.sql` — `resgates.cancelado_por` (enum `resgate_origin`), os 2
+RPCs `cancelar_resgate`/`cancelar_resgate_admin` gravam quem cancelou, view `resgates_admin` expõe.
+Aditiva. **Rodar antes** de o código valer (é coluna que o código lê; sem ela a query degrada pra
+vazio, não quebra).
 
 ## Pendências gerais registradas (ver CLAUDE.md p/ detalhe)
 
