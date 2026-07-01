@@ -1225,7 +1225,7 @@ export default function OrcamentoPage() {
         <div
           style={{
             position: "fixed",
-            bottom: "calc(88px + env(safe-area-inset-bottom))",
+            bottom: 88,
             left: 16,
             right: 16,
             background: "#FCEAEA",

@@ -16,9 +16,7 @@ export default function ViewportDebug() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    // [TEMPORÁRIO] sempre ligado p/ capturar a abertura fria no iPhone —
-    // o standalone não tem barra de URL, então ?debug=1 nunca chega aqui.
-    // if (new URLSearchParams(window.location.search).get("debug") !== "1") return;
+    if (new URLSearchParams(window.location.search).get("debug") !== "1") return;
     setOn(true);
 
     const read = () => {
@@ -49,14 +47,10 @@ export default function ViewportDebug() {
       setTxt(
         [
           `modo: ${standalone ? "PWA-standalone" : "navegador"}`,
-          `innerH:${window.innerHeight}  screenH:${screen.height}  scrollY:${Math.round(window.scrollY)}`,
+          `innerH:${window.innerHeight}  scrollY:${Math.round(window.scrollY)}`,
           `visualVP: h=${r(vv?.height)} top=${r(vv?.offsetTop)}`,
           `docClientH:${document.documentElement.clientHeight}`,
-          `safe-bottom:${sab}  --app-vh:${
-            getComputedStyle(document.documentElement)
-              .getPropertyValue("--app-vh")
-              .trim() || "—"
-          }`,
+          `safe-bottom:${sab}`,
           `app: top=${r(app?.top)} bot=${r(app?.bottom)} h=${r(app?.height)}`,
           `NAV: top=${r(nav?.top)} bot=${r(nav?.bottom)}`,
           `>> BURACO nav->fundo: ${gap}px <<`,

@@ -180,30 +180,12 @@
   margin: 0 auto;
   background: var(--paper);
   position: relative;
-  /* NÃO adicionar transform/filter/perspective/will-change/contain AQUI (na
-     regra BASE). Qualquer um torna o .pintor-app o containing block dos
-     position:fixed internos (bottom-nav, modais, sheets), que passam a se
-     ancorar NESTA caixa min-height:100dvh — e no iOS/WebKit dvh/viewport
-     nascem DEFASADOS (launch frio: innerHeight 793 numa tela de 852; idem na
-     transição SPA login->home): a nav sobe e deixa a faixa creme embaixo,
-     assentando só no 1º gesto real. Já mordeu 2x.
-     A EXCEÇÃO DELIBERADA é a regra html.ios-standalone logo abaixo: lá o
-     transform volta DE PROPÓSITO, mas pareado com altura em PX MEDIDA do
-     hardware (--app-vh = screen.height, via ViewportKick), que nunca nasce
-     defasada — a nav cola no fundo físico desde o 1º paint mesmo com o
-     viewport mentindo. transform + dvh = bug; transform + px medido = fix.
-     O preview desktop tem seu próprio translateZ no @media (min-width:900px),
-     onde a moldura é de altura FIXA (min(844px,...)) — estável igual. */
-}
-
-/* iOS standalone (classe posta pelo ViewportKick): o launch nasce com o
-   viewport curto (sem a altura da status bar) e fixed ancorados nele ficam
-   "empurrados" até um gesto real reconciliar — scroll programático NÃO cura
-   (testado no aparelho). Solução: ancorar os fixed nesta caixa com a altura
-   REAL da tela (--app-vh, px medido), imune ao viewport natimorto. */
-html.ios-standalone .pintor-app {
+  /* Containing block dos position:fixed internos (bottom-nav, modais, sheets).
+     Sem isto, no iOS os fixed se ancoram no layout-viewport instável e sofrem
+     solavanco (a nav sobe, faixa branca embaixo) que só "assenta" ao rolar.
+     Com o transform eles se ancoram nesta moldura estável — é por isso que o
+     preview desktop, que já tinha este transform, nunca teve o bug. */
   transform: translateZ(0);
-  min-height: var(--app-vh, 100dvh);
 }
 .pintor-scroll {
   flex: 1;
@@ -212,8 +194,7 @@ html.ios-standalone .pintor-app {
      camada de scroll própria; ela desloca os fixed irmãos e quebra sob o
      transform do .pintor-app. iOS moderno tem momentum nativo sem ela. */
   padding-top: env(safe-area-inset-top);
-  /* nav (78px + lift) + safe-area do home indicator (env=0 fora do iPhone) */
-  padding-bottom: calc(92px + env(safe-area-inset-bottom));
+  padding-bottom: 92px; /* espaço para a bottom-nav */
   scrollbar-width: none; /* Firefox — esconde a barra de rolagem (scroll segue por roda/touch) */
   -ms-overflow-style: none;
 }
@@ -806,8 +787,7 @@ html.ios-standalone .pintor-app {
   transform: translateX(-50%);
   width: 100%;
   max-width: 480px;
-  /* 78px visual + safe-area por baixo (env=0 no desktop/Android → sem mudança) */
-  height: calc(78px + env(safe-area-inset-bottom));
+  height: 78px;
   background: var(
     --paper
   ); /* sólido — evita o conteúdo "vazar" atrás da barra */
@@ -815,7 +795,7 @@ html.ios-standalone .pintor-app {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   align-items: center;
-  padding: 0 4px calc(8px + env(safe-area-inset-bottom));
+  padding: 0 4px 8px;
   z-index: 40;
 }
 .nav-item {
@@ -879,8 +859,7 @@ textarea.field-input {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  /* acima da bottom-nav + safe-area, pra não sobrepor a nav no iPhone */
-  bottom: calc(86px + env(safe-area-inset-bottom));
+  bottom: 86px;
   width: calc(100% - 24px);
   max-width: 456px;
   background: var(--ink);
