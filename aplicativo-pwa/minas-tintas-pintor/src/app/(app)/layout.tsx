@@ -13,6 +13,7 @@ import BottomNav from "@/components/BottomNav";
 import MockStatusBar from "@/components/MockStatusBar"; // [MOCKUP DESKTOP] remover ao publicar
 import RealtimeRefresh from "@/components/RealtimeRefresh";
 import ViewportDebug from "@/components/ViewportDebug"; // [DEBUG] liga com ?debug=1
+import OfflinePill from "@/components/OfflinePill";
 
 const MES = [
   "jan",
@@ -444,10 +445,13 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   return (
     <PintorProvider data={data}>
       <RealtimeRefresh />
-      <div className="pintor-app">
+      {/* --nav = altura fechada (não mínima): sem ela a .pintor-scroll cresce
+          com o conteúdo e a bottom-nav afunda abaixo da dobra (ver globals) */}
+      <div className="pintor-app pintor-app--nav">
         <MockStatusBar />
         <div className="pintor-scroll">{children}</div>
         <BottomNav />
+        <OfflinePill />
         <ViewportDebug />
       </div>
     </PintorProvider>

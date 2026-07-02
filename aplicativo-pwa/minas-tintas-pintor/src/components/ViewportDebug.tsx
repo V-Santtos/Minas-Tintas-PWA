@@ -44,14 +44,46 @@ export default function ViewportDebug() {
       const r = (n?: number) => (n == null ? "?" : Math.round(n));
       const gap = nav ? Math.round(window.innerHeight - nav.bottom) : NaN;
 
+      // Quem empurra a moldura: filhos NO FLUXO do .pintor-app (fixed/none
+      // ficam de fora) com suas alturas + altura x conteúdo do .pintor-scroll
+      const appEl = document.querySelector(".pintor-app");
+      const kids = appEl
+        ? Array.from(appEl.children)
+            .map((el) => {
+              const cs = getComputedStyle(el);
+              if (cs.position === "fixed" || cs.display === "none") return null;
+              const cls =
+                String((el as HTMLElement).className).split(" ")[0] ||
+                el.tagName.toLowerCase();
+              return `${cls.slice(0, 14)}:${Math.round(el.getBoundingClientRect().height)}`;
+            })
+            .filter(Boolean)
+            .join("  ")
+        : "?";
+      const scEl = document.querySelector(".pintor-scroll");
+      const scInfo = scEl
+        ? `h=${Math.round(scEl.getBoundingClientRect().height)} conteudo=${scEl.scrollHeight}`
+        : "?";
+
+      const htmlEl = document.documentElement;
+      const appVh =
+        htmlEl.style.getPropertyValue("--app-vh").trim() || "(não setada)";
+      const iosClass = htmlEl.classList.contains("ios-standalone")
+        ? "sim"
+        : "NÃO";
+
       setTxt(
         [
           `modo: ${standalone ? "PWA-standalone" : "navegador"}`,
+          `screen: ${screen.width}x${screen.height}  innerW:${window.innerWidth}`,
+          `--app-vh: ${appVh}  .ios-standalone: ${iosClass}`,
           `innerH:${window.innerHeight}  scrollY:${Math.round(window.scrollY)}`,
           `visualVP: h=${r(vv?.height)} top=${r(vv?.offsetTop)}`,
           `docClientH:${document.documentElement.clientHeight}`,
           `safe-bottom:${sab}`,
           `app: top=${r(app?.top)} bot=${r(app?.bottom)} h=${r(app?.height)}`,
+          `filhos: ${kids}`,
+          `scroll: ${scInfo}`,
           `NAV: top=${r(nav?.top)} bot=${r(nav?.bottom)}`,
           `>> BURACO nav->fundo: ${gap}px <<`,
         ].join("\n"),

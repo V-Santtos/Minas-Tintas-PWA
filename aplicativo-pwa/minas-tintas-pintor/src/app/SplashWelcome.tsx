@@ -18,10 +18,9 @@ export default function SplashWelcome() {
   }, []);
 
   return (
-    <div
-      className="pintor-app"
-      style={{ background: "#373131", minHeight: "100dvh", height: "100dvh" }}
-    >
+    // Altura vem da classe .pintor-app (100dvh base + --app-vh no iOS
+    // standalone) — mesmo fix do login; não reintroduzir dvh inline.
+    <div className="pintor-app" style={{ background: "#373131" }}>
       <MockStatusBar overlay />
       {/* [MOCKUP DESKTOP] some no mobile via CSS */}
       <div

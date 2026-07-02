@@ -196,6 +196,28 @@
 html.ios-standalone .pintor-app {
   min-height: var(--app-vh, 100dvh);
 }
+/* Moldura das telas internas (variante com bottom-nav, posta pelo (app)/layout):
+   altura FECHADA, não só mínima. min-height não é altura "definida" pro flex →
+   o flex-basis 0% da .pintor-scroll caía no fallback de conteúdo, o quadro
+   crescia até o tamanho do conteúdo (medido: 970 numa tela de 852) e a nav,
+   ancorada no fundo da moldura, afundava 118px abaixo da dobra. Com height
+   fechado a .pintor-scroll engata o scroll interno (mesmo mecanismo do preview
+   desktop, que sempre teve height definido). Login/splash ficam de fora de
+   propósito: lá crescer com o conteúdo é desejável. */
+.pintor-app--nav {
+  height: 100dvh;
+}
+html.ios-standalone .pintor-app--nav {
+  height: var(--app-vh, 100dvh);
+}
+/* No boot do standalone o env(safe-area-inset-top) nasce 0 (viewport ainda
+   fora da status bar) e reconcilia pra ~59px logo depois → o conteúdo dava um
+   pulo pra baixo ao entrar no home. --safe-top-boot (script síncrono no layout
+   raiz) traz o valor medido desde o 1º frame; o max() garante que, quando o
+   env reconciliar, os dois empatam e nada se move. */
+html.ios-standalone .pintor-scroll {
+  padding-top: max(env(safe-area-inset-top), var(--safe-top-boot, 0px));
+}
 .pintor-scroll {
   flex: 1;
   overflow-y: auto;
@@ -792,8 +814,14 @@ html.ios-standalone .pintor-app {
 .bottom-nav {
   position: fixed;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  /* Centralização SEM transform: left 50% + translateX(-50%) ancorava a barra
+     em meio-pixel (ex.: 196,5px numa tela de 393) e cada re-rasterização
+     (pop de um item, troca de rota) deslocava os ícones ~0,5px de lado —
+     a "tremidinha" lateral. left/right 0 + margin auto centraliza igual,
+     ancorado em pixel inteiro. */
+  left: 0;
+  right: 0;
+  margin: 0 auto;
   width: 100%;
   max-width: 480px;
   height: 78px;
@@ -841,6 +869,14 @@ html.ios-standalone .pintor-app {
 }
 .nav-item.active .nav-dot {
   background: var(--brand);
+}
+
+/* Botão "Instalar o aplicativo" do login: instalação é coisa do aparelho —
+   no preview desktop (moldura de validação) não faz sentido e some */
+@media (min-width: 900px) {
+  .install-pwa {
+    display: none;
+  }
 }
 
 /* Inputs de formulário (orçamento / clientes) */
