@@ -37,6 +37,7 @@ export default function RootLayout({
     <html
       lang="pt-BR"
       className={`${inter.variable} ${playfair.variable} ${jakarta.variable}`}
+      suppressHydrationWarning
     >
       <body>{children}</body>
     </html>
