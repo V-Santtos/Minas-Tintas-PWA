@@ -3,10 +3,22 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { primeSom, tocarNotificacao } from "@/lib/som";
 
 export default function RealtimeRefresh() {
   const router = useRouter();
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Destrava o áudio no 1º gesto da sessão (autoplay policy). `once` remove sozinho.
+  useEffect(() => {
+    const prime = () => primeSom();
+    window.addEventListener("pointerdown", prime, { once: true });
+    window.addEventListener("keydown", prime, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", prime);
+      window.removeEventListener("keydown", prime);
+    };
+  }, []);
 
   useEffect(() => {
     const supabase = createClient();
@@ -16,6 +28,19 @@ export default function RealtimeRefresh() {
     const refresh = () => {
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(() => router.refresh(), 800);
+    };
+
+    // Som só pra novidade vinda da loja: decisão de pedido, crédito/estorno no
+    // ledger, resgate entregue/cancelado. INSERTs do próprio pintor (enviar
+    // orçamento, resgatar) e loja_items não tocam.
+    const somPorEvento: Record<string, string[]> = {
+      orders: ["UPDATE"],
+      point_transactions: ["INSERT"],
+      resgates: ["UPDATE"],
+    };
+    const onEvento = (payload: { table: string; eventType: string }) => {
+      if (somPorEvento[payload.table]?.includes(payload.eventType)) tocarNotificacao();
+      refresh();
     };
 
     // Espera a sessao inicializar e autentica o canal com o JWT ANTES de
@@ -31,22 +56,22 @@ export default function RealtimeRefresh() {
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table: "orders" },
-          refresh,
+          onEvento,
         )
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table: "point_transactions" },
-          refresh,
+          onEvento,
         )
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table: "resgates" },
-          refresh,
+          onEvento,
         )
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table: "loja_items" },
-          refresh,
+          onEvento,
         )
         .subscribe();
     });
