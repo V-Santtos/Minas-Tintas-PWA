@@ -3,10 +3,12 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
+import { salvarEspelho } from "./espelho";
 import {
   bonusPts,
   type Order,
@@ -152,6 +154,13 @@ export function PintorProvider({
   const [lastSubmitted, setLastSubmitted] = useState<SubmittedOrder | null>(
     null,
   );
+
+  // Espelho offline (write-through): cada payload novo vindo do servidor é
+  // copiado pro IndexedDB do aparelho. Best-effort, invisível — a leitura
+  // desse espelho só entra com o bloco offline (Fase 2).
+  useEffect(() => {
+    void salvarEspelho(data);
+  }, [data]);
 
   const addCart = (id: string, delta: number) => {
     setCart((prev) => {
