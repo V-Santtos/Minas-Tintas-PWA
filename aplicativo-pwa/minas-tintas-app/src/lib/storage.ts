@@ -30,9 +30,14 @@ export async function subirImagemWebp(
 
   const supabase = createAdminClient();
   const path = `${prefix}/${crypto.randomUUID()}.webp`;
+  // Blob binário explícito, nunca Buffer cru: no runtime da Vercel o Buffer
+  // foi tratado como texto UTF-8 no PUT e cada byte inválido virou U+FFFD
+  // (imagens corrompidas no bucket — RIFF declarando menos bytes que o
+  // arquivo). Blob trava o corpo como binário em qualquer runtime.
+  const body = new Blob([new Uint8Array(webp)], { type: "image/webp" });
   const { error } = await supabase.storage
     .from(BUCKET)
-    .upload(path, webp, { contentType: "image/webp", upsert: false });
+    .upload(path, body, { contentType: "image/webp", upsert: false });
   if (error) throw new Error(`upload: ${error.message}`);
 
   return supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
