@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -10,12 +10,20 @@ import {
   Gift,
   HelpCircle,
   Info,
+  Loader2,
   MessageCircle,
   ShieldCheck,
+  Smartphone,
   Tag,
 } from "lucide-react";
 import { usePintor } from "@/lib/pintor-store";
 import { salvarNotifPrefs } from "@/lib/configuracoes-actions";
+import {
+  ativarPush,
+  desativarPush,
+  estadoPush,
+  type EstadoPush,
+} from "@/lib/push-client";
 
 type ToggleKey = "pedidos" | "pontos" | "resgates" | "promocoes";
 
@@ -77,6 +85,29 @@ export default function ConfiguracoesPage() {
     data.notifPrefs,
   );
 
+  // Push no celular (T6c). Estado derivado do navegador (permissão +
+  // subscription), sem coluna nova; ativar exige gesto (regra do iOS).
+  const [pushEstado, setPushEstado] = useState<EstadoPush | "carregando">(
+    "carregando",
+  );
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushErro, setPushErro] = useState<string | null>(null);
+
+  useEffect(() => {
+    estadoPush().then(setPushEstado);
+  }, []);
+
+  async function togglePush() {
+    if (pushBusy) return;
+    setPushBusy(true);
+    setPushErro(null);
+    const res =
+      pushEstado === "ativo" ? await desativarPush() : await ativarPush();
+    if (!res.ok) setPushErro(res.error);
+    setPushEstado(await estadoPush());
+    setPushBusy(false);
+  }
+
   async function toggle(key: ToggleKey) {
     const next = { ...toggles, [key]: !toggles[key] };
     setToggles(next);
@@ -112,6 +143,117 @@ export default function ConfiguracoesPage() {
       </div>
 
       <div style={{ padding: "0 16px 100px", display: "grid", gap: 14 }}>
+        <section className="card" style={{ padding: 14 }}>
+          <div className="eyebrow-label" style={{ marginBottom: 10 }}>
+            NO CELULAR
+          </div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "30px 1fr",
+              gap: 10,
+              alignItems: "start",
+              marginBottom: 10,
+            }}
+          >
+            <span
+              style={{
+                width: 30,
+                height: 30,
+                borderRadius: 10,
+                background:
+                  pushEstado === "ativo" ? "var(--ink)" : "var(--paper)",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Smartphone
+                size={15}
+                strokeWidth={1.8}
+                color={pushEstado === "ativo" ? "var(--paper)" : "var(--muted)"}
+              />
+            </span>
+            <span style={{ minWidth: 0 }}>
+              <span
+                style={{
+                  display: "block",
+                  fontSize: 13.5,
+                  fontWeight: 700,
+                  color: "var(--ink)",
+                }}
+              >
+                Avisos no celular
+              </span>
+              <span
+                style={{
+                  display: "block",
+                  fontSize: 11.5,
+                  color: "var(--muted)",
+                  marginTop: 1,
+                  lineHeight: 1.35,
+                }}
+              >
+                {pushEstado === "ativo"
+                  ? "Ativados — você recebe mesmo com o app fechado."
+                  : pushEstado === "denied"
+                    ? "Permissão negada. Reative nos ajustes de notificação do aparelho."
+                    : pushEstado === "unsupported"
+                      ? "Indisponível neste navegador. No iPhone, instale o app na tela inicial."
+                      : "Receba avisos de pedidos e resgates mesmo com o app fechado."}
+              </span>
+            </span>
+          </div>
+          {(pushEstado === "inativo" || pushEstado === "ativo") && (
+            <button
+              type="button"
+              className="tap"
+              onClick={togglePush}
+              disabled={pushBusy}
+              style={{
+                width: "100%",
+                border: "1px solid var(--line)",
+                borderRadius: 12,
+                padding: "10px 12px",
+                fontSize: 13,
+                fontWeight: 700,
+                background:
+                  pushEstado === "ativo" ? "var(--card)" : "var(--ink)",
+                color: pushEstado === "ativo" ? "var(--ink)" : "var(--paper)",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                opacity: pushBusy ? 0.7 : 1,
+              }}
+            >
+              {pushBusy ? (
+                <Loader2
+                  size={15}
+                  strokeWidth={2}
+                  style={{ animation: "spin 0.8s linear infinite" }}
+                />
+              ) : pushEstado === "ativo" ? (
+                "Desativar avisos no celular"
+              ) : (
+                "Ativar avisos no celular"
+              )}
+            </button>
+          )}
+          {pushErro && (
+            <div
+              style={{
+                marginTop: 8,
+                fontSize: 11.5,
+                color: "var(--danger, #b3261e)",
+                lineHeight: 1.35,
+              }}
+            >
+              {pushErro}
+            </div>
+          )}
+        </section>
+
         <section className="card" style={{ padding: 14 }}>
           <div className="eyebrow-label" style={{ marginBottom: 10 }}>
             NOTIFICAÇÕES

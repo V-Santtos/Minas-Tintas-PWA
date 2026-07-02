@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import { apagarImagemPorUrl } from "@/lib/storage";
+import { enviarPushPintor } from "@/lib/push";
 
 export type LojaItemInput = {
   id?: string;
@@ -75,6 +76,18 @@ export async function entregarResgate(
   });
   if (error)
     return { ok: false, error: error.message || "Não foi possível entregar." };
+  const r = await resgateParaPush(resgateId);
+  if (r)
+    await enviarPushPintor(
+      r.painter_id,
+      {
+        title: "Resgate entregue",
+        body: "Retirada confirmada na loja. Bom proveito!",
+        url: "/notificacoes",
+        tag: `resgate-${resgateId}`,
+      },
+      "notif_resgates",
+    );
   revalidatePath("/lojinha");
   return { ok: true };
 }
@@ -88,6 +101,26 @@ export async function recusarResgate(
   });
   if (error)
     return { ok: false, error: error.message || "Não foi possível recusar." };
+  const r = await resgateParaPush(resgateId);
+  if (r)
+    // Crítico: sem toggle (cancelamento pela loja não é silenciável).
+    await enviarPushPintor(r.painter_id, {
+      title: "Resgate cancelado pela loja",
+      body: "Os pontos voltaram para o seu saldo.",
+      url: "/notificacoes",
+      tag: `resgate-${resgateId}`,
+    });
   revalidatePath("/lojinha");
   return { ok: true };
+}
+
+// Painter do resgate pro push — best-effort; sem a linha, não notifica.
+async function resgateParaPush(resgateId: string) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("resgates")
+    .select("painter_id")
+    .eq("id", resgateId)
+    .maybeSingle();
+  return data;
 }

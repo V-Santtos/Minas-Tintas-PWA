@@ -34,3 +34,48 @@ const serwist = new Serwist({
 });
 
 serwist.addEventListeners();
+
+// --- Web Push (T6c) ---------------------------------------------------------
+// Eventos que o Serwist não usa; coexistem com o precache/fallback acima.
+// O som/vibração da notificação é o padrão do sistema operacional.
+
+self.addEventListener("push", (event) => {
+  if (!event.data) return;
+  const data = event.data.json() as {
+    title?: string;
+    body?: string;
+    tag?: string;
+    url?: string;
+  };
+  event.waitUntil(
+    self.registration.showNotification(data.title ?? "Minas Tintas", {
+      body: data.body ?? "",
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+      // mesmo tag substitui a notificação anterior em vez de empilhar
+      tag: data.tag ?? "minas-tintas",
+      data: { url: data.url ?? "/notificacoes" },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url =
+    (event.notification.data as { url?: string } | undefined)?.url ??
+    "/notificacoes";
+  event.waitUntil(
+    self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((list) => {
+        for (const client of list) {
+          // app já aberto → foca e navega; senão abre janela nova
+          if (client.url.includes(self.location.origin) && "focus" in client) {
+            client.navigate(url).catch(() => {});
+            return client.focus();
+          }
+        }
+        return self.clients.openWindow(url);
+      }),
+  );
+});
