@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Phone, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import MockStatusBar from "@/components/MockStatusBar"; // [MOCKUP DESKTOP] remover ao publicar
+import InstalarPwa from "@/components/InstalarPwa";
 import { createClient } from "@/utils/supabase/client";
 
 function fmtPhone(raw: string): string {
@@ -75,10 +76,10 @@ export default function LoginForm({ staleSession }: { staleSession: boolean }) {
   }
 
   return (
-    <div
-      className="pintor-app"
-      style={{ background: "#373131", minHeight: "100dvh" }}
-    >
+    // Altura vem da classe .pintor-app (100dvh base + --app-vh no iOS
+    // standalone). O minHeight inline ganhava da regra e prendia o login
+    // no dvh defasado do launch frio — não reintroduzir.
+    <div className="pintor-app" style={{ background: "#373131" }}>
       <MockStatusBar overlay />
       {/* [MOCKUP DESKTOP] some no mobile via CSS */}
       <div
@@ -300,6 +301,10 @@ export default function LoginForm({ staleSession }: { staleSession: boolean }) {
               "Entrar"
             )}
           </button>
+          {/* Instalar o PWA: só aparece no navegador do celular (some no app
+              instalado e no preview desktop) — decisão: botão fixo no login,
+              não pop-up, pra não competir com o modal de brinde do 1º login */}
+          <InstalarPwa />
         </form>
       </div>
     </div>
