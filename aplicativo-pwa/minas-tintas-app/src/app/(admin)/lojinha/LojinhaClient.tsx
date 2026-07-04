@@ -78,12 +78,14 @@ export default function LojinhaClient({
   allRewards: allRewardsProp,
   resgates: resgatesProp,
   globalMult: globalMultProp,
+  bonusPercent,
   catalog,
 }: {
   rewards: Reward[];
   allRewards: Reward[];
   resgates: Resgate[];
   globalMult: number;
+  bonusPercent: number;
   catalog: CatalogItem[];
 }) {
   const router = useRouter();
@@ -354,16 +356,22 @@ export default function LojinhaClient({
     setAddUnico(false);
   }
 
+  // Volume em reais que o pintor precisa vender (em pedidos aprovados) pra juntar
+  // os pontos do item: pontos ÷ bonus_percent. Valor exato, escala suave — não
+  // arredonda pra "pedido inteiro". Amarrado à taxa real (se o % mudar, ajusta).
+  const volumeReais = (pts: number) =>
+    bonusPercent > 0 ? Math.round(pts / bonusPercent) : 0;
+
   // Pts calculations
   const editCusto = editReward?.custo || 0;
   const editPts = calcPts(editCusto, editMod, globalMult);
   const editOrigPts = editMod < 0 ? calcPts(editCusto, 0, globalMult) : null;
-  const editPedidosEquiv = Math.ceil(editPts / 300);
+  const editVolumeReq = volumeReais(editPts);
   const addCustoNum = parseFloat(addCusto) || 0;
   const addPts = addCustoNum ? calcPts(addCustoNum, addMod, globalMult) : 0;
   const addOrigPts =
     addCustoNum && addMod < 0 ? calcPts(addCustoNum, 0, globalMult) : null;
-  const addPedidosEquiv = addPts > 0 ? Math.ceil(addPts / 300) : 0;
+  const addVolumeReq = addPts > 0 ? volumeReais(addPts) : 0;
 
   const resgateList = resgates
     .filter((r) =>
@@ -1665,9 +1673,9 @@ export default function LojinhaClient({
                 >
                   <Clock size={12} /> Equivale a{" "}
                   <strong style={{ marginLeft: 2 }}>
-                    {editPedidosEquiv} pedido{editPedidosEquiv !== 1 ? "s" : ""}
+                    R$ {editVolumeReq.toLocaleString("pt-BR")}
                   </strong>
-                  &nbsp;de R$ 3.000 aprovados
+                  &nbsp;em pedidos aprovados
                 </div>
               </div>
 
@@ -2054,9 +2062,9 @@ export default function LojinhaClient({
                   >
                     <Clock size={12} /> Equivale a{" "}
                     <strong style={{ marginLeft: 2 }}>
-                      {addPedidosEquiv} pedido{addPedidosEquiv !== 1 ? "s" : ""}
+                      R$ {addVolumeReq.toLocaleString("pt-BR")}
                     </strong>
-                    &nbsp;de R$ 3.000 aprovados
+                    &nbsp;em pedidos aprovados
                   </div>
                 )}
               </div>

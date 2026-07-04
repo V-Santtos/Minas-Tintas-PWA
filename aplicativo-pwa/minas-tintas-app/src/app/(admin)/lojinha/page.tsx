@@ -35,7 +35,10 @@ export default async function LojinhaPage() {
         "id, painter_nome, loja_item_id, pontos_congelados, status, created_at, quantidade",
       )
       .order("created_at", { ascending: false }),
-    supabase.from("settings").select("multiplicador_padrao").single(),
+    supabase
+      .from("settings")
+      .select("multiplicador_padrao, bonus_percent")
+      .single(),
     supabase
       .from("products")
       .select("id, code, name, brand, price, stock")
@@ -44,6 +47,7 @@ export default async function LojinhaPage() {
   ]);
 
   const padrao = Number(cfg?.multiplicador_padrao ?? 3);
+  const bonusPct = Number(cfg?.bonus_percent ?? 0.01);
 
   // itemMod = mult_delta (já é o delta; 0 quando herda). O calcPts do client,
   // com globalMult = padrao, faz valor_base × (padrao + delta).
@@ -89,6 +93,7 @@ export default async function LojinhaPage() {
       allRewards={allRewards}
       resgates={resgates}
       globalMult={padrao}
+      bonusPercent={bonusPct}
       catalog={catalog}
     />
   );
