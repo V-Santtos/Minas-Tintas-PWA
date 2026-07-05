@@ -343,8 +343,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     });
   }
 
-  // Promoções na lojinha (mult_delta < 0 → promo). Sem data de evento própria;
-  // usamos "agora" só para ordenação (aparecem no topo enquanto ativas).
+  // Promoções (mult_delta < 0). Data de evento = promo_desde (trigger); estável, então marca como lida normalmente.
   if (prefPromocoes) {
     for (const r of lojaRows ?? []) {
       if (!r.promo) continue;
