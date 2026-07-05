@@ -5,6 +5,10 @@
 -- Aplicar manualmente (SQL editor ou `psql`) com service_role,
 -- que é isento de RLS — não precisa de policy de escrita pra semear.
 --
+-- Este arquivo é um CATÁLOGO de blocos, não um script pra rodar inteiro.
+-- Cada bloco é auto-contido em begin/commit — selecione o que precisa e rode.
+-- Rodar o arquivo TODO semearia e depois LIMPARIA tudo (o CLEAN SLATE no fim).
+--
 -- Premissas (já existem no banco, NÃO são criadas aqui):
 --   • 1 admin (login real)
 --   • 3 painters com login:
@@ -134,32 +138,41 @@ insert into point_transactions (painter_id, valor, tipo, order_id, resgate_id, m
   -- Pintor Sintetico
   ('85b0f493-d414-43fd-ad7c-e6c9452695e7',   5, 'bonus',   '00000000-0000-0000-0000-00000000aa06', null, null, null);
 
+commit;
+
 -- ============================================================
--- CLEAN SLATE (descomente e rode como service_role ANTES de entrar dado
--- real). Zera os dados de TESTE por tabela inteira — não por uuid do seed —
--- porque os pintores de teste acumulam dados criados pelo próprio app (uuids
--- aleatórios) além do que está aqui. Mantém `settings` (config global),
--- `admins`, `products` (catálogo real, vem da sync do Hiper) e os 2 itens de
--- brinde de boas-vindas (`is_brinde = true`, IDs fixos …c1/…c2) — não é pra
--- perder o catálogo nem reseedar os brindes na mão depois. A ordem respeita
--- as FKs; a trigger de imutabilidade do ledger é desabilitada só durante o
--- delete. Validado em sandbox PG16 (2026-07-01), migrations até
--- 20260701150000 inclusive.
+-- CLEAN SLATE (rode como service_role ANTES de entrar dado real, ex.: na
+-- entrega ao cliente). Zera os dados de TESTE por tabela inteira — não por
+-- uuid do seed — porque os pintores de teste acumulam dados criados pelo
+-- próprio app (uuids aleatórios) além do que está aqui. Mantém `settings`
+-- (config global), `admins`, `products` (catálogo real, vem da sync do Hiper)
+-- e os 2 itens de brinde de boas-vindas (`is_brinde = true`, IDs fixos
+-- …c1 boné / …c2 pincel) — não é pra perder o catálogo nem reseedar os
+-- brindes na mão depois. Os itens de lojinha do seed (inclusive o boné
+-- LEGADO …b1, que é `is_brinde = false`) SAEM pelo filtro — é lixo de teste.
+-- A ordem respeita as FKs; a trigger de imutabilidade do ledger é desabilitada
+-- só durante o delete. O bloco é auto-contido (begin/commit ATIVOS): selecione
+-- de `begin;` a `commit;` e rode inteiro no SQL editor — tudo-ou-nada.
+-- Validado em sandbox PG16 (2026-07-05), TODAS as migrations até
+-- 20260705161322 (promo_desde) inclusive, com push_subscriptions presente.
 -- ------------------------------------------------------------
--- begin;
---   alter table point_transactions disable trigger trg_ledger_imutavel;
---   delete from point_transactions;
---   alter table point_transactions enable trigger trg_ledger_imutavel;
---   delete from resgates;
---   delete from order_items;
---   delete from orders;
---   delete from painter_clients;
---   delete from painter_settings;
---   delete from loja_items where is_brinde = false;  -- preserva os 2 brindes (…c1 bone / …c2 pincel)
---   update loja_items set stock = 10 where id = '00000000-0000-0000-0000-0000000000c1';  -- reseta estoque do bone
---   delete from clients;
---   delete from painters;
--- commit;
+-- ANTES de rodar: faça um snapshot/backup do projeto no painel do Supabase.
+-- É irreversível.
+begin;
+  delete from push_subscriptions;                                     -- Web Push (T6c): folha, sem dependentes
+  alter table point_transactions disable trigger trg_ledger_imutavel;
+  delete from point_transactions;
+  alter table point_transactions enable trigger trg_ledger_imutavel;
+  delete from resgates;
+  delete from order_items;
+  delete from orders;
+  delete from painter_clients;
+  delete from painter_settings;
+  delete from loja_items where is_brinde = false;  -- preserva SÓ os 2 brindes (…c1 boné / …c2 pincel)
+  update loja_items set stock = 10 where id = '00000000-0000-0000-0000-0000000000c1';  -- reseta estoque do boné (pincel …c2 é ilimitado, não precisa)
+  delete from clients;
+  delete from painters;
+commit;
 --
 -- Depois, no painel do Supabase (Auth -> Users), apague TODOS os logins de
 -- pintor (o painel limpa sessions/identities junto; NAO use delete from
