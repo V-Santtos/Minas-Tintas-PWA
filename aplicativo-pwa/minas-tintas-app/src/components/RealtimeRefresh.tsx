@@ -37,7 +37,8 @@ export default function RealtimeRefresh() {
       resgates: ["INSERT"],
     };
     const onEvento = (payload: { table: string; eventType: string }) => {
-      if (somPorEvento[payload.table]?.includes(payload.eventType)) tocarNotificacao();
+      if (somPorEvento[payload.table]?.includes(payload.eventType))
+        tocarNotificacao();
       refresh();
     };
 
@@ -59,6 +60,11 @@ export default function RealtimeRefresh() {
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table: "resgates" },
+          onEvento,
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "settings" },
           onEvento,
         )
         .subscribe();

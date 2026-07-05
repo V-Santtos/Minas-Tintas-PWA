@@ -1,0 +1,11 @@
+-- Mudanca em settings (bonus_percent, multiplicador_padrao) nao chegava aos
+-- clients sem reload: a tabela nunca entrou na publicacao do Realtime. O caso
+-- mais visivel e o pintor -- os precos da lojinha derivam de
+-- settings.multiplicador_padrao via view (cross join), entao mudar o global
+-- altera todos os precos SEM evento em loja_items. No admin, a Lojinha le
+-- bonus_percent no Server Component e so atualizava com reload. Aditivo.
+--
+-- Sem REPLICA IDENTITY FULL, mesmo racional de loja_items: a policy de
+-- leitura ("autenticado le settings") nao filtra por linha -- a decisao da
+-- RLS nunca depende da linha antiga, o default (so PK no WAL) basta.
+alter publication supabase_realtime add table settings;
