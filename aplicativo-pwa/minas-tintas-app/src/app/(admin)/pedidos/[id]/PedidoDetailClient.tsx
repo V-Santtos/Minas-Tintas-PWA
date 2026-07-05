@@ -90,10 +90,12 @@ export default function PedidoDetailClient({
   order: serverOrder,
   id,
   orderUuid,
+  bonusPercent,
 }: {
   order: Order | null;
   id: string;
   orderUuid?: string;
+  bonusPercent: number;
 }) {
   const [manualOrders, setManualOrders] = useState<Order[]>([]);
   const [estornoOpen, setEstornoOpen] = useState(false);
@@ -907,7 +909,12 @@ export default function PedidoDetailClient({
                 >
                   <span>R$ {brl(o.total)}</span>
                   <span>×</span>
-                  <span>10%</span>
+                  <span>
+                    {(bonusPercent * 100).toLocaleString("pt-BR", {
+                      maximumFractionDigits: 2,
+                    })}
+                    %
+                  </span>
                   <span>=</span>
                   <span style={{ fontWeight: 600, color: cfg.valueColor }}>
                     {bonusPts.toLocaleString("pt-BR")} pts

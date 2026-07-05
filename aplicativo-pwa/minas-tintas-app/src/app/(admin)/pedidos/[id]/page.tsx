@@ -28,7 +28,8 @@ export default async function PedidoDetailPage({
     supabase.from("settings").select("bonus_percent").single(),
   ]);
 
-  if (!r) return <PedidoDetailClient order={null} id={id} />;
+  if (!r)
+    return <PedidoDetailClient order={null} id={id} bonusPercent={0.01} />;
 
   const { data: itemRows } = await supabase
     .from("order_items")
@@ -67,5 +68,12 @@ export default async function PedidoDetailPage({
     bonusPts,
   };
 
-  return <PedidoDetailClient order={order} id={id} orderUuid={r.id} />;
+  return (
+    <PedidoDetailClient
+      order={order}
+      id={id}
+      orderUuid={r.id}
+      bonusPercent={percent}
+    />
+  );
 }
