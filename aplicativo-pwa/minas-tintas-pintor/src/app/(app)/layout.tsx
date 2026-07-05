@@ -82,7 +82,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     supabase
       .from("loja_items_admin")
       .select(
-        "id, name, valor_base, stock, categoria, imagem, imagem_pos_x, imagem_pos_y, descricao, custo_pts, promo, resgate_unico",
+        "id, name, valor_base, stock, categoria, imagem, imagem_pos_x, imagem_pos_y, descricao, custo_pts, promo, resgate_unico, promo_desde",
       )
       .eq("active", true)
       .eq("is_brinde", false)
@@ -346,17 +346,17 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   // Promoções na lojinha (mult_delta < 0 → promo). Sem data de evento própria;
   // usamos "agora" só para ordenação (aparecem no topo enquanto ativas).
   if (prefPromocoes) {
-    const agoraIso = new Date().toISOString();
     for (const r of lojaRows ?? []) {
       if (!r.promo) continue;
+      const at = r.promo_desde ?? new Date().toISOString(); // fallback defensivo
       feedRaw.push({
         id: `promo-${r.id}`,
         kind: "promo",
         title: "Promoção na lojinha",
         text: `${r.name} com menos pontos por tempo limitado.`,
         href: "/loja",
-        at: agoraIso,
-        ts: Date.now(),
+        at,
+        ts: new Date(at).getTime(),
       });
     }
   }
