@@ -227,7 +227,7 @@ export default function PedidosClient({
               .toLowerCase()
               .includes(manualDraft.productSearch.toLowerCase().trim()),
         )
-        .slice(0, 5)
+        .slice(0, 20)
     : [];
   const cartEntries = Object.entries(manualCart)
     .map(([id, qty]) => ({ product: products.find((p) => p.id === id), qty }))
@@ -1567,10 +1567,11 @@ export default function PedidosClient({
                         left: 0,
                         right: 0,
                         top: 46,
+                        maxHeight: "400px",
+                        overflowY: "auto",
                         background: "var(--card)",
                         border: "1px solid var(--line)",
                         borderRadius: 12,
-                        overflow: "hidden",
                         boxShadow: "var(--shadow-3)",
                       }}
                     >
