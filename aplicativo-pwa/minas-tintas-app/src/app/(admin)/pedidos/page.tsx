@@ -31,12 +31,7 @@ export default async function PedidosPage() {
       .eq("active", true)
       .order("nome"),
     supabase.from("clients").select("id, nome, type").order("nome"),
-    supabase
-      .from("products")
-      .select("id, code, name, brand, price, stock")
-      .eq("active", true)
-      .order("name")
-      .limit(2000),
+    supabase.rpc("get_all_products"),
   ]);
   const percent = Number(cfg?.bonus_percent ?? 0.01);
 
