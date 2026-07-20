@@ -35,7 +35,8 @@ export default async function PedidosPage() {
       .from("products")
       .select("id, code, name, brand, price, stock")
       .eq("active", true)
-      .order("name"),
+      .order("name")
+      .limit(2000),
   ]);
   const percent = Number(cfg?.bonus_percent ?? 0.01);
 
