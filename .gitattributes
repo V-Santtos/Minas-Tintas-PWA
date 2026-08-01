@@ -1,0 +1,20 @@
+# Normalização de fim de linha — o repositório é canônico em LF.
+# Sem este arquivo, o tratamento depende da config local de cada máquina
+# (foi o que fez a migração Windows -> Ubuntu marcar 230 arquivos como
+# "modificados" sem nenhuma mudança real de conteúdo).
+
+# Padrão: git detecta texto vs binário e grava LF no working tree.
+* text=auto eol=lf
+
+# Binários — nunca converter (a autodetecção já pega, mas explícito é mais seguro).
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.webp binary
+*.woff  binary
+*.woff2 binary
+*.ttf  binary
+*.otf  binary
+*.pdf  binary
