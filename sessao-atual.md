@@ -1,16 +1,45 @@
 # Sessão atual
 
-**Atualizado:** 2026-07-02
+**Atualizado:** 2026-08-01
 
 ---
 
-## 🚀 SUBIDA PENDENTE — o que sobe, em que ordem, como verificar (2026-07-02)
+## 🖥️ Migração de ambiente: Windows → Ubuntu 26.04 (2026-08-01)
 
-**Estado:** tudo implementado e verificado **localmente, nada commitado**. Typecheck verde nos
-2 apps; **build de produção verde nos 2 apps** (pintor com SW bundlado). Tudo aditivo: o código
-pode subir antes das migrations/envs sem janela de quebra (push/som degradam pra no-op).
+Projeto copiado (não clonado) do Windows para o Ubuntu. Dois problemas, nenhum deles de código:
 
-### O que sobe (7 commits, nesta ordem)
+1. **230 arquivos "modificados" sem nenhuma mudança real** — os arquivos vieram com **CRLF**,
+   os blobs no git são **LF**, e o repo **nunca teve `.gitattributes`**, então o tratamento de
+   fim de linha dependia da config local de cada máquina. Diagnóstico que prova:
+   `git diff --ignore-cr-at-eol --stat` volta **vazio** (o diff bruto era 64.642 inserções contra
+   64.642 deleções — toda linha do repo). **Corrigido:** `.gitattributes` com `* text=auto eol=lf`
+   \+ `core.autocrlf input` + re-checkout forçado (`git rm --cached -r . && git reset --hard`).
+   **`git pull` não resolveria isto** — pull traz commits, não reescreve o working tree; o `\r`
+   está nos arquivos em disco, não no repositório.
+2. **`node_modules` inutilizável** — vieram só binários win32 (`swc-win32-x64-msvc`,
+   `sharp-win32-x64`, `lightningcss-win32-x64-msvc`). **Corrigido:** apagar `node_modules` + `.next`
+   dos 2 apps e reinstalar.
+
+**Lição reaplicável:** com o `.gitattributes` versionado, um `git clone` novo (em qualquer SO)
+já nasce em LF — isto foi consequência de **copiar a pasta** em vez de clonar. Num clone só
+sobram os passos normais de setup: `npm install` e recriar os `.env.local` (nunca vão pro git).
+
+**⚠️ Envs marcadas como "Sensitive" na Vercel não podem ser lidas de volta** (nem por
+`vercel env pull`, nem no dashboard) — todas as deste projeto estão assim. Elas seguem servindo
+produção normalmente, mas **não são recuperáveis** para uma máquina nova. Para desenvolvimento
+local com push, gerar um par VAPID **próprio de dev** (`npx web-push generate-vapid-keys`) —
+prod e dev não compartilham subscriptions, então divergir é inofensivo. O par de produção só
+existe hoje dentro da Vercel: se precisar dele fora de lá, não há como extrair.
+
+---
+
+## ✅ SUBIDA DE 2026-07-02 — CONCLUÍDA (histórico)
+
+Os 7 commits abaixo **já subiram** (`2037a2c`..`12781b7`, todos em 2026-07-02), e o trabalho
+posterior (até `f566cca`, 2026-07-20) foi construído em cima deles. Mantido como registro do
+que cada commit carregava.
+
+### O que subiu (7 commits, nesta ordem)
 
 Arquivos que misturam dois temas (layout raiz, LoginForm) vão no commit onde está o
 grosso, com o "caroneiro" citado no corpo — evita `git add -p`.
@@ -108,30 +137,34 @@ quase-instantâneo de graça.
 ## ⚠️ INSTRUÇÕES DE BANCO — rodar no Supabase (Claude não aplica direto)
 
 Claude versiona a migration no repo; **o dev roda no banco hospedado** (`supabase db push` ou o SQL
-pelo dashboard). Pendente desta sessão:
+pelo dashboard).
 
-1. **`20260701150000_resgate_cancelado_por.sql`** — adiciona `resgates.cancelado_por` (enum
-   `resgate_origin`), atualiza os RPCs `cancelar_resgate`/`cancelar_resgate_admin` (gravam quem
-   cancelou) e a view `resgates_admin` (expõe a coluna). **Bloqueia** a notificação "Resgate
-   cancelado pela loja": sem ela, a query degrada pra vazio (não quebra o app), mas a notificação
-   não aparece. **Aditiva**, não altera dado existente. Rodar **antes** de depender do recurso.
-2. **`20260702150000_push_subscriptions.sql`** — tabela do Web Push (T6c): `push_subscriptions`
-   (endpoint PK, painter_id FK cascade, chaves p256dh/auth) + RLS self (4 policies). O envio usa
-   `service_role` (sem policy de admin). **Aditiva.** Sem ela, ativar avisos no celular falha na
-   gravação (erro tratado) e o envio é no-op — nada quebra.
+**As duas migrations que estavam pendentes em 2026-07-02** (`20260701150000_resgate_cancelado_por`
+e `20260702150000_push_subscriptions`) **saíram da fila**: o trabalho posterior dependeu delas
+(o commit `71d8e99`, de 07-05, já ajusta o seed para limpar `push_subscriptions`) e o push está
+em produção. Migrations posteriores no repo, na mesma situação — `20260703102233_brinde_sorteio`,
+`20260705152953_realtime_settings`, `20260705161322_promo_desde` e `20260720_rpc_get_all_products`.
+
+**Não verificado contra o banco** (a máquina nova ainda não tinha o Supabase CLI quando isto foi
+escrito): confirmar com `supabase migration list` assim que o CLI estiver logado, e aplicar o que
+faltar. A lista é a fonte da verdade, não este parágrafo.
 
 > Regra geral: migrations aditivas (coluna com default, `create or replace`, RPC nova) são seguras
 > num banco populado; rename/drop são breaking → expand/contract (subir código compatível antes do
-> `db push`). Conferir também se as migrations anteriores (brinde, notif_visto) já foram aplicadas.
+> `db push`).
 
 ---
 
 ## Estado consolidado
 
 Repositório: `https://github.com/V-Santtos/Minas-Tintas-PWA`
-Apps Admin e Pintor validados e publicados.
+Apps Admin e Pintor validados e **em produção** (`minas-tintas-pintor.vercel.app` e
+`minas-tintas-app.vercel.app`). Último commit: `f566cca` (2026-07-20), local e remoto em dia.
 
-**Sessão de 2026-07-02 (local, aguardando subida — ver bloco 🚀 acima):**
+> **Provar o build servido, não o ✓ do GitHub** (lição do Instant Rollback, abaixo): que os dois
+> domínios respondam não prova qual commit cada deployment serve. Amarrar o SHA exige `vercel ls`.
+
+**Sessão de 2026-07-02 (publicada):**
 
 - **Som de notificação in-app** (pintor + admin) — ✅ implementado.
 - **T6c — Push real com app fechado** — ✅ implementado (valida no aparelho pós-deploy).
@@ -250,7 +283,7 @@ ainda existe — apagar quando não houver mais investigação de viewport pende
 
 ## Próximo bloco — restante das notificações (T6c/T6d) e offline
 
-T6c saiu de "adiado" pra **implementado (aguardando subida/validação)**; T6d segue adiado
+T6c saiu de "adiado" pra **implementado e publicado** (subiu em 2026-07-02); T6d segue adiado
 consciente; offline tem anexo pronto + adiantamento feito. Nada aqui bloqueia o resto.
 
 - **T6c — Push real: ✅ IMPLEMENTADO localmente (2026-07-02), pendente de validação.**
