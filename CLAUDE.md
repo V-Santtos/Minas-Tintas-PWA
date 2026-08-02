@@ -36,14 +36,20 @@ Antes de responder ou executar qualquer tarefa, leia:
   eu já domino. **Mantenha o porquê** de decisões técnicas reais (ex.: "set null vs cascade aqui
   porque X"), que é o que me impede de copiar sem entender o trade-off. Quando eu quiser aprofundar,
   eu peço.
-- **Eu mesmo faço as mudanças no código**, localmente, e commito/faço push. Explique **o quê**,
-  **onde** e **por quê**, e espere eu executar e reportar antes de seguir. (Documentação e arquivos
-  de referência você pode gerar prontos pra eu revisar e colocar.)
+- **Quem executa:** **você executa** as mudanças — código, infra, docs e chores de git — sempre
+  **depois do meu OK explícito** (regra do `CLAUDE.md` global; aqui só o recorte deste projeto).
+  Continue explicando **o quê**, **onde** e **por quê** antes de aplicar: a explicação é o produto
+  tanto quanto o diff.
+- **Exceção — arquivos sensíveis são meus.** `.env*` (local e de cada app), chaves, tokens e
+  credenciais, e qualquer coisa em painel externo (Vercel, Supabase, Hiper): você me diz o que
+  precisa entrar e **onde**, e eu aplico. Nunca escreva segredo em arquivo versionado nem me peça
+  pra colar segredo no chat.
 - **Passo a passo**, uma etapa por vez. Razão e contexto antes da ação.
-- Antes de instruir sobre um arquivo, **confira o código/config real** (clonando o repo) em vez de
-  assumir — já fomos mordidos por suposições.
-- **Verifique no remoto** (clone fresco) quando eu disser que fiz push — pega descompasso entre o
-  que apliquei e o que subiu.
+- Antes de instruir sobre um arquivo, **leia o arquivo real no disco** em vez de assumir — já fomos
+  mordidos por suposições.
+- **Verifique no remoto** quando eu disser que fiz push — pega descompasso entre o que apliquei e o
+  que subiu. Vale também pro que **está servido em produção**: o ✓ do GitHub não prova o build do
+  domínio (ver a lição do Instant Rollback em "Em aberto").
 - **Commits: gere você a mensagem pronta** ao fim de cada **bloco lógico** (não a cada passo),
   em _conventional commits_ (`tipo(escopo): resumo`) — uma linha pras simples, com **corpo**
   quando houver várias peças. **Um único título por commit**: se o bloco junta várias mudanças,
@@ -208,8 +214,9 @@ Troca de telefone do pintor pelo admin; recuperação por e-mail (SMTP).
   (escritas) é o **3b**.
 - `rules.ts` duplicado idêntico nos dois apps **de propósito** — decisão travada, não vira lib
   compartilhada. A duplicação é intencional, não dívida.
-- O `.gitignore` raiz exclui: `.claude/` (config local), `sessao-atual.md` (notas de sessão),
-  `**/node_modules/`, `**/.next/`, `**/.env*`.
+- O `.gitignore` raiz exclui: `.claude/` (config local), `**/node_modules/`, `**/.next/`,
+  `**/.env*`, `hawkstreet-site/` e `GSAP/` (projeto pessoal não relacionado). O `sessao-atual.md`
+  **é versionado** (já esteve no ignore; hoje não está) — é o arquivo de estado vivo do projeto.
 - **Endereço do pintor** entregue: colunas em `painters` + na view `painter_stats`; admin edita no
   detalhe, pintor vê read-only no `meus-dados`. Resíduo: lista de pintores e relatórios ainda
   mostram `city = '—'` (placeholder, não ligado à coluna); o `*` em "Cidade" no form é decorativo
